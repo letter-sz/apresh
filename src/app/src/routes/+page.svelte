@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { invalidateAll } from '$app/navigation';
+	import { invalidateAll, pushState } from '$app/navigation';
 	import { anonymousBackend } from '$lib/canisters';
 	import { getLocalStorage } from '$lib/storage';
 	import { wallet } from '$lib/wallet.svelte';
@@ -15,10 +15,12 @@
 	import MapButton from '../components/MapButton.svelte';
 	import PillButton from '../components/common/PillButton.svelte';
 	import SettleShipment from '../components/forms/SettleShipment.svelte';
+	import { page } from '$app/stores';
 	// import * as vetkd from 'ic-vetkd-utils';
 
 	onMount(async () => {
 		await invalidateAll();
+		pushState('', { showAddModal: false });
 	});
 
 	const {
@@ -92,7 +94,6 @@
 		showBuyModal = false;
 	}
 
-	let showAddModal = $state(false);
 	let showBuyModal = $state(false);
 	let message = $state('');
 	let selected = $state<Shipment | null>(null);
@@ -131,9 +132,7 @@
 	}
 </script>
 
-<Marker callback={() => selectShipment(BigInt(1))} location={{ lat: 43, lng: 43 }} name={'dupa'} />
-
-<CreateShipmentForm showModal={showAddModal} onClose={() => (showAddModal = false)} />
+<CreateShipmentForm showModal={$page.state.showAddModal} onClose={() => history.back()} />
 
 {#if data.created.length > 0}
 	{#each data.created as { id, info }}
@@ -147,9 +146,12 @@
 		{/if}
 	</Modal>
 
-	<MapButton showModal={showAddModal} />
+	<MapButton
+		currentIsOpen={$page.state.showAddModal}
+		onOpen={() => pushState('create', { showAddModal: true })}
+	/>
 {:else if data.carried.length > 0}
-	{#if !showAddModal}
+	{#if !$page.state.showAddModal}
 		{#each data.carried as { id, info }}
 			<Marker callback={() => selectShipment(id)} location={info.destination} name={id.toString()}
 			></Marker>
@@ -177,5 +179,8 @@
 		<PillButton onClick={() => buy(selected!)} text="Buy" className="w-1/2 mx-auto" />
 	</Modal>
 
-	<MapButton bind:showModal={showAddModal} />
+	<MapButton
+		currentIsOpen={$page.state.showAddModal}
+		onOpen={() => pushState('create', { showAddModal: true })}
+	/>
 {/if}
