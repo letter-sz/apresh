@@ -27,7 +27,8 @@
 		"paths": {
 			"$lib/*": ["src/lib/*"],
 			"$declarations/*": ["../declarations/*"],
-			"$components/*": ["src/components/*"]
+			"$components/*": ["src/components/*"],
+			"$routes/*": ["src/routes/*"]
 		}
 	},
 	"include": [
