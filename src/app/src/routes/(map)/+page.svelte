@@ -1,22 +1,21 @@
 <script lang="ts">
 	import { invalidateAll, pushState } from '$app/navigation';
 	import { anonymousBackend } from '$lib/canisters';
-	import { getLocalStorage } from '$lib/storage';
 	import { wallet } from '$lib/wallet.svelte';
 	import { onMount } from 'svelte';
-	import type { Shipment } from '$declarations/contract/contract.did';
-	import CreateShipmentForm from '$components/forms/CreateShipment.svelte';
+	import type { Shipment, ShipmentLocation } from '$declarations/contract/contract.did';
 	import Marker from '$components/Marker.svelte';
 	import Modal from '$components/modal/Modal.svelte';
 	import ShipmentInfo from '$components/ShipmentInfo.svelte';
 	import type { PageData } from './$types';
 	import TextInput from '$components/common/Inputs/TextInput.svelte';
-	import { Principal } from '@dfinity/principal';
 	import MapButton from '$components/MapButton.svelte';
 	import PillButton from '$components/common/PillButton.svelte';
 	import SettleShipment from '$components/forms/SettleShipment.svelte';
 	import { page } from '$app/stores';
-	// import * as vetkd from 'ic-vetkd-utils';
+	import CreatePage from '../shipment/create/+page.svelte';
+	import { ibe_encrypt } from '$lib/encryption.svelte';
+	import { MapEvents } from 'svelte-maplibre';
 
 	onMount(async () => {
 		await invalidateAll();
@@ -37,31 +36,6 @@
 		showBuyModal = true;
 	}
 
-	const hex_decode = (hexString: string) =>
-		Uint8Array.from(hexString.match(/.{1,2}/g)!.map((byte) => parseInt(byte, 16)));
-
-	const hex_encode = (bytes: Uint8Array) =>
-		bytes.reduce((str, byte) => str + byte.toString(16).padStart(2, '0'), '');
-
-	async function ibe_encrypt(message: string, principal: Principal) {
-		if (!$wallet.connected) await wallet.connect();
-		if (!$wallet.connected) return;
-
-		const pk_bytes_hex = await $wallet.actor.ibe_encryption_key();
-		const message_encoded = new TextEncoder().encode(message);
-		const seed = window.crypto.getRandomValues(new Uint8Array(32));
-
-		// const ibe_ciphertext = vetkd.IBECiphertext.encrypt(
-		// 	hex_decode(pk_bytes_hex),
-		// 	principal.toUint8Array(),
-		// 	message_encoded,
-		// 	seed
-		// );
-
-		// return hex_encode(ibe_ciphertext.serialize());
-		return hex_encode(new Uint8Array());
-	}
-
 	async function buy(shipment: Shipment) {
 		if (!$wallet.connected) await wallet.connect();
 		if (!$wallet.connected) return;
@@ -71,7 +45,7 @@
 		const error = await $wallet.actor.buyShipment('Jacek', shipment.id);
 		console.log(error);
 
-		const encryptedMessage = await ibe_encrypt(message, shipment.customer);
+		const encryptedMessage = await ibe_encrypt($wallet, message, shipment.customer);
 		const errorMessage = await $wallet.actor.addEncryptedMessage(encryptedMessage!, shipment.id);
 		console.log(errorMessage);
 
@@ -98,6 +72,9 @@
 	let message = $state('');
 	let selected = $state<Shipment | null>(null);
 	let image = $state<string | null>(null);
+	let selectModeType = $state<'Source' | 'Destination' | undefined>(undefined);
+	let sourceLocation = $state<ShipmentLocation | undefined>(undefined);
+	let destinationLocation = $state<ShipmentLocation | undefined>(undefined);
 
 	$effect(() => {
 		console.log('data', data);
@@ -130,13 +107,42 @@
 			};
 		});
 	}
+
+	function createShipment() {
+		pushState('/shipment/create', { showAddModal: true });
+	}
+
+	let stateShowAddModal = $state(false);
+	$effect(() => {
+		stateShowAddModal = $page.state.showAddModal && selectModeType === undefined;
+	});
+
+	function getLocation(e: CustomEvent<maplibregl.MapMouseEvent>) {
+		console.log('got location');
+
+		const { lng, lat } = e.detail.lngLat;
+		const street = 'Some street';
+		if (selectModeType === 'Source') {
+			sourceLocation = { lat, lng, street };
+		} else {
+			destinationLocation = { lat, lng, street };
+		}
+		selectModeType = undefined;
+		createShipment();
+	}
+
+	function selectLocation(type: 'Source' | 'Destination') {
+		selectModeType = type;
+	}
 </script>
 
-<Modal bind:showModal={$page.state.showAddModal} onClose={() => history.back()}>
-	<CreateShipmentForm showModal={$page.state.showAddModal} onClose={() => history.back()} />
+<Modal bind:showModal={stateShowAddModal} onClose={() => history.back()}>
+	<CreatePage {data} {selectLocation} {sourceLocation} {destinationLocation} />
 </Modal>
 
-{#if data.created.length > 0}
+{#if selectModeType !== undefined}
+	<MapEvents on:click={getLocation} />
+{:else if data.created.length > 0}
 	{#each data.created as { id, info }}
 		<Marker callback={() => selectShipment(id)} location={info.destination} name={id.toString()}
 		></Marker>
@@ -148,10 +154,7 @@
 		{/if}
 	</Modal>
 
-	<MapButton
-		currentIsOpen={$page.state.showAddModal}
-		onOpen={() => pushState('create', { showAddModal: true })}
-	/>
+	<MapButton currentIsOpen={$page.state.showAddModal} onOpen={createShipment} />
 {:else if data.carried.length > 0}
 	{#if !$page.state.showAddModal}
 		{#each data.carried as { id, info }}
@@ -181,8 +184,5 @@
 		<PillButton onClick={() => buy(selected!)} text="Buy" className="w-1/2 mx-auto" />
 	</Modal>
 
-	<MapButton
-		currentIsOpen={$page.state.showAddModal}
-		onOpen={() => pushState('/shipment/create', { showAddModal: true })}
-	/>
+	<MapButton currentIsOpen={$page.state.showAddModal} onOpen={createShipment} />
 {/if}

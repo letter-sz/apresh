@@ -1,5 +1,5 @@
 // import * as vetkd from 'ic-vetkd-utils';
-import { stateWallet, wallet } from '$lib/wallet.svelte';
+import { stateWallet, wallet, type Wallet } from '$lib/wallet.svelte';
 import { Principal } from '@dfinity/principal';
 import { Actor } from '@dfinity/agent';
 
@@ -28,5 +28,24 @@ export async function ibe_decrypt(ibe_ciphertext_hex: string) {
 	return 'vetkd not yet supported';
 }
 
-const hex_decode = (hexString: any) =>
-	Uint8Array.from(hexString.match(/.{1,2}/g)!.map((byte: any) => parseInt(byte, 16)));
+const hex_decode = (hexString: string) =>
+	Uint8Array.from(hexString.match(/.{1,2}/g)!.map((byte) => parseInt(byte, 16)));
+
+const hex_encode = (bytes: Uint8Array) =>
+	bytes.reduce((str, byte) => str + byte.toString(16).padStart(2, '0'), '');
+
+export async function ibe_encrypt(wallet: Wallet, message: string, principal: Principal) {
+	const pk_bytes_hex = await wallet.actor.ibe_encryption_key();
+	const message_encoded = new TextEncoder().encode(message);
+	const seed = window.crypto.getRandomValues(new Uint8Array(32));
+
+	// const ibe_ciphertext = vetkd.IBECiphertext.encrypt(
+	// 	hex_decode(pk_bytes_hex),
+	// 	principal.toUint8Array(),
+	// 	message_encoded,
+	// 	seed
+	// );
+
+	// return hex_encode(ibe_ciphertext.serialize());
+	return hex_encode(new Uint8Array());
+}
