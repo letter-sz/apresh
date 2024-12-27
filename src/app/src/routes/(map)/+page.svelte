@@ -5,16 +5,16 @@
 	import { wallet } from '$lib/wallet.svelte';
 	import { onMount } from 'svelte';
 	import type { Shipment } from '$declarations/contract/contract.did';
-	import CreateShipmentForm from '../components/forms/CreateShipment.svelte';
-	import Marker from '../components/Marker.svelte';
-	import Modal from '../components/modal/Modal.svelte';
-	import ShipmentInfo from '../components/ShipmentInfo.svelte';
+	import CreateShipmentForm from '$components/forms/CreateShipment.svelte';
+	import Marker from '$components/Marker.svelte';
+	import Modal from '$components/modal/Modal.svelte';
+	import ShipmentInfo from '$components/ShipmentInfo.svelte';
 	import type { PageData } from './$types';
-	import TextInput from '../components/common/Inputs/TextInput.svelte';
+	import TextInput from '$components/common/Inputs/TextInput.svelte';
 	import { Principal } from '@dfinity/principal';
-	import MapButton from '../components/MapButton.svelte';
-	import PillButton from '../components/common/PillButton.svelte';
-	import SettleShipment from '../components/forms/SettleShipment.svelte';
+	import MapButton from '$components/MapButton.svelte';
+	import PillButton from '$components/common/PillButton.svelte';
+	import SettleShipment from '$components/forms/SettleShipment.svelte';
 	import { page } from '$app/stores';
 	// import * as vetkd from 'ic-vetkd-utils';
 
@@ -132,7 +132,9 @@
 	}
 </script>
 
-<CreateShipmentForm showModal={$page.state.showAddModal} onClose={() => history.back()} />
+<Modal bind:showModal={$page.state.showAddModal} onClose={() => history.back()}>
+	<CreateShipmentForm showModal={$page.state.showAddModal} onClose={() => history.back()} />
+</Modal>
 
 {#if data.created.length > 0}
 	{#each data.created as { id, info }}
@@ -181,6 +183,6 @@
 
 	<MapButton
 		currentIsOpen={$page.state.showAddModal}
-		onOpen={() => pushState('create', { showAddModal: true })}
+		onOpen={() => pushState('/shipment/create', { showAddModal: true })}
 	/>
 {/if}

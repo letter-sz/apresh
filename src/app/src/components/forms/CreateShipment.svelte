@@ -132,90 +132,82 @@
 {#if isSelectMode}
 	<MapEvents on:click={getLocation} />
 {:else}
-	<Modal
-		bind:showModal
-		onClose={() => {
-			onClose();
-			clearData();
-		}}
-	>
-		<form method="POST" class="flex w-full flex-col space-y-7" onsubmit={createShipment}>
-			<h1
-				class="mb-5 inline-block bg-gradient-to-r from-blue-500 to-rose-400 bg-clip-text text-center text-3xl font-semibold text-transparent"
-			>
-				Create shipment
-			</h1>
+	<form method="POST" class="flex w-full flex-col space-y-7" onsubmit={createShipment}>
+		<h1
+			class="mb-5 inline-block bg-gradient-to-r from-blue-500 to-rose-400 bg-clip-text text-center text-3xl font-semibold text-transparent"
+		>
+			Create shipment
+		</h1>
 
-			<TextInput label="Name" id="name" name="name" bind:value={name} required />
-			<DecimalInput label="Value" id="value" name="value" bind:value required />
-			<DecimalInput label="Price" id="price" name="price" bind:value={price} required />
+		<TextInput label="Name" id="name" name="name" bind:value={name} required />
+		<DecimalInput label="Value" id="value" name="value" bind:value required />
+		<DecimalInput label="Price" id="price" name="price" bind:value={price} required />
 
-			<div class="my-8 flex justify-between px-10">
-				<div class="flex flex-col space-y-2 text-center">
-					<span>Source</span>
-					{#if !source.street}
-						<button
-							class="mx-auto rounded-full bg-gradient-to-r from-blue-500 to-rose-400 px-4 py-1 text-white transition duration-200 ease-in-out hover:-translate-y-0.5 hover:scale-105"
-							onclick={selectSource}>Select location</button
-						>
-					{:else}
-						<button onclick={selectSource} class="text-lg"
-							>{source.lat.toFixed(2)}, {source.lng.toFixed(2)}</button
-						>
-					{/if}
-				</div>
-				<div class="flex flex-col space-y-2 text-center">
-					<span>Destination</span>
-					{#if !destination.street}
-						<button
-							class="mx-auto rounded-full bg-gradient-to-r from-blue-500 to-rose-400 px-4 py-1 text-white transition duration-200 ease-in-out hover:-translate-y-0.5 hover:scale-105"
-							onclick={selectDestination}>Select location</button
-						>
-					{:else}
-						<button onclick={selectDestination} class="text-lg"
-							>{destination.lat.toFixed(2)}, {destination.lng.toFixed(2)}</button
-						>
-					{/if}
-				</div>
+		<div class="my-8 flex justify-between px-10">
+			<div class="flex flex-col space-y-2 text-center">
+				<span>Source</span>
+				{#if !source.street}
+					<button
+						class="mx-auto rounded-full bg-gradient-to-r from-blue-500 to-rose-400 px-4 py-1 text-white transition duration-200 ease-in-out hover:-translate-y-0.5 hover:scale-105"
+						onclick={selectSource}>Select location</button
+					>
+				{:else}
+					<button onclick={selectSource} class="text-lg"
+						>{source.lat.toFixed(2)}, {source.lng.toFixed(2)}</button
+					>
+				{/if}
 			</div>
+			<div class="flex flex-col space-y-2 text-center">
+				<span>Destination</span>
+				{#if !destination.street}
+					<button
+						class="mx-auto rounded-full bg-gradient-to-r from-blue-500 to-rose-400 px-4 py-1 text-white transition duration-200 ease-in-out hover:-translate-y-0.5 hover:scale-105"
+						onclick={selectDestination}>Select location</button
+					>
+				{:else}
+					<button onclick={selectDestination} class="text-lg"
+						>{destination.lat.toFixed(2)}, {destination.lng.toFixed(2)}</button
+					>
+				{/if}
+			</div>
+		</div>
 
-			<Tabs.Root
-				value={size_category ?? 'Parcel'}
-				onValueChange={(value) => (size_category = value as 'Parcel' | 'Envelope')}
-				class="w-full"
-			>
-				<Tabs.List class="grid w-full grid-cols-2">
-					<Tabs.Trigger value="Parcel">Parcel</Tabs.Trigger>
-					<Tabs.Trigger value="Envelope">Envelope</Tabs.Trigger>
-				</Tabs.List>
-				<Tabs.Content value="Parcel">
-					<DecimalInput
-						label="Height"
-						id="max_height"
-						name="max_height"
-						bind:value={max_height}
-						required
-					/>
-					<DecimalInput
-						label="Width"
-						id="max_width"
-						name="max_width"
-						bind:value={max_width}
-						required
-					/>
-					<DecimalInput
-						label="Depth"
-						id="max_depth"
-						name="max_depth"
-						bind:value={max_depth}
-						required
-					/>
-				</Tabs.Content>
-			</Tabs.Root>
+		<Tabs.Root
+			value={size_category ?? 'Parcel'}
+			onValueChange={(value) => (size_category = value as 'Parcel' | 'Envelope')}
+			class="w-full"
+		>
+			<Tabs.List class="grid w-full grid-cols-2">
+				<Tabs.Trigger value="Parcel">Parcel</Tabs.Trigger>
+				<Tabs.Trigger value="Envelope">Envelope</Tabs.Trigger>
+			</Tabs.List>
+			<Tabs.Content value="Parcel">
+				<DecimalInput
+					label="Height"
+					id="max_height"
+					name="max_height"
+					bind:value={max_height}
+					required
+				/>
+				<DecimalInput
+					label="Width"
+					id="max_width"
+					name="max_width"
+					bind:value={max_width}
+					required
+				/>
+				<DecimalInput
+					label="Depth"
+					id="max_depth"
+					name="max_depth"
+					bind:value={max_depth}
+					required
+				/>
+			</Tabs.Content>
+		</Tabs.Root>
 
-			<PillButton text="Create Shipment" />
-		</form>
-	</Modal>
+		<PillButton text="Create Shipment" />
+	</form>
 {/if}
 
 {#if source.street && (isSelectMode || showModal)}

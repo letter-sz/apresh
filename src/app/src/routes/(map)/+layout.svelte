@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { defaultLocation } from '$lib/common';
 	import { MapLibre } from 'svelte-maplibre';
-	import Header from '../components/common/Header.svelte';
-	import '../styles.scss';
+	import Header from '$components/common/Header.svelte';
+	import '../../styles.scss';
 	import type { Snippet } from 'svelte';
 
 	const { children } = $props<{
@@ -15,7 +15,7 @@
 
 	<MapLibre
 		style="https://basemaps.cartocdn.com/gl/positron-gl-style/style.json"
-		class="maplibre relative w-full sm:aspect-video h-screen z-0"
+		class="maplibre relative z-0 h-screen w-full sm:aspect-video"
 		zoom={15}
 		center={defaultLocation}
 	>
