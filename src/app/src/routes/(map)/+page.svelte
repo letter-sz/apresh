@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { invalidateAll, pushState } from '$app/navigation';
-	import { anonymousBackend } from '$lib/canisters.svelte';
+	import { anonymousBackend } from '$lib/canisters';
 	import type { Shipment, ShipmentLocation } from '$declarations/contract/contract.did';
 	import Marker from '$components/Marker.svelte';
 	import Modal from '$components/modal/Modal.svelte';
@@ -11,7 +11,7 @@
 	import PillButton from '$components/common/PillButton.svelte';
 	import { page } from '$app/stores';
 	import CreatePage from '../shipment/create/+page.svelte';
-	import { ibe_encrypt } from '$lib/encryption.svelte';
+	import { ibe_encrypt } from '$lib/encryption';
 	import { MapEvents } from 'svelte-maplibre';
 	import SettlePage from '../shipment/settle/+page.svelte';
 	import { connection } from '$lib/connection.svelte';

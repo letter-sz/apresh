@@ -1,7 +1,7 @@
 import { type ActorSubclass, type Identity } from '@dfinity/agent';
-import { type _SERVICE } from '../../../declarations/contract/contract.did.js';
-import type { _SERVICE as _ICRC1_SERVICE } from '../../../declarations/icrc1_ledger_canister/icrc1_ledger_canister.did';
-import { connect, type IConnection } from './canisters.svelte';
+import { type _SERVICE } from '$declarations/contract/contract.did.js';
+import type { _SERVICE as _ICRC1_SERVICE } from '$declarations/icrc1_ledger_canister/icrc1_ledger_canister.did';
+import { connect, type IConnection } from './canisters';
 
 export class Connection {
 	identity: Identity | null = $state(null);

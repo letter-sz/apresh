@@ -1,7 +1,7 @@
 // import * as vetkd from 'ic-vetkd-utils';
 
 import type { Principal } from '@dfinity/principal';
-import type { IConnection } from './canisters.svelte';
+import type { IConnection } from './canisters';
 
 export async function ibe_decrypt(ibe_ciphertext_hex: string) {
 	// const tsk_seed = window.crypto.getRandomValues(new Uint8Array(32));

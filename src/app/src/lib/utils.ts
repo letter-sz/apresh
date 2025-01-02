@@ -64,3 +64,8 @@ export function unwrap<T>(result: Object): T {
 		throw new Error('Error from backend: ' + Err);
 	}
 }
+
+export function match<T extends object>(value: T, variant: string): boolean {
+	const enumKeys = Object.keys(value);
+	return enumKeys.includes(variant);
+}

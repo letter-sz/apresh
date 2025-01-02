@@ -10,7 +10,8 @@
     "pretest": "npm run prebuild --workspaces --if-present",
     "start": "npm start --workspaces --if-present",
     "test": "npm test --workspaces --if-present",
-    "storybook": "cd src/app && bun run storybook"
+    "storybook": "cd src/app && bun run storybook",
+    "backend": "dfx canister stop contract && dfx canister delete contract && dfx deploy contract"
   },
   "type": "module",
   "workspaces": [
@@ -18,6 +19,6 @@
   ],
   "dependencies": {
     "vite-plugin-top-level-await": "^1.4.4",
-    "vite-plugin-wasm": "^3.3.0"
+    "vite-plugin-wasm": "^3.4.1"
   }
 }

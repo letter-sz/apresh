@@ -1,13 +1,13 @@
-import { createActor, canisterId } from '../../../declarations/contract';
-import { canisterId as identityCanisterId } from '../../../declarations/internet_identity';
+import { createActor, canisterId } from '$declarations/contract';
+import { canisterId as identityCanisterId } from '$declarations/internet_identity';
 import {
 	canisterId as tokenCanisterId,
 	createActor as createTokenActor
-} from '../../../declarations/icrc1_ledger_canister';
+} from '$declarations/icrc1_ledger_canister';
 import { AuthClient } from '@dfinity/auth-client';
 import { type ActorSubclass, type Identity } from '@dfinity/agent';
-import { type _SERVICE } from '../../../declarations/contract/contract.did.js';
-import type { _SERVICE as _ICRC1_SERVICE } from '../../../declarations/icrc1_ledger_canister/icrc1_ledger_canister.did';
+import type { _SERVICE } from '$declarations/contract/contract.did';
+import type { _SERVICE as _ICRC1_SERVICE } from '$declarations/icrc1_ledger_canister/icrc1_ledger_canister.did';
 
 const host = `http://localhost:4943`;
 

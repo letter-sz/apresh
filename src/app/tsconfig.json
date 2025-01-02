@@ -22,14 +22,7 @@
 		"jsx": "react-jsx",
 		"types": [
 			"vite/client"
-		],
-		"baseUrl": ".",
-		"paths": {
-			"$lib/*": ["src/lib/*"],
-			"$declarations/*": ["../declarations/*"],
-			"$components/*": ["src/components/*"],
-			"$routes/*": ["src/routes/*"]
-		}
+		]
 	},
 	"include": [
 		"src",

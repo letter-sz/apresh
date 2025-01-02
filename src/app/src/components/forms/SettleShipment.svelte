@@ -2,8 +2,8 @@
 	import PillButton from '$components/common/PillButton.svelte';
 	import type { Shipment } from '$declarations/contract/contract.did';
 	import { getLocalStorage } from '$lib/storage';
-	import QrCodeDisplay from '../QrCodeDisplay.svelte';
-	import ShipmentInfo from '../ShipmentInfo.svelte';
+	import QrCodeDisplay from '$components/QrCodeDisplay.svelte';
+	import ShipmentInfo from '$components/ShipmentInfo.svelte';
 
 	let { selected, onSettle } = $props<{
 		selected: Shipment;

@@ -1,6 +1,7 @@
 import type { Shipment } from '$declarations/contract/contract.did';
-import { anonymousBackend } from '$lib/canisters.svelte';
+import { anonymousBackend } from '$lib/canisters';
 import { connection } from '$lib/connection.svelte';
+import { match } from '$lib/utils';
 import type { LoadEvent } from '@sveltejs/kit';
 
 /** @type {import('./$types').PageLoad } */
@@ -36,8 +37,8 @@ export async function load({ url }: LoadEvent): Promise<{
 		console.log('Carrier registered');
 
 		let [car, cus] = await actor.listUserShipments();
-		carried = car;
-		created = cus;
+		carried = car.filter((shipment) => !match(shipment.status, 'Delivered'));
+		created = cus.filter((shipment) => !match(shipment.status, 'Delivered'));
 		// }
 	}
 

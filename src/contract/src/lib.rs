@@ -153,6 +153,8 @@ async fn finalize_shipment(shipment_id: u64, secret_key: Option<String>) -> Resu
     //     ic_cdk::trap(&e.to_string())
     // }
 
+    ic_cdk::print(format!("Shipment finalized: {:?}", shipment_id).as_str());
+
     Ok(())
 }
 
@@ -180,10 +182,9 @@ async fn buy_shipment(carrier_name: String, shipment_id: u64) -> Result<(), Stri
         .await
         .map_err(|e| e.to_string());
 
-    match transfer_in_result {
-        Ok(_) => Ok(()),
-        Err(e) => ic_cdk::trap(&e),
-    }
+    ic_cdk::print(format!("Shipment bought: {:?}", shipment_id).as_str());
+
+    Ok(())
 }
 
 #[query(name = "generateQr")]
@@ -239,6 +240,7 @@ async fn create_shipment(
 
     let qr_code = qr::generate(qr_options).unwrap_or_else(|err| ic_cdk::trap(&err.to_string()));
 
+    ic_cdk::print(format!("Shipment created: {:?}", shipment_id).as_str());
     Ok((qr_code, shipment_id))
 }
 

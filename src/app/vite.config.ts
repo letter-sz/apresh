@@ -42,7 +42,7 @@ export default defineConfig({
 				replacement: fileURLToPath(new URL('../declarations', import.meta.url))
 			},
 			{
-				find: '$components',
+				find: 'components',
 				replacement: fileURLToPath(new URL('./src/components', import.meta.url))
 			}
 		]

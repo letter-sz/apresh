@@ -1,7 +1,4 @@
-import type { Shipment } from '$declarations/contract/contract.did';
-import { anonymousBackend } from '$lib/canisters.svelte';
 import { error, type LoadEvent } from '@sveltejs/kit';
-import { get } from 'svelte/store';
 
 /** @type {import('./$types').PageLoad } */
 export async function load({ url }: LoadEvent) {
