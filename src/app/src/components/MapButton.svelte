@@ -1,13 +1,13 @@
 <script lang="ts">
+	import { connection } from '$lib/connection.svelte';
 	import { Plus } from 'lucide-svelte';
-	import { wallet } from '$lib/wallet.svelte';
 
 	let { onOpen, currentIsOpen } = $props<{ onOpen: () => void; currentIsOpen: boolean }>();
 
-	function handleClick() {
+	async function handleClick() {
 		if (currentIsOpen === true) return;
 
-		if (!$wallet.connected) wallet.connect();
+		await connection.ensureConnected();
 		onOpen();
 	}
 </script>

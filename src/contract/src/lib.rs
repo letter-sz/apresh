@@ -149,10 +149,11 @@ async fn finalize_shipment(shipment_id: u64, secret_key: Option<String>) -> Resu
         .await
         .map_err(|e| e.to_string());
 
-    match transfer_out_carrier_result {
-        Ok(_) => Ok(()),
-        Err(e) => ic_cdk::trap(&e.to_string()),
-    }
+    // if let Err(e) = transfer::transfer_out(transfer_out_carrier_args).await {
+    //     ic_cdk::trap(&e.to_string())
+    // }
+
+    Ok(())
 }
 
 #[update(name = "buyShipment")]
@@ -203,8 +204,8 @@ async fn create_shipment(
     hashed_secret: String,
     qr_options: QrCodeOptions,
     shipment_info: ShipmentInfo,
-) -> Result<(Vec<u8>, u64), String> {
-    block_anonymous()?;
+) -> Result<(Vec<u8>, ShipmentIdInner), String> {
+    ic_cdk::print("Creating a shipment");
 
     let customer_id = ic_cdk::caller();
     let amount = NumTokens::from(shipment_info.price());

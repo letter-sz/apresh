@@ -2,7 +2,6 @@
 	import type { ShipmentLocation } from '$declarations/contract/contract.did';
 	import type { PageData } from './$types';
 	import { getLocalStorage, setLocalStorage } from '$lib/storage';
-	import { wallet } from '$lib/wallet.svelte';
 	import { sha256 } from 'js-sha256';
 	import DecimalInput from '$components/common/Inputs/DecimalInput.svelte';
 	import TextInput from '$components/common/Inputs/TextInput.svelte';
@@ -10,6 +9,9 @@
 	import { createEventDispatcher } from 'svelte';
 	import PillButton from '$components/common/PillButton.svelte';
 	import { invalidateAll } from '$app/navigation';
+	import { unwrap } from '$lib/utils';
+	import { connection } from '$lib/connection.svelte';
+	import { wallet } from '$lib/wallet.svelte';
 
 	const {
 		data,
@@ -33,14 +35,14 @@
 
 	const createShipment = async (e: Event) => {
 		e.preventDefault();
+		const actor = await connection.getActor();
+
+		console.log('verifying connection');
 
 		if (!sourceLocation || !destinationLocation) {
 			console.error('Source or destination location is not defined');
 			return;
 		}
-
-		if (!$wallet.connected) await wallet.connect();
-		if (!$wallet.connected) return;
 
 		const priceBigint = BigInt(price);
 
@@ -51,7 +53,9 @@
 		hash.update(secret);
 		const hashed = hash.hex();
 
-		const res = await $wallet.actor.createShipment(
+		console.log('creating shipment');
+
+		const res = await actor.createShipment(
 			'',
 			name,
 			hashed,
@@ -80,7 +84,7 @@
 		);
 
 		if (Object.keys(res)[0] === 'Ok') {
-			const id: bigint = (res as { Ok: [number[], bigint] }).Ok[1];
+			const id: bigint = unwrap<[number[], bigint]>(res)[1];
 			setLocalStorage(id.toString(), secret);
 			const loadedDone = getLocalStorage('done', secret);
 			console.log('loadedDone', loadedDone);
@@ -114,11 +118,6 @@
 			// TODO: this should be handled better
 		}
 	};
-
-	$inspect('here');
-	$inspect(data.created);
-	$inspect(sourceLocation);
-	$inspect(destinationLocation);
 </script>
 
 <form method="POST" class="flex w-full flex-col space-y-7" onsubmit={createShipment}>

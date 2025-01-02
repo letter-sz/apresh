@@ -1,13 +1,9 @@
 <script lang="ts">
 	import clsx from 'clsx';
 	import { Marker } from 'svelte-maplibre';
-	import type { Shipment } from '../../../declarations/contract/contract.did';
+	import type { Shipment } from '$declarations/contract/contract.did';
 
-	interface ShipmantLocationProps {
-		shipments: Shipment[];
-	}
-
-	let { shipments }: ShipmantLocationProps = $props();
+	let { shipments } = $props<{ shipments: Shipment[] }>();
 </script>
 
 {#each shipments as shipment}

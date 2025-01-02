@@ -1,7 +1,7 @@
 // import * as vetkd from 'ic-vetkd-utils';
-import { stateWallet, wallet, type Wallet } from '$lib/wallet.svelte';
-import { Principal } from '@dfinity/principal';
-import { Actor } from '@dfinity/agent';
+
+import type { Principal } from '@dfinity/principal';
+import type { IConnection } from './canisters.svelte';
 
 export async function ibe_decrypt(ibe_ciphertext_hex: string) {
 	// const tsk_seed = window.crypto.getRandomValues(new Uint8Array(32));
@@ -34,7 +34,7 @@ const hex_decode = (hexString: string) =>
 const hex_encode = (bytes: Uint8Array) =>
 	bytes.reduce((str, byte) => str + byte.toString(16).padStart(2, '0'), '');
 
-export async function ibe_encrypt(wallet: Wallet, message: string, principal: Principal) {
+export async function ibe_encrypt(wallet: IConnection, message: string, principal: Principal) {
 	const pk_bytes_hex = await wallet.actor.ibe_encryption_key();
 	const message_encoded = new TextEncoder().encode(message);
 	const seed = window.crypto.getRandomValues(new Uint8Array(32));

@@ -1,3 +1,5 @@
+import type { Shipment } from '$declarations/contract/contract.did';
+
 /// <reference types="@sveltejs/kit" />
 // See https://kit.svelte.dev/docs/types#app
 // for information about these interfaces
@@ -7,7 +9,8 @@ declare global {
 		// interface Locals {}
 		// interface PageData {}
 		interface PageState {
-			showAddModal: boolean;
+			mode: 'none' | 'create' | 'buy' | 'settle';
+			selected: bigint | null;
 		}
 		// interface Platform {}
 	}

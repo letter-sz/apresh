@@ -1,6 +1,6 @@
 import type { Shipment } from '$declarations/contract/contract.did';
-import { anonymousBackend } from '$lib/canisters';
-import { stateWallet, wallet } from '$lib/wallet.svelte';
+import { anonymousBackend } from '$lib/canisters.svelte';
+import { connection } from '$lib/connection.svelte';
 import type { LoadEvent } from '@sveltejs/kit';
 
 /** @type {import('./$types').PageLoad } */
@@ -23,7 +23,9 @@ export async function load({ url }: LoadEvent): Promise<{
 	let carried: Shipment[] = [];
 	let created: Shipment[] = [];
 
-	if (stateWallet.actor) {
+	const actor = await connection.actor;
+
+	if (actor !== null) {
 		console.log('Wallet connected');
 
 		// const [car, cus] = await stateWallet.actor.roles();
@@ -33,7 +35,7 @@ export async function load({ url }: LoadEvent): Promise<{
 		// if (registeredCarrier) {
 		console.log('Carrier registered');
 
-		let [car, cus] = await stateWallet.actor.listUserShipments();
+		let [car, cus] = await actor.listUserShipments();
 		carried = car;
 		created = cus;
 		// }
