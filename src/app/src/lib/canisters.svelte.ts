@@ -44,11 +44,15 @@ type ConnectionOrConnect =
 			connected: true;
 	  } & IConnection);
 
-export const connect = async (): Promise<IConnection> => {
+export const connect = async (allowReconnect: boolean = true): Promise<IConnection> => {
 	console.log('Connecting to backend');
 	let authClient = await AuthClient.create();
 
-	if (!(await authClient.isAuthenticated())) {
+	const authenticated = await authClient.isAuthenticated();
+	const canReconnect = authenticated && allowReconnect;
+
+	if (!canReconnect) {
+		// Login manually (opens a new tab)
 		await new Promise((resolve) => {
 			authClient.login({
 				identityProvider: `http://${identityCanisterId}.localhost:4943/`, // 'https://identity.ic0.app'

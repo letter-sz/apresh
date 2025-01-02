@@ -3,9 +3,11 @@
 	import Button from './Buttons/Button.svelte';
 
 	async function onClick() {
-		console.log('clicked');
-		await connection.ensureConnected();
-		console.log('connected');
+		if (connection.identity === null) {
+			await connection.ensureConnected();
+		} else {
+			await connection.reconnect(false);
+		}
 	}
 
 	let formattedIdentity = $derived(
