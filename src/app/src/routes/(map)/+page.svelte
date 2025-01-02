@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { invalidateAll, pushState } from '$app/navigation';
-	import { anonymousBackend } from '$lib/canisters';
+	import { fetchBackend } from '$lib/canisters';
 	import type { Shipment, ShipmentLocation } from '$declarations/contract/contract.did';
 	import Marker from '$components/Marker.svelte';
 	import Modal from '$components/modal/Modal.svelte';
@@ -81,17 +81,11 @@
 	let destinationLocation = $state<ShipmentLocation | undefined>(undefined);
 
 	$effect(() => {
-		console.log('data', data);
 		if (!data.settleId || !data.settleSecret) return;
-
-		console.log('here');
-		// anonymousBackend
-		// 	.finalizeShipment(BigInt(data.settleId), [data.settleSecret])
-		// 	.then((res) => console.log('endpoint res ', res));
 	});
 
 	async function getQrCode(url: string) {
-		const data = await anonymousBackend.generateQr(url, BigInt(500));
+		const data = fetchBackend(fetch).generateQr(url, BigInt(500));
 
 		if (Object.keys(data)[0] == 'Ok') {
 			const blob = new Blob([Object.values(data)[0] as Uint8Array], { type: 'image/png' });

@@ -1,11 +1,11 @@
 import type { Shipment } from '$declarations/contract/contract.did';
-import { anonymousBackend } from '$lib/canisters';
+import { fetchBackend } from '$lib/canisters';
 import { connection } from '$lib/connection.svelte';
 import { match } from '$lib/utils';
 import type { LoadEvent } from '@sveltejs/kit';
 
 /** @type {import('./$types').PageLoad } */
-export async function load({ url }: LoadEvent): Promise<{
+export async function load({ fetch, url }: LoadEvent): Promise<{
 	shipments: Shipment[];
 	registeredCarrier: boolean;
 	registeredCustomer: boolean;
@@ -14,7 +14,7 @@ export async function load({ url }: LoadEvent): Promise<{
 	settleSecret: string | null;
 	settleId: string | null;
 }> {
-	const shipments = await anonymousBackend.listPendingShipments();
+	const shipments = await fetchBackend(fetch).listPendingShipments();
 
 	const settleSecret = url.searchParams.get('settleSecret');
 	const settleId = url.searchParams.get('settleId');

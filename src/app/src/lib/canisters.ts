@@ -9,9 +9,11 @@ import { type ActorSubclass, type Identity } from '@dfinity/agent';
 import type { _SERVICE } from '$declarations/contract/contract.did';
 import type { _SERVICE as _ICRC1_SERVICE } from '$declarations/icrc1_ledger_canister/icrc1_ledger_canister.did';
 
-const host = `http://localhost:4943`;
+const host = `http://[::1]:4943`;
 
-export const anonymousBackend = createActor(canisterId, { agentOptions: { host } });
+export function fetchBackend(fetchFunction: typeof fetch) {
+	return createActor(canisterId, { agentOptions: { host, fetch: fetchFunction } });
+}
 
 export interface IConnection {
 	actor: ActorSubclass<_SERVICE>;
@@ -69,13 +71,15 @@ const initActors = (authClient: AuthClient): IConnection => {
 	const actor = createActor(canisterId, {
 		agentOptions: {
 			identity,
-			host
+			host,
+			fetch
 		}
 	});
 	const tokenActor = createTokenActor(tokenCanisterId, {
 		agentOptions: {
 			identity,
-			host
+			host,
+			fetch
 		}
 	});
 
