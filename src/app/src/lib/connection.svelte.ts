@@ -2,6 +2,7 @@ import { type ActorSubclass, type Identity } from '@dfinity/agent';
 import { type _SERVICE } from '$declarations/contract/contract.did.js';
 import type { _SERVICE as _ICRC1_SERVICE } from '$declarations/icrc1_ledger_canister/icrc1_ledger_canister.did';
 import { connect, type IConnection } from './canisters';
+import { invalidate, invalidateAll } from '$app/navigation';
 
 export class Connection {
 	identity: Identity | null = $state(null);
@@ -26,6 +27,9 @@ export class Connection {
 		this.identity = connection.identity;
 		this.actor = connection.actor;
 		this.tokenActor = connection.tokenActor;
+
+		// TODO: This should work just fine.
+		// invalidate('shipments:pending');
 
 		return connection;
 	}

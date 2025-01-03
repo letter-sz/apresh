@@ -66,6 +66,6 @@ export function unwrap<T>(result: Object): T {
 }
 
 export function match<T extends object>(value: T, variant: string): boolean {
-	const enumKeys = Object.keys(value);
-	return enumKeys.includes(variant);
+	const enumKeys = Object.keys(value)[0];
+	return enumKeys === variant;
 }

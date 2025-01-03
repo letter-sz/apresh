@@ -1,9 +1,10 @@
 import type { Shipment } from '$declarations/contract/contract.did';
+import { fetchBackend } from '$lib/canisters';
 import { connection } from '$lib/connection.svelte';
 import { error, type LoadEvent } from '@sveltejs/kit';
 
 /** @type {import('./$types').PageLoad } */
-export async function load({ url }: LoadEvent): Promise<{
+export async function load({ fetch, url }: LoadEvent): Promise<{
 	id: bigint;
 	shipment: Shipment;
 }> {
@@ -13,10 +14,10 @@ export async function load({ url }: LoadEvent): Promise<{
 			message: 'Missing shipment ID'
 		});
 	}
+
 	const id = BigInt(idParam);
-	const actor = await connection.getActor();
-	const [carried, created] = await actor.listUserShipments();
-	const shipment = created.find((shipment: Shipment) => shipment.id === id);
+	const shipments = await fetchBackend(fetch).listPendingShipments();
+	const shipment = shipments.find((shipment: Shipment) => shipment.id === id);
 	if (shipment === undefined) {
 		error(404, {
 			message: 'Shipment not found'

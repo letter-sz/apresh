@@ -8,7 +8,7 @@
 	import * as Tabs from '$lib/components/ui/tabs';
 	import { createEventDispatcher } from 'svelte';
 	import PillButton from '$components/common/PillButton.svelte';
-	import { invalidateAll } from '$app/navigation';
+	import { invalidate } from '$app/navigation';
 	import { unwrap } from '$lib/utils';
 	import { connection } from '$lib/connection.svelte';
 	import { wallet } from '$lib/wallet.svelte';
@@ -36,8 +36,6 @@
 	const createShipment = async (e: Event) => {
 		e.preventDefault();
 		const actor = await connection.getActor();
-
-		console.log('verifying connection');
 
 		if (!sourceLocation || !destinationLocation) {
 			console.error('Source or destination location is not defined');
@@ -92,7 +90,7 @@
 
 		console.log('createShipment', appRes, res);
 
-		invalidateAll();
+		invalidate('shipments:pending');
 	};
 
 	function clearData() {

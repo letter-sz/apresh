@@ -12,7 +12,8 @@
       "frontend": {},
       "specified_id": "mxzaz-hqaaa-aaaar-qaada-cai",
       "type": "custom",
-      "wasm": "https://download.dfinity.systems/ic/35bfcadd0f2a474057e42393917b8b3ac269627a/canisters/ic-icrc1-ledger.wasm.gz"
+      "wasm": "https://download.dfinity.systems/ic/35bfcadd0f2a474057e42393917b8b3ac269627a/canisters/ic-icrc1-ledger.wasm.gz",
+      "init_arg_file": "token_init.candid"
     },
     "internet_identity": {
       "candid": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity.did",

@@ -5,7 +5,7 @@ import { match } from '$lib/utils';
 import type { LoadEvent } from '@sveltejs/kit';
 
 /** @type {import('./$types').PageLoad } */
-export async function load({ fetch, url }: LoadEvent): Promise<{
+export async function load({ fetch, depends, url }: LoadEvent): Promise<{
 	shipments: Shipment[];
 	registeredCarrier: boolean;
 	registeredCustomer: boolean;
@@ -14,6 +14,7 @@ export async function load({ fetch, url }: LoadEvent): Promise<{
 	settleSecret: string | null;
 	settleId: string | null;
 }> {
+	depends('shipments:pending');
 	const shipments = await fetchBackend(fetch).listPendingShipments();
 
 	const settleSecret = url.searchParams.get('settleSecret');
@@ -24,7 +25,7 @@ export async function load({ fetch, url }: LoadEvent): Promise<{
 	let carried: Shipment[] = [];
 	let created: Shipment[] = [];
 
-	const actor = await connection.actor;
+	const actor = connection.actor;
 
 	if (actor !== null) {
 		console.log('Wallet connected');
