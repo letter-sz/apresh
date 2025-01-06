@@ -1,5 +1,3 @@
-#[clippy::allow(dead_code)]
-
 use crate::models::shipment::ShipmentId;
 use candid::Principal;
 
@@ -27,6 +25,7 @@ pub enum ActorRole {
     Carrier,
 }
 
+#[allow(dead_code)]
 /// Core trait that defines the behavior and properties of all actors in the system.
 /// 
 /// An actor represents a participant in the shipping system, such as a shipper or carrier.
