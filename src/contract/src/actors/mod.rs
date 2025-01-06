@@ -1,3 +1,5 @@
+#[clippy::allow(dead_code)]
+
 use crate::models::shipment::ShipmentId;
 use candid::Principal;
 

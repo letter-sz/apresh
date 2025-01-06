@@ -35,9 +35,9 @@ impl Shipment {
         let result = hasher.finalize();
 
         if result[..] == hex {
-            return Ok(());
+            Ok(())
         } else {
-            return Err(anyhow::anyhow!("secret verification failed"));
+            Err(anyhow::anyhow!("secret verification failed"))
         }
     }
 
@@ -130,7 +130,9 @@ impl Shipment {
         name: &str,
         info: ShipmentInfo,
     ) -> Self {
-        let shipment = Self {
+        
+
+        Self {
             id,
             info,
             name: name.to_string(),
@@ -140,9 +142,7 @@ impl Shipment {
             carrier: None,
             shipper,
             created_at: timestamp,
-        };
-
-        shipment
+        }
     }
 
     pub fn attach_message(&mut self, message: String) {

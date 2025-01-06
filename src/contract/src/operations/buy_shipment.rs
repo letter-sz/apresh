@@ -16,7 +16,7 @@ pub struct BuyShipmentOp {
     shipment_id: ShipmentId,
 }
 
-impl<'a> BuyShipmentOp {
+impl BuyShipmentOp {
     pub fn new(carrier: Carrier, shipment_id: ShipmentId) -> Self {
         Self {
             carrier,
@@ -25,7 +25,7 @@ impl<'a> BuyShipmentOp {
     }
 }
 
-impl<'a> StateOp<Cost> for BuyShipmentOp {
+impl StateOp<Cost> for BuyShipmentOp {
     type Error = anyhow::Error;
 
     fn apply(&self, state: &mut CanisterState) -> Result<Cost, Self::Error> {

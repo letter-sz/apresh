@@ -100,7 +100,7 @@ fn init() {
             .map_err(|e| e.to_string())
             .expect("Failed to create shipment");
 
-        ic_cdk::print(&format!(
+        ic_cdk::print(format!(
             "Shipment created: {:?}, shipment_id: {}",
             create_shipment_op, shipment_id
         ));

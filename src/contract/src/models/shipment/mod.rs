@@ -1,6 +1,6 @@
 mod info;
-mod shipment;
+mod shipment_impl;
 
 
 pub use info::*;
-pub use shipment::*;
+pub use shipment_impl::*;

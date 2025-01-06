@@ -17,7 +17,7 @@ impl ReadMessageOp {
     }
 }
 
-impl<'a> StateOp<Option<String>> for ReadMessageOp {
+impl StateOp<Option<String>> for ReadMessageOp {
     type Error = anyhow::Error;
 
     fn read(&self, state: &CanisterState) -> Result<Option<String>, Self::Error> {
