@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 pub type CarrierId = Principal;
 
-#[derive(Deserialize, Serialize, Debug, Clone, IsActor)]
+#[derive(Debug, Clone, Deserialize, Serialize, IsActor)]
 pub struct Carrier {
     base: ActorBase,
 }

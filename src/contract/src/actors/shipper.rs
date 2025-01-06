@@ -6,7 +6,7 @@ use super::{base::ActorBase, ActorRole, Actor};
 
 pub type ShipperId = Principal;
 
-#[derive(Deserialize, Serialize, Debug, Clone, IsActor)]
+#[derive(Debug, Clone, Deserialize, Serialize, IsActor)]
 pub struct Shipper {
     base: ActorBase,
 }

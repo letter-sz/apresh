@@ -1,6 +1,6 @@
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse_macro_input, DeriveInput, Data, Fields, Error};
+use syn::{parse_macro_input, DeriveInput, Data, Error};
 
 #[proc_macro_derive(IsActor)]
 pub fn derive_actor(input: TokenStream) -> TokenStream {
