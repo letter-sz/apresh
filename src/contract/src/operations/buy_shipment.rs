@@ -11,32 +11,27 @@ use anyhow::anyhow;
 
 pub type Cost = u64;
 
-pub struct BuyShipmentOp<'a> {
-    carrier_id: CarrierId,
-    carrier_name: &'a str,
+pub struct BuyShipmentOp {
+    carrier: Carrier,
     shipment_id: ShipmentId,
 }
 
-impl<'a> BuyShipmentOp<'a> {
-    pub fn new(carrier_id: CarrierId, carrier_name: &'a str, shipment_id: ShipmentId) -> Self {
+impl<'a> BuyShipmentOp {
+    pub fn new(carrier: Carrier, shipment_id: ShipmentId) -> Self {
         Self {
-            carrier_id,
-            carrier_name,
+            carrier,
             shipment_id,
         }
     }
 }
 
-impl<'a> StateOp<Cost> for BuyShipmentOp<'a> {
+impl<'a> StateOp<Cost> for BuyShipmentOp {
     type Error = anyhow::Error;
 
     fn apply(&self, state: &mut CanisterState) -> Result<Cost, Self::Error> {
-        let carrier = match state.carriers.get_mut(&self.carrier_id) {
+        let carrier = match state.carriers.get_mut(&self.carrier.id()) {
             Some(carrier) => carrier,
-            None => state.carriers.create(
-                self.carrier_id,
-                Carrier::new(self.carrier_id, self.carrier_name),
-            ),
+            None => state.carriers.create(self.carrier.clone()),
         };
 
         let shipment = state
@@ -44,7 +39,7 @@ impl<'a> StateOp<Cost> for BuyShipmentOp<'a> {
             .get_mut(&self.shipment_id)
             .ok_or(anyhow!("Shipment not found"))?;
 
-        shipment.action(ShipmentActions::Buy(self.carrier_id))?;
+        shipment.action(ShipmentActions::Buy(self.carrier.id()))?;
         carrier.add_shipment(self.shipment_id);
 
         Ok(shipment.info().value())

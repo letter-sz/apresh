@@ -17,8 +17,8 @@ impl<T: Actor> ActorCollection<T> {
     self.inner.get(id)
   }
 
-  pub fn create(&mut self, id: Principal, actor: T) -> &mut T {
-    self.inner.entry(id).or_insert(actor)
+  pub fn create(&mut self, actor: T) -> &mut T {
+    self.inner.entry(actor.id()).or_insert(actor)
   }
 
   pub fn get_mut(&mut self, id: &Principal) -> Option<&mut T> {

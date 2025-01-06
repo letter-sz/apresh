@@ -5,9 +5,9 @@ use crate::{
     models::shipment::{Shipment, ShipmentId, ShipmentInfo},
 };
 
+#[derive(Debug)]
 pub struct CreateShipmentOp<'a> {
-    creator_id: ShipperId,
-    creator_name: &'a str,
+    creator: Shipper,
     hashed_secret: &'a str,
     shipment_name: &'a str,
     info: ShipmentInfo,
@@ -16,25 +16,23 @@ pub struct CreateShipmentOp<'a> {
 
 impl<'a> CreateShipmentOp<'a> {
     pub fn new(
-        creator_id: ShipperId,
-        creator_name: &'a str,
+        creator: Shipper,
         hashed_secret: &'a str,
         shipment_name: &'a str,
         info: ShipmentInfo,
         timestamp: u64,
     ) -> Self {
         Self {
-            creator_id,
-            creator_name,
+            creator,
             hashed_secret,
             shipment_name,
             info,
             timestamp,
         }
     }
-}
+}   
 
-impl StateOp<ShipmentId> for CreateShipmentOp<'_> {
+impl<'a> StateOp<ShipmentId> for CreateShipmentOp<'a> {
     type Error = anyhow::Error;
 
     fn apply(&self, state: &mut CanisterState) -> Result<ShipmentId, anyhow::Error> {
@@ -43,9 +41,9 @@ impl StateOp<ShipmentId> for CreateShipmentOp<'_> {
 
         let shipper = match state
             .shippers
-            .get_mut(&self.creator_id) {
+            .get_mut(&self.creator.id()) {
                 Some(shipper) => shipper,
-                None => state.shippers.create(self.creator_id, Shipper::new(self.creator_id, self.creator_name)),
+                None => state.shippers.create(self.creator.clone()),
             };
 
         let shipment = Shipment::new(
@@ -92,9 +90,10 @@ mod tests {
             SizeCategory::Envelope,
         );
 
+        let creator = Shipper::new(creator_id, creator_name);
+
         let op = CreateShipmentOp::new(
-            creator_id,
-            creator_name,
+            creator,
             hashed_secret,
             shipment_name,
             info.clone(),
@@ -110,8 +109,8 @@ mod tests {
 
         let shipment = state.shipments.get(&shipment_id).unwrap();
         assert_eq!(shipment.shipper_id(), creator_id);
-        assert_eq!(shipment.id(), shipment_id);
-        assert_eq!(shipment.name(), shipment_name);
+        assert_eq!(shipment._id(), shipment_id);
+        assert_eq!(shipment._name(), shipment_name);
 
         let shipper = state.shippers.get(&creator_id).unwrap();
         assert_eq!(shipper.id(), creator_id);

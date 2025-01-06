@@ -1,2 +1,2 @@
-pub mod shipment;
 pub mod qrcode;
+pub mod shipment;

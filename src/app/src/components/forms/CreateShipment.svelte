@@ -4,9 +4,12 @@
 	import { wallet } from '$lib/wallet.svelte';
 	import { sha256 } from 'js-sha256';
 	import { MapEvents, Marker } from 'svelte-maplibre';
-	import DecimalInput from './common/Inputs/DecimalInput.svelte';
-	import TextInput from './common/Inputs/TextInput.svelte';
-	import Modal from './Modal.svelte';
+	import DecimalInput from '../common/Inputs/DecimalInput.svelte';
+	import TextInput from '../common/Inputs/TextInput.svelte';
+	import Modal from '../modal/Modal.svelte';
+	import * as Tabs from '$lib/components/ui/tabs';
+	import { createEventDispatcher } from 'svelte';
+	import PillButton from '$components/common/PillButton.svelte';
 
 	interface ShipmentProps {
 		showModal: boolean;
@@ -119,6 +122,11 @@
 		price = 0;
 		name = '';
 	}
+
+	const dispatch = createEventDispatcher();
+	const onBackdropClick = () => {
+		dispatch('backdropClick');
+	};
 </script>
 
 {#if isSelectMode}
@@ -131,9 +139,9 @@
 			clearData();
 		}}
 	>
-		<form method="POST" class="flex flex-col space-y-7 w-full" onsubmit={createShipment}>
+		<form method="POST" class="flex w-full flex-col space-y-7" onsubmit={createShipment}>
 			<h1
-				class="text-3xl text-center font-semibold inline-block bg-gradient-to-r from-blue-500 to-rose-400 bg-clip-text text-transparent mb-5"
+				class="mb-5 inline-block bg-gradient-to-r from-blue-500 to-rose-400 bg-clip-text text-center text-3xl font-semibold text-transparent"
 			>
 				Create shipment
 			</h1>
@@ -142,12 +150,12 @@
 			<DecimalInput label="Value" id="value" name="value" bind:value required />
 			<DecimalInput label="Price" id="price" name="price" bind:value={price} required />
 
-			<div class="flex justify-between px-10 my-8">
-				<div class="flex flex-col text-center space-y-2">
+			<div class="my-8 flex justify-between px-10">
+				<div class="flex flex-col space-y-2 text-center">
 					<span>Source</span>
 					{#if !source.street}
 						<button
-							class="bg-gradient-to-r from-blue-500 to-rose-400 rounded-full px-4 py-1 mx-auto text-white transition ease-in-out hover:-translate-y-0.5 hover:scale-105 duration-200"
+							class="mx-auto rounded-full bg-gradient-to-r from-blue-500 to-rose-400 px-4 py-1 text-white transition duration-200 ease-in-out hover:-translate-y-0.5 hover:scale-105"
 							onclick={selectSource}>Select location</button
 						>
 					{:else}
@@ -156,11 +164,11 @@
 						>
 					{/if}
 				</div>
-				<div class="flex flex-col text-center space-y-2">
+				<div class="flex flex-col space-y-2 text-center">
 					<span>Destination</span>
 					{#if !destination.street}
 						<button
-							class="bg-gradient-to-r from-blue-500 to-rose-400 rounded-full px-4 py-1 mx-auto text-white transition ease-in-out hover:-translate-y-0.5 hover:scale-105 duration-200"
+							class="mx-auto rounded-full bg-gradient-to-r from-blue-500 to-rose-400 px-4 py-1 text-white transition duration-200 ease-in-out hover:-translate-y-0.5 hover:scale-105"
 							onclick={selectDestination}>Select location</button
 						>
 					{:else}
@@ -171,57 +179,48 @@
 				</div>
 			</div>
 
-			<div class="flex flex-col">
-				<label for="size_category" class="ml-1.5">Size Category</label>
-				<div class="rounded-lg border-2 border-gradient-to-r from-primary to-secondary">
-					<select
-						id="size_category"
-						name="size_category"
-						bind:value={size_category}
-						class="w-full rounded-3xl bg-transparent text-neutral-600 font-normal focus:outline-none px-4 py-2.5 text-base"
-					>
-						<option value="Parcel">Parcel</option>
-						<option value="Envelope">Envelope</option>
-					</select>
-				</div>
-			</div>
-
-			{#if size_category === 'Parcel'}
-				<DecimalInput
-					label="Height"
-					id="max_height"
-					name="max_height"
-					bind:value={max_height}
-					required
-				/>
-				<DecimalInput
-					label="Width"
-					id="max_width"
-					name="max_width"
-					bind:value={max_width}
-					required
-				/>
-				<DecimalInput
-					label="Depth"
-					id="max_depth"
-					name="max_depth"
-					bind:value={max_depth}
-					required
-				/>
-			{/if}
-
-			<button
-				type="submit"
-				class="bg-gradient-to-r from-blue-500 to-rose-400 rounded-full px-7 py-2 w-3/5 mx-auto text-white text-base transition ease-in-out hover:-translate-y-0.5 hover:scale-105 duration-200"
-				>Create Shipment</button
+			<Tabs.Root
+				value={size_category ?? 'Parcel'}
+				onValueChange={(value) => (size_category = value as 'Parcel' | 'Envelope')}
+				class="w-full"
 			>
+				<Tabs.List class="grid w-full grid-cols-2">
+					<Tabs.Trigger value="Parcel">Parcel</Tabs.Trigger>
+					<Tabs.Trigger value="Envelope">Envelope</Tabs.Trigger>
+				</Tabs.List>
+				<Tabs.Content value="Parcel">
+					<DecimalInput
+						label="Height"
+						id="max_height"
+						name="max_height"
+						bind:value={max_height}
+						required
+					/>
+					<DecimalInput
+						label="Width"
+						id="max_width"
+						name="max_width"
+						bind:value={max_width}
+						required
+					/>
+					<DecimalInput
+						label="Depth"
+						id="max_depth"
+						name="max_depth"
+						bind:value={max_depth}
+						required
+					/>
+				</Tabs.Content>
+			</Tabs.Root>
+
+			<PillButton text="Create Shipment" />
 		</form>
 	</Modal>
 {/if}
 
 {#if source.street && (isSelectMode || showModal)}
 	<Marker lngLat={[source.lng, source.lat]}>
-		<div class="relative pin bounce-a cursor-pointer active"></div>
+		<div class="pin bounce-a active relative cursor-pointer"></div>
 
 		<!-- <div
 			class="absolute -top-10 left-10 text-center bg-white rounded-lg px-3 py-2 flex items-center font-bold text-lg"
@@ -233,7 +232,7 @@
 
 {#if destination.street && (isSelectMode || showModal)}
 	<Marker lngLat={[destination.lng, destination.lat]}>
-		<div class="pin bounce-a cursor-pointer active"></div>
+		<div class="pin bounce-a active cursor-pointer"></div>
 
 		<!-- <div class="relative">
 			<div

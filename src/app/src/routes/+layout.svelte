@@ -1,8 +1,13 @@
-<script>
+<script lang="ts">
 	import { defaultLocation } from '$lib/common';
 	import { MapLibre } from 'svelte-maplibre';
 	import Header from '../components/common/Header.svelte';
 	import '../styles.scss';
+	import type { Snippet } from 'svelte';
+
+	const { children } = $props<{
+		children: Snippet;
+	}>();
 </script>
 
 <main>
@@ -14,6 +19,6 @@
 		zoom={15}
 		center={defaultLocation}
 	>
-		<slot />
+		{@render children()}
 	</MapLibre>
 </main>

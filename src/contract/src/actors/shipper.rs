@@ -15,4 +15,8 @@ impl Shipper {
     pub fn new(id: ShipperId, name: &str) -> Self {
         Self { base: ActorBase::new(id, name.to_string()) }
     }
+
+    pub fn id(&self) -> ShipperId {
+        self.base.id()
+    }
 }

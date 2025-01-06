@@ -5,6 +5,9 @@ import {
 	createActor as createTokenActor
 } from '../../../declarations/icrc1_ledger_canister';
 import { AuthClient } from '@dfinity/auth-client';
+import canisterIds from '../../../../.dfx/local/canister_ids.json';
+import { Actor, HttpAgent, type ActorSubclass } from '@dfinity/agent';
+import { idlFactory, type _SERVICE } from '../../../declarations/contract/contract.did.js';
 
 const host = `http://localhost:4943`;
 
@@ -38,3 +41,5 @@ export const connect = async () => {
 
 	return { actor, tokenActor, identity };
 };
+
+export const contractCanister = canisterIds.contract.local;

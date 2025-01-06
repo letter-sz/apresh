@@ -165,11 +165,11 @@ impl Shipment {
         self.carrier
     }
 
-    pub fn id(&self) -> ShipmentId {
+    pub fn _id(&self) -> ShipmentId {
         self.id
     }
 
-    pub fn name(&self) -> &str {
+    pub fn _name(&self) -> &str {
         &self.name
     }
 

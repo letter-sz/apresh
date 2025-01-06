@@ -1,4 +1,4 @@
-import type { Shipment } from '../../../declarations/contract/contract.did';
+import type { Shipment } from '$declarations/contract/contract.did';
 import { anonymousBackend } from '$lib/canisters';
 import { stateWallet, wallet } from '$lib/wallet.svelte';
 import type { LoadEvent } from '@sveltejs/kit';

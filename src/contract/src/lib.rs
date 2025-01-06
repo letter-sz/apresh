@@ -7,19 +7,105 @@ mod transfer;
 mod utils;
 mod vetkd;
 
+use actors::{carrier::Carrier, shipper::Shipper};
 use candid::Principal;
-use ic_cdk::{query, update};
+use ic_cdk::{init, query, update};
 use icrc_ledger_types::icrc1::transfer::NumTokens;
 use models::{
     qrcode::QrCodeOptions,
-    shipment::{Shipment, ShipmentInfo, ShipmentStatus},
+    shipment::{Shipment, ShipmentInfo, ShipmentLocation, ShipmentStatus, SizeCategory},
 };
-use operations::{AddMessageOp, BuyShipmentOp, CreateShipmentOp, FinalizeShipmentOp, ReadMessageOp, StateOp};
+use operations::{
+    AddMessageOp, BuyShipmentOp, CreateShipmentOp, FinalizeShipmentOp, ReadMessageOp, StateOp,
+};
 use state::STATE;
 use transfer::{transfer_in, transfer_out, TransferInParams, TransferOutParams, TransferParams};
 use utils::block_anonymous;
 
 pub use vetkd::{encrypted_ibe_decryption_key_for_caller, ibe_encryption_key};
+
+#[init]
+fn init() {
+    ic_cdk::print("Initializing the shipment service");
+
+    // Define a set of realistic coordinates for shipment locations
+    let locations = [
+        ("A", 40.7128, -74.0060),  // New York, USA
+        ("B", 34.0522, -118.2437), // Los Angeles, USA
+        ("C", 51.5074, -0.1278),   // London, UK
+        ("D", 48.8566, 2.3522),    // Paris, France
+        ("E", 35.6895, 139.6917),  // Tokyo, Japan
+        ("F", -33.8688, 151.2093), // Sydney, Australia
+    ];
+
+    let names: [&str; 10] = [
+        "John Doe",
+        "Jane Doe",
+        "Alice Smith",
+        "Bob Smith",
+        "Charlie Brown",
+        "Daisy Brown",
+        "Eve Green",
+        "Frank Green",
+        "Grace Black",
+        "Harry Black",
+    ];
+
+    let default_principal =
+        Principal::from_text("ryssj-xcbz7-gbw4s-p7fio-lolnx-5nr7a-yxufe-cvpfg-6iujw-2ypsz-rqe")
+            .expect("Failed to create principal");
+
+    let shippers = names
+        .iter()
+        .map(|name| Shipper::new(default_principal, name))
+        .collect::<Vec<_>>();
+
+    let packages_names = [
+        "Package 1",
+        "Package 2",
+        "Package 3",
+        "Package 4",
+        "Package 5",
+        "Package 6",
+        "Package 7",
+        "Package 8",
+        "Package 9",
+        "Package 10",
+    ];
+
+    for (i, (shipper, package_name)) in shippers
+        .into_iter()
+        .zip(packages_names.into_iter())
+        .enumerate()
+    {
+        let (origin_label, origin_lat, origin_lng) = &locations[i % locations.len()];
+        let (dest_label, dest_lat, dest_lng) = &locations[(i + 1) % locations.len()];
+
+        let create_shipment_op = CreateShipmentOp::new(
+            shipper,
+            "hashed_secret",
+            package_name,
+            ShipmentInfo::new(
+                100u64 + i as u64,
+                10u64 + i as u64,
+                ShipmentLocation::new(origin_label.to_string(), *origin_lat, *origin_lng),
+                ShipmentLocation::new(dest_label.to_string(), *dest_lat, *dest_lng),
+                SizeCategory::Envelope,
+            ),
+            ic_cdk::api::time(),
+        );
+
+        let shipment_id = STATE
+            .with_borrow_mut(|state| create_shipment_op.apply(state))
+            .map_err(|e| e.to_string())
+            .expect("Failed to create shipment");
+
+        ic_cdk::print(&format!(
+            "Shipment created: {:?}, shipment_id: {}",
+            create_shipment_op, shipment_id
+        ));
+    }
+}
 
 #[update(name = "addEncryptedMessage")]
 async fn add_encrypted_message(message: String, shipment_id: u64) -> Result<(), String> {
@@ -74,8 +160,8 @@ async fn buy_shipment(carrier_name: String, shipment_id: u64) -> Result<(), Stri
     block_anonymous()?;
 
     let carrier_id = ic_cdk::caller();
-
-    let buy_shipment_op = BuyShipmentOp::new(carrier_id, &carrier_name, shipment_id);
+    let carrier = Carrier::new(carrier_id, carrier_name.as_str());
+    let buy_shipment_op = BuyShipmentOp::new(carrier, shipment_id);
 
     let shipment_cost = STATE
         .with_borrow_mut(|state| buy_shipment_op.apply(state))
@@ -122,13 +208,14 @@ async fn create_shipment(
 
     let customer_id = ic_cdk::caller();
     let amount = NumTokens::from(shipment_info.price());
+    let shipper = Shipper::new(customer_id, customer_name.as_str());
 
     let transfer_in_args = TransferInParams {
         params: TransferParams {
             amount: NumTokens::from(amount),
             memo: None,
         },
-        from: customer_id.into(),
+        from: shipper.id().into(),
     };
 
     transfer_in(transfer_in_args)
@@ -138,8 +225,7 @@ async fn create_shipment(
     let created_at = ic_cdk::api::time();
 
     let create_shipment_op = CreateShipmentOp::new(
-        customer_id,
-        &customer_name,
+        shipper,
         &hashed_secret,
         &shipment_name,
         shipment_info,
