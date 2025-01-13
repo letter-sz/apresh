@@ -10,8 +10,8 @@ type Result_2 = variant { Ok : blob; Err : text };
 type Result_3 = variant { Ok : opt text; Err : text };
 type Shipment = record {
   id : nat64;
+  shipper : principal;
   status : ShipmentStatus;
-  customer : principal;
   info : ShipmentInfo;
   name : text;
   created_at : nat64;
@@ -27,7 +27,16 @@ type ShipmentInfo = record {
   price : nat64;
 };
 type ShipmentLocation = record { lat : float64; lng : float64; street : text };
-type ShipmentStatus = variant { InTransit; Delivered; Cancelled; Pending };
+type ShipmentStatus = variant {
+  InTransit;
+  DeliveryScheduled;
+  DeliveryCompleted;
+  PickupScheduled;
+  Bought;
+  Cancelled;
+  PickupCompleted;
+  Created;
+};
 type SizeCategory = variant {
   Parcel : record { max_height : nat64; max_width : nat64; max_depth : nat64 };
   Envelope;

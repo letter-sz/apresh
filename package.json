@@ -11,7 +11,8 @@
     "start": "npm start --workspaces --if-present",
     "test": "npm test --workspaces --if-present",
     "storybook": "cd src/app && bun run storybook",
-    "backend": "dfx canister stop contract && dfx canister delete contract && dfx deploy contract"
+    "backend": "dfx canister stop contract && dfx canister delete contract && dfx deploy contract",
+    "initial": "bash scripts/initial_deploy.sh"
   },
   "type": "module",
   "workspaces": [

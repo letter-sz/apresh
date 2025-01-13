@@ -205,7 +205,7 @@ async fn create_shipment(
     hashed_secret: String,
     qr_options: QrCodeOptions,
     shipment_info: ShipmentInfo,
-) -> Result<(Vec<u8>, ShipmentIdInner), String> {
+) -> Result<(Vec<u8>, u64), String> {
     ic_cdk::print("Creating a shipment");
 
     let customer_id = ic_cdk::caller();
