@@ -1,13 +1,13 @@
-use crate::vetkd_types::{
-    VetKDCurve, VetKDEncryptedKeyReply, VetKDEncryptedKeyRequest, VetKDKeyId, VetKDPublicKeyReply,
-    VetKDPublicKeyRequest,
-};
+mod types;
+
+pub use types::*;
 use ic_cdk::{api::management_canister::main::CanisterId, update};
 use std::str::FromStr;
+
 const VETKD_SYSTEM_API_CANISTER_ID: &str = "s55qq-oqaaa-aaaaa-aaakq-cai";
 
 #[update]
-async fn ibe_encryption_key() -> String {
+pub async fn ibe_encryption_key() -> String {
     let request = VetKDPublicKeyRequest {
         canister_id: None,
         derivation_path: vec![b"ibe_encryption".to_vec()],
@@ -26,7 +26,7 @@ async fn ibe_encryption_key() -> String {
 }
 
 #[update]
-async fn encrypted_ibe_decryption_key_for_caller(encryption_public_key: Vec<u8>) -> String {
+pub async fn encrypted_ibe_decryption_key_for_caller(encryption_public_key: Vec<u8>) -> String {
     debug_println_caller("encrypted_ibe_decryption_key_for_caller");
 
     let request = VetKDEncryptedKeyRequest {
@@ -65,4 +65,4 @@ fn debug_println_caller(method_name: &str) {
         ic_cdk::caller().to_text(),
         ic_cdk::caller() == candid::Principal::anonymous()
     );
-}
+} 

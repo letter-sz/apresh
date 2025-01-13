@@ -3,9 +3,10 @@ use qrcode_generator::QrCodeEcc;
 use std::io::Cursor;
 
 use crate::models::qrcode::QrCodeOptions;
+
 /// Generates a QR code image in PNG format for the given input text.
 /// The requested image size should be specified in pixels.
-pub(super) fn generate(options: QrCodeOptions) -> Result<Vec<u8>, anyhow::Error> {
+pub fn generate(options: QrCodeOptions) -> Result<Vec<u8>, anyhow::Error> {
     // Generate a QR code image that can tolerate 25% of erroneous codewords.
     let mut qr = image::DynamicImage::ImageLuma8(qrcode_generator::to_image_buffer(
         options.link,
@@ -42,8 +43,6 @@ fn add_gradient(qr: &mut ImageBuffer<Rgba<u8>, Vec<u8>>) {
     let image_size = qr.width().min(qr.height()) as usize;
 
     // Prepare a linear gradient function based on two colors.
-    // For each point `x` in range `[0.0 .. 1.0]`, the function returns a color
-    // between the two initial colors: `gradient.at(x)`.
     let gradient = colorgrad::CustomGradient::new()
         .colors(&[
             colorgrad::Color::from_rgba8(100, 0, 100, 255),
@@ -63,4 +62,4 @@ fn add_gradient(qr: &mut ImageBuffer<Rgba<u8>, Vec<u8>>) {
             *pixel = image::Rgba(rgba);
         }
     }
-}
+} 

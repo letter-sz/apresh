@@ -38,4 +38,4 @@ pub struct VetKDEncryptedKeyRequest {
 #[derive(CandidType, Deserialize)]
 pub struct VetKDEncryptedKeyReply {
     pub encrypted_key: Vec<u8>,
-}
+} 
