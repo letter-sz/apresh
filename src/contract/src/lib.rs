@@ -251,7 +251,7 @@ fn get_pending_shipments() -> Vec<Shipment> {
             .shipments
             .values()
             .filter(|shipment| *shipment.status() == ShipmentStatus::Created)
-            .cloned()
+            .map(Shipment::from)
             .collect()
     })
 }
@@ -265,7 +265,7 @@ fn get_user_shipments() -> (Vec<Shipment>, Vec<Shipment>) {
             .shipments
             .values()
             .filter(|shipment| shipment.shipper_id() == customer_id)
-            .cloned()
+            .map(Shipment::from)
             .collect()
     });
 
@@ -274,7 +274,7 @@ fn get_user_shipments() -> (Vec<Shipment>, Vec<Shipment>) {
             .shipments
             .values()
             .filter(|shipment| shipment.carrier_id() == Some(customer_id))
-            .cloned()
+            .map(Shipment::from)
             .collect()
     });
 
@@ -293,7 +293,13 @@ fn roles() -> (bool, bool) {
 
 #[query]
 fn shipments() -> Vec<Shipment> {
-    STATE.with_borrow(|state| state.shipments.values().cloned().collect())
+    STATE.with_borrow(|state| {
+        state
+            .shipments
+            .values()
+            .map(|shipment| Shipment::from(shipment))
+            .collect()
+    })
 }
 
 ic_cdk::export_candid!();

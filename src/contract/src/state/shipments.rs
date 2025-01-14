@@ -1,6 +1,6 @@
-use crate::{impl_deref_deref_mut, models::shipment::Shipment};
+use crate::{impl_deref_deref_mut, models::shipment::InternalShipment};
 use std::collections::HashMap;
-type ShipmentsStore = HashMap<u64, Shipment>;
+type ShipmentsStore = HashMap<u64, InternalShipment>;
 
 #[derive(Default)]
 pub struct Shipments(ShipmentsStore);

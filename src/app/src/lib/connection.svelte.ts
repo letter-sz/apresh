@@ -18,10 +18,10 @@ export class Connection {
 				tokenActor: this.tokenActor!
 			};
 
-		return this.reconnect(true);
+		return this.connect(true);
 	}
 
-	async reconnect(allowReconnect: boolean = true): Promise<IConnection> {
+	async connect(allowReconnect: boolean = true): Promise<IConnection> {
 		const connection = await connect(allowReconnect);
 
 		this.identity = connection.identity;

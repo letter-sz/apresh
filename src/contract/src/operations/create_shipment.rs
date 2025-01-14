@@ -2,7 +2,7 @@ use super::{CanisterState, StateOp};
 
 use crate::{
     actors::{shipper::{Shipper, ShipperId}, Actor},
-    models::shipment::{Shipment, ShipmentId, ShipmentInfo},
+    models::shipment::{InternalShipment, ShipmentId, ShipmentInfo},
 };
 
 #[derive(Debug)]
@@ -46,7 +46,7 @@ impl<'a> StateOp<ShipmentId> for CreateShipmentOp<'a> {
                 None => state.shippers.create(self.creator.clone()),
             };
 
-        let shipment = Shipment::new(
+        let shipment = InternalShipment::new(
             self.timestamp,
             shipper.id(),
             new_shipment_id,

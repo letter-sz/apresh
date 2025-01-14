@@ -17,7 +17,7 @@ pub enum ShipmentActions<'a> {
     },
 }
 
-impl Shipment {
+impl InternalShipment {
     pub fn action(&mut self, op: ShipmentActions) -> anyhow::Result<()> {
         match op {
             ShipmentActions::Buy(carrier_id) => self.buy(carrier_id),
@@ -78,7 +78,7 @@ impl Shipment {
 pub type ShipmentId = u64;
 
 /// Shipment status
-#[derive(Deserialize, Serialize, Debug, Clone, CandidType, PartialEq, Eq, Default)]
+#[derive(Deserialize, Serialize, Debug, Clone, Copy, CandidType, PartialEq, Eq, Default)]
 pub enum ShipmentStatus {
     /// Shipment is created but not bought
     #[default]
@@ -99,8 +99,8 @@ pub enum ShipmentStatus {
     Cancelled,
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone, CandidType)]
-pub struct Shipment {
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct InternalShipment {
     /// Shipment id
     id: ShipmentId,
     /// Shipment name
@@ -114,14 +114,43 @@ pub struct Shipment {
     /// Encrypted message from shipper to carrier, could be used to send contact information
     message: Option<String>,
     /// Carrier id
-    carrier: Option<Principal>,
+    carrier: Option<Principal>, // TODO: I think we should use some internal id instead of principal here
     /// Shipper id
     shipper: Principal,
     /// Shipment creation timestamp
     created_at: u64,
 }
 
-impl Shipment {
+#[derive(Deserialize, Serialize, Debug, Clone, CandidType)]
+pub struct Shipment {
+    id: ShipmentId,
+    name: String,
+    hashed_secret: String,
+    info: ShipmentInfo,
+    status: ShipmentStatus,
+    message: Option<String>,
+    carrier: Option<String>,
+    shipper: String,
+    created_at: u64,
+}
+
+impl From<&InternalShipment> for Shipment {
+    fn from(shipment: &InternalShipment) -> Self {
+        Self {
+            id: shipment.id,
+            name: shipment.name.clone(),
+            hashed_secret: shipment.hashed_secret.clone(),
+            info: shipment.info.clone(),
+            status: shipment.status,
+            message: shipment.message.clone(),
+            carrier: shipment.carrier.map(|id| id.to_string()),
+            shipper: shipment.shipper.to_string(),
+            created_at: shipment.created_at,
+        }
+    }
+}
+
+impl InternalShipment {
     pub fn new(
         timestamp: u64,
         shipper: ShipperId,
@@ -130,8 +159,6 @@ impl Shipment {
         name: &str,
         info: ShipmentInfo,
     ) -> Self {
-        
-
         Self {
             id,
             info,

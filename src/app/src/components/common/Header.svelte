@@ -6,7 +6,7 @@
 		if (connection.identity === null) {
 			await connection.ensureConnected();
 		} else {
-			await connection.reconnect(false);
+			await connection.connect(false);
 		}
 	}
 

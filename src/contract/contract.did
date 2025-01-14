@@ -10,14 +10,14 @@ type Result_2 = variant { Ok : blob; Err : text };
 type Result_3 = variant { Ok : opt text; Err : text };
 type Shipment = record {
   id : nat64;
-  shipper : principal;
+  shipper : text;
   status : ShipmentStatus;
   info : ShipmentInfo;
   name : text;
   created_at : nat64;
   message : opt text;
   hashed_secret : text;
-  carrier : opt principal;
+  carrier : opt text;
 };
 type ShipmentInfo = record {
   destination : ShipmentLocation;

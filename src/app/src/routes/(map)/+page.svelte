@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { pushState } from '$app/navigation';
-	import { fetchBackend } from '$lib/canisters';
-	import type { Shipment, ShipmentLocation } from '$declarations/contract/contract.did';
+	import type { ShipmentLocation } from '$declarations/contract/contract.did';
 	import Marker from '$components/Marker.svelte';
 	import Modal from '$components/modal/Modal.svelte';
 	import type { PageData } from './$types';
@@ -12,154 +11,76 @@
 	import { MapEvents } from 'svelte-maplibre';
 	import SettlePage from '../shipment/settle/+page.svelte';
 
-	const { data } = $props<{ data: PageData }>();
+	const { data }: { data: PageData } = $props();
 
-	function selectShipment(id: bigint) {
-		selected =
-			[...data.shipments, ...data.created, ...data.carried].find(
-				(shipment) => shipment.id === id
-			) ?? null;
+	// Location selection data
+	let selectMode: 'Source' | 'Destination' | null = $state(null);
+	let sourceLocation: ShipmentLocation | undefined = $state(undefined);
+	let destinationLocation: ShipmentLocation | undefined = $state(undefined);
 
-		if (selected === null) throw new Error('Shipment not found');
-
-		if (data.created.find((shipment: Shipment) => shipment.id === id)) {
-			pushState(`/shipment/settle?id=${selected.id}`, {
-				mode: 'settle',
-				selected: selected.id
-			});
-			showSettleModal = true;
-		} else {
-			pushState(`/shipment/buy?id=${selected.id}`, {
-				mode: 'buy',
-				selected: selected.id
-			});
-			showBuyModal = true;
-		}
-	}
-
-	// async function buy(shipment: Shipment) {
-	// 	const actor = await connection.getActor();
-
-	// 	const fee = await wallet.getTransferFee();
-	// 	await wallet.approve(shipment.info.value + fee);
-
-	// 	const error = await actor.buyShipment('Jacek', shipment.id);
-	// 	console.log(error);
-
-	// 	const encryptedMessage = await ibe_encrypt(
-	// 		await connection.getConnection(),
-	// 		message,
-	// 		shipment.customer
-	// 	);
-	// 	const errorMessage = await actor.addEncryptedMessage(encryptedMessage!, shipment.id);
-	// 	console.log(errorMessage);
-
-	// 	await invalidate('shipments:pending');
-
-	// 	selected = null;
-	// 	showBuyModal = false;
-	// }
-
-	let showBuyModal = $state(false);
-	let showSettleModal = $state(false);
-
-	let message = $state('');
-	let selected = $state<Shipment | null>(null);
-	let image = $state<string | null>(null);
-	let selectModeType = $state<'Source' | 'Destination' | undefined>(undefined);
-	let sourceLocation = $state<ShipmentLocation | undefined>(undefined);
-	let destinationLocation = $state<ShipmentLocation | undefined>(undefined);
-
-	// async function getQrCode(url: string) {
-	// 	const data = fetchBackend(fetch).generateQr(url, BigInt(500));
-
-	// 	if (Object.keys(data)[0] == 'Ok') {
-	// 		const blob = new Blob([Object.values(data)[0] as Uint8Array], { type: 'image/png' });
-	// 		const url = await convertToDataUrl(blob);
-	// 		return url as string;
-	// 	}
-
-	// 	throw new Error('Cannot get QR code');
-	// }
-
-	// function convertToDataUrl(blob: Blob) {
-	// 	return new Promise((resolve, _) => {
-	// 		const fileReader = new FileReader();
-	// 		fileReader.readAsDataURL(blob);
-	// 		fileReader.onloadend = function () {
-	// 			resolve(fileReader.result);
-	// 		};
-	// 	});
-	// }
-
-	function createShipment() {
-		pushState('/shipment/create', { mode: 'create', selected: null });
-	}
-
-	let stateShowAddModal = $state(false);
-	$effect(() => {
-		stateShowAddModal = $page.state.mode === 'create' && selectModeType === undefined;
-	});
-
-	function getLocation(e: CustomEvent<maplibregl.MapMouseEvent>) {
-		console.log('got location');
-
-		const { lng, lat } = e.detail.lngLat;
+	function getLocation(ev: CustomEvent<maplibregl.MapMouseEvent>) {
+		const { lng, lat } = ev.detail.lngLat;
 		const street = 'Some street';
-		if (selectModeType === 'Source') {
+
+		if (selectMode === 'Source') {
 			sourceLocation = { lat, lng, street };
 		} else {
 			destinationLocation = { lat, lng, street };
 		}
-		selectModeType = undefined;
-		createShipment();
+
+		selectMode = null;
 	}
 
-	function selectLocation(type: 'Source' | 'Destination') {
-		selectModeType = type;
-	}
-
-	let shipmentPageData = $derived(selected ? { id: selected.id, shipment: selected } : null);
+	$inspect($page.state);
 </script>
 
-<Modal bind:showModal={stateShowAddModal} onClose={() => history.back()}>
-	<CreatePage {data} {selectLocation} {sourceLocation} {destinationLocation} />
-</Modal>
-
-{#if selectModeType !== undefined}
+{#if selectMode !== null}
 	<MapEvents on:click={getLocation} />
 {:else if data.created.length > 0}
-	{#each data.created as { id, info }}
-		<Marker callback={() => selectShipment(id)} location={info.destination} name={id.toString()}
+	{#each data.created as shipment}
+		<Marker
+			callback={() =>
+				pushState(`/shipment/settle?id=${shipment.id}`, {
+					page: { mode: 'settle', id: shipment.id, shipment: shipment }
+				})}
+			location={shipment.info.destination}
+			name={shipment.id.toString()}
 		></Marker>
 	{/each}
-
-	<Modal
-		unbindableShow={$page.state.mode === 'settle'}
-		cls="w-[1000px]"
-		onClose={() => (showSettleModal = false)}
-	>
-		{#if shipmentPageData}
-			<SettlePage data={shipmentPageData} />
-		{/if}
-	</Modal>
-
-	<MapButton currentIsOpen={$page.state.mode === 'create'} onOpen={createShipment} />
 {:else}
-	{#each data.shipments as { id, info }}
-		<Marker callback={() => selectShipment(id)} location={info.source} name={id.toString()}
+	{#each data.shipments as shipment}
+		<Marker
+			callback={() =>
+				pushState(`/shipment/buy?id=${shipment.id}`, {
+					page: { mode: 'buy', id: shipment.id, shipment: shipment }
+				})}
+			location={shipment.info.source}
+			name={shipment.id.toString()}
 		></Marker>
 	{/each}
+{/if}
 
-	<Modal
-		unbindableShow={$page.state.mode === 'buy'}
-		cls="w-[1000px]"
-		onClose={() => (showBuyModal = false)}
-	>
-		{#if shipmentPageData}
-			<BuyPage data={shipmentPageData} />
+<MapButton
+	currentIsOpen={$page.state?.page?.mode === 'map'}
+	onOpen={() => {
+		console.log('open');
+		pushState('/shipment/create', { page: { mode: 'create' } });
+	}}
+/>
+
+{#if 'page' in $page.state}
+	<Modal showModal={$page.state.page.mode !== 'map'} onClose={() => history.back()}>
+		{#if $page.state.page.mode === 'settle'}
+			<SettlePage data={$page.state.page} />
+		{:else if $page.state.page.mode === 'buy'}
+			<BuyPage data={$page.state.page} />
+		{:else if $page.state.page.mode === 'create'}
+			<CreatePage
+				{data}
+				selectLocation={(mode: 'Source' | 'Destination') => (selectMode = mode)}
+				{sourceLocation}
+				{destinationLocation}
+			/>
 		{/if}
 	</Modal>
-
-	<MapButton currentIsOpen={$page.state.mode === 'create'} onOpen={createShipment} />
 {/if}

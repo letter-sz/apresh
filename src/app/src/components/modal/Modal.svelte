@@ -1,43 +1,27 @@
 <script lang="ts">
 	import clsx from 'clsx';
-	import { createEventDispatcher, type Snippet } from 'svelte';
+	import { type Snippet } from 'svelte';
 
 	interface IProps {
 		showModal?: boolean;
-		unbindableShow?: boolean;
 		onClose: () => void;
 		cls?: string;
 		children: Snippet;
 		header?: Snippet;
 	}
 
-	let {
-		showModal = $bindable(false),
-		unbindableShow,
-		onClose,
-		cls,
-		children,
-		header
-	}: IProps = $props();
+	let { showModal, onClose, cls, children, header }: IProps = $props();
 	let dialog: HTMLDialogElement;
 
 	$effect(() => {
-		if (unbindableShow === undefined) return;
-		if (unbindableShow === showModal) return;
+		if (!dialog) return;
 
-		showModal = unbindableShow;
+		if (showModal) {
+			dialog.showModal();
+		} else {
+			dialog.close();
+		}
 	});
-
-	$effect(() => {
-		if (dialog && showModal) dialog.showModal();
-		if (dialog && !showModal) dialog.close();
-	});
-
-	const dispatch = createEventDispatcher();
-
-	const onBackdropClick = () => {
-		dispatch('backdropClick');
-	};
 </script>
 
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
