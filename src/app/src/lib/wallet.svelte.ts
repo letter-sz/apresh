@@ -72,7 +72,7 @@ class Wallet {
 
 		unwrap<TransferResult>(mintResult);
 
-		invalidate('token:balance');
+		await invalidate('token:balance');
 
 		return;
 	}

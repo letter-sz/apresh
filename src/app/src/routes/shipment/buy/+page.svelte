@@ -8,7 +8,7 @@
 	import type { Shipment } from '$declarations/contract/contract.did';
 	import TextInput from '$components/common/Inputs/TextInput.svelte';
 
-	let { data, bought } = $props<{ data: PageData; settled?: () => void }>();
+	let { data, bought }: { data: PageData; bought?: () => void } = $props();
 
 	async function buy(shipment: Shipment) {
 		const actor = await connection.getActor();
@@ -27,10 +27,10 @@
 		// const errorMessage = await actor.addEncryptedMessage(encryptedMessage!, shipment.id);
 		// console.log(errorMessage);
 
+		invalidate('token:balance');
 		await invalidate('shipments:pending');
 
-		// selected = null;
-		// showBuyModal = false;
+		bought?.();
 	}
 
 	let message = $state('');

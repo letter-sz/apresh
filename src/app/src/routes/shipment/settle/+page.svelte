@@ -16,11 +16,8 @@
 		unwrap<null>(res);
 		console.log('Settled:', data.shipment.id);
 
+		invalidate('token:balance');
 		await invalidate('shipments:pending');
-	}
-
-	function onSettle() {
-		settle();
 		settled?.();
 	}
 </script>
@@ -29,7 +26,7 @@
 	<div class="flex flex-col">
 		<ShipmentInfo shipment={data.shipment} />
 
-		<PillButton text="Settle" onClick={() => onSettle()} />
+		<PillButton text="Settle" onClick={settle} />
 	</div>
 	<div class="flex items-center text-lg">OR</div>
 	<div class="flex items-center">

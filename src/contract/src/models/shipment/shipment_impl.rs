@@ -99,6 +99,7 @@ pub enum ShipmentStatus {
     Cancelled,
 }
 
+// Shipment, but without principals, so JSON-able
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct InternalShipment {
     /// Shipment id

@@ -2,10 +2,10 @@
 	import { connection } from '$lib/connection.svelte';
 	import { Plus } from 'lucide-svelte';
 
-	let { onOpen, currentIsOpen } = $props<{ onOpen: () => void; currentIsOpen: boolean }>();
+	let { onOpen, isOpen }: { onOpen: () => void; isOpen: boolean } = $props();
 
 	async function handleClick() {
-		if (currentIsOpen === true) return;
+		if (isOpen === true) return;
 
 		await connection.ensureConnected();
 		onOpen();

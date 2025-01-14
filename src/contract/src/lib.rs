@@ -178,9 +178,10 @@ async fn buy_shipment(carrier_name: String, shipment_id: u64) -> Result<(), Stri
         from: carrier_id.into(),
     };
 
-    let transfer_in_result = transfer_in(transfer_in_args)
+    transfer_in(transfer_in_args)
         .await
-        .map_err(|e| e.to_string());
+        .map_err(|e| e.to_string())
+        .unwrap();
 
     ic_cdk::print(format!("Shipment bought: {:?}", shipment_id).as_str());
 

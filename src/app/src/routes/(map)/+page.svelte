@@ -59,7 +59,7 @@
 {/if}
 
 <MapButton
-	currentIsOpen={$page.state?.page?.mode === 'map'}
+	isOpen={$page.state?.page?.mode === 'map'}
 	onOpen={() => {
 		console.log('open');
 		pushState('/shipment/create', {

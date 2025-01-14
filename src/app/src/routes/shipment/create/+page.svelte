@@ -16,12 +16,14 @@
 		data,
 		selectLocation,
 		sourceLocation,
-		destinationLocation
+		destinationLocation,
+		created
 	}: {
 		data: PageData;
 		selectLocation?: (type: 'Source' | 'Destination') => void;
 		sourceLocation?: ShipmentLocation;
 		destinationLocation?: ShipmentLocation;
+		created?: () => void;
 	} = $props();
 
 	let value = $state(0);
@@ -84,11 +86,13 @@
 		);
 
 		invalidate('shipments:pending');
+		invalidate('token:balance');
 
 		const id: bigint = unwrap<[number[], bigint]>(res)[1];
 		setLocalStorage(id.toString(), secret);
 		const loadedDone = getLocalStorage('done', secret);
-		console.log('loadedDone', loadedDone);
+
+		created?.();
 	};
 
 	const selectLocationWrapper = (type: 'Source' | 'Destination') => {
