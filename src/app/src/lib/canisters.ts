@@ -8,6 +8,7 @@ import { AuthClient } from '@dfinity/auth-client';
 import { type ActorSubclass, type Identity } from '@dfinity/agent';
 import type { _SERVICE } from '$declarations/contract/contract.did';
 import type { _SERVICE as _ICRC1_SERVICE } from '$declarations/icrc1_ledger_canister/icrc1_ledger_canister.did';
+import { invalidate } from '$app/navigation';
 
 const host = `http://[::1]:4943`;
 
@@ -18,6 +19,7 @@ export function fetchBackend(fetchFunction: typeof fetch) {
 export interface IConnection {
 	actor: ActorSubclass<_SERVICE>;
 	tokenActor: ActorSubclass<_ICRC1_SERVICE>;
+	anonymousTokenActor: ActorSubclass<_ICRC1_SERVICE>;
 	identity: Identity;
 }
 
@@ -63,6 +65,8 @@ export const connect = async (allowReconnect: boolean = true): Promise<IConnecti
 		});
 	}
 
+	invalidate('token:balance');
+
 	return initActors(authClient);
 };
 
@@ -82,10 +86,16 @@ const initActors = (authClient: AuthClient): IConnection => {
 			fetch
 		}
 	});
+	const anonymousTokenActor = createTokenActor(tokenCanisterId, {
+		agentOptions: {
+			host,
+			fetch
+		}
+	});
 
 	console.log('Connected to backend as', identity.getPrincipal().toText());
 
-	return { actor, tokenActor, identity };
+	return { actor, tokenActor, anonymousTokenActor, identity };
 };
 
 // export const contractCanister = canisterIds.contract.local;

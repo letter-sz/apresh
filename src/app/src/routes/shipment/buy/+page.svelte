@@ -5,10 +5,6 @@
 	import { connection } from '$lib/connection.svelte';
 	import ShipmentInfo from '$components/ShipmentInfo.svelte';
 	import PillButton from '$components/common/PillButton.svelte';
-	import QrCodeDisplay from '$components/QrCodeDisplay.svelte';
-	import { getLocalStorage } from '$lib/storage';
-	import { onMount } from 'svelte';
-	import { wallet } from '$lib/wallet.svelte';
 	import type { Shipment } from '$declarations/contract/contract.did';
 	import TextInput from '$components/common/Inputs/TextInput.svelte';
 
@@ -35,11 +31,6 @@
 
 		// selected = null;
 		// showBuyModal = false;
-	}
-
-	function onBuy() {
-		buy(data.shipment);
-		bought?.();
 	}
 
 	let message = $state('');

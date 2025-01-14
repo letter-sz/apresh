@@ -31,7 +31,7 @@
 		selectMode = null;
 	}
 
-	$inspect($page.state);
+	$inspect(selectMode);
 </script>
 
 {#if selectMode !== null}
@@ -69,7 +69,12 @@
 />
 
 {#if 'page' in $page.state}
-	<Modal showModal={$page.state.page.mode !== 'map'} onClose={() => history.back()}>
+	<Modal
+		showModal={$page.state.page.mode !== 'map' && selectMode === null}
+		onClose={() => {
+			if (selectMode === null) history.back();
+		}}
+	>
 		{#if $page.state.page.mode === 'settle'}
 			<SettlePage data={$page.state.page} />
 		{:else if $page.state.page.mode === 'buy'}

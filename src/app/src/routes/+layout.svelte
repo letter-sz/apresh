@@ -2,13 +2,17 @@
 	import Header from '$components/common/Header.svelte';
 	import '../styles.scss';
 	import type { Snippet } from 'svelte';
+	import type { LayoutData } from './$types';
 
-	const { children } = $props<{
+	const { children, data } = $props<{
+		data: LayoutData;
 		children: Snippet;
 	}>();
+
+	$inspect(data);
 </script>
 
 <main>
-	<Header />
+	<Header balance={data.balance} />
 	{@render children()}
 </main>

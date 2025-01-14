@@ -37,7 +37,7 @@ export async function load({ fetch, depends, url }: LoadEvent): Promise<{
 		// if (registeredCarrier) {
 		console.log('Carrier registered');
 
-		let [car, cus] = await actor.listUserShipments();
+		let [cus, car] = await actor.listUserShipments();
 		carried = car.filter((shipment) => !match(shipment.status, 'Delivered'));
 		created = cus.filter((shipment) => !match(shipment.status, 'Delivered'));
 		// }

@@ -6,7 +6,6 @@
 	import DecimalInput from '$components/common/Inputs/DecimalInput.svelte';
 	import TextInput from '$components/common/Inputs/TextInput.svelte';
 	import * as Tabs from '$lib/components/ui/tabs';
-	import { createEventDispatcher } from 'svelte';
 	import PillButton from '$components/common/PillButton.svelte';
 	import { invalidate } from '$app/navigation';
 	import { unwrap } from '$lib/utils';
@@ -37,6 +36,9 @@
 		e.preventDefault();
 		const actor = await connection.getActor();
 
+		console.log('owner', await wallet.owner());
+		console.log('balance', await wallet.balance());
+
 		if (!sourceLocation || !destinationLocation) {
 			console.error('Source or destination location is not defined');
 			return;
@@ -44,7 +46,7 @@
 
 		const priceBigint = BigInt(price);
 
-		const appRes = await wallet.approve(priceBigint);
+		await wallet.approve(priceBigint);
 		const secret = 'secret';
 
 		const hash = sha256.create();
@@ -81,31 +83,12 @@
 			}
 		);
 
-		if (Object.keys(res)[0] === 'Ok') {
-			const id: bigint = unwrap<[number[], bigint]>(res)[1];
-			setLocalStorage(id.toString(), secret);
-			const loadedDone = getLocalStorage('done', secret);
-			console.log('loadedDone', loadedDone);
-		}
-
-		console.log('createShipment', appRes, res);
-
 		invalidate('shipments:pending');
-	};
 
-	function clearData() {
-		value = 0;
-		size_category = 'Parcel';
-		max_height = 0;
-		max_width = 0;
-		max_depth = 0;
-		price = 0;
-		name = '';
-	}
-
-	const dispatch = createEventDispatcher();
-	const onBackdropClick = () => {
-		dispatch('backdropClick');
+		const id: bigint = unwrap<[number[], bigint]>(res)[1];
+		setLocalStorage(id.toString(), secret);
+		const loadedDone = getLocalStorage('done', secret);
+		console.log('loadedDone', loadedDone);
 	};
 
 	const selectLocationWrapper = (type: 'Source' | 'Destination') => {

@@ -206,9 +206,9 @@ async fn create_shipment(
     qr_options: QrCodeOptions,
     shipment_info: ShipmentInfo,
 ) -> Result<(Vec<u8>, u64), String> {
-    ic_cdk::print("Creating a shipment");
-
     let customer_id = ic_cdk::caller();
+    ic_cdk::print(format!("Creating a shipment: {}", customer_id).as_str());
+
     let amount = NumTokens::from(shipment_info.price());
     let shipper = Shipper::new(customer_id, customer_name.as_str());
 

@@ -61,7 +61,8 @@ export function unwrap<T>(result: Object): T {
 		return Ok;
 	} else {
 		const { Err } = result as { Err: string };
-		throw new Error('Error from backend: ' + Err);
+		console.error(Err);
+		throw new Error('Error from backend: ' + Err.toString());
 	}
 }
 

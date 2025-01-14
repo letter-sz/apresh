@@ -1,3 +1,7 @@
+#!/bin/bash
+
+used=$(dfx identity whoami)
+
 dfx identity use anonymous
 
 dfx canister call icrc1_ledger_canister icrc1_transfer "(record {                  
@@ -7,4 +11,4 @@ dfx canister call icrc1_ledger_canister icrc1_transfer "(record {
   };  
 })"
 
-dfx identity use default
+dfx identity use $used

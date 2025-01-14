@@ -1,8 +1,22 @@
 import canisterIds from '../../../../.dfx/local/canister_ids.json';
 import { Principal } from '@dfinity/principal';
 import { connection } from './connection.svelte';
+import { unwrap } from './utils';
+import type {
+	ApproveResult,
+	TransferResult
+} from '$declarations/icrc1_ledger_canister/icrc1_ledger_canister.did';
+import { invalidate } from '$app/navigation';
 
 class Wallet {
+	async owner() {
+		return await connection.getIdentity();
+	}
+
+	async tokenName() {
+		return (await connection.getTokenActor()).icrc1_name();
+	}
+
 	async getTransferFee() {
 		const tokenActor = await connection.getTokenActor();
 		const fee = await tokenActor.icrc1_fee();
@@ -25,6 +39,9 @@ class Wallet {
 			expires_at: [],
 			spender: { owner: spender, subaccount: [] }
 		});
+
+		unwrap<ApproveResult>(approveResult);
+		return approveResult;
 	}
 
 	async balance() {
@@ -34,7 +51,28 @@ class Wallet {
 			owner: owner.getPrincipal(),
 			subaccount: []
 		});
+
 		return balance;
+	}
+
+	async mint(amount: bigint) {
+		console.log('Minting', amount);
+		const tokenActor = await connection.getAnonymousTokenActor();
+		const owner = await connection.getIdentity();
+		const mintResult = await tokenActor.icrc1_transfer({
+			amount,
+			to: { owner: owner.getPrincipal(), subaccount: [] },
+			fee: [],
+			memo: [],
+			from_subaccount: [],
+			created_at_time: []
+		});
+
+		unwrap<TransferResult>(mintResult);
+
+		await invalidate('token:balance');
+
+		return;
 	}
 }
 
