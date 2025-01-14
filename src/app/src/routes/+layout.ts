@@ -1,17 +1,22 @@
+import { mintBackend } from '$lib/canisters';
 import { connection } from '$lib/connection.svelte';
-import { wallet } from '$lib/wallet.svelte';
 import type { LayoutLoad } from './$types';
 
 export const ssr = false;
 export const prerender = true;
 
-export const load: LayoutLoad = async ({ depends }) => {
+export const load: LayoutLoad = async ({ depends, fetch }): Promise<{ balance?: bigint }> => {
 	depends('token:balance');
 
-	let balance = 0n;
+	let balance: bigint | undefined;
 
 	if (connection.identity !== null) {
-		balance = await wallet.balance();
+		const tokenActor = mintBackend(fetch);
+
+		balance = await tokenActor.icrc1_balance_of({
+			owner: connection.identity.getPrincipal(),
+			subaccount: []
+		});
 	}
 
 	return {

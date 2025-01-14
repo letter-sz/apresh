@@ -22,12 +22,11 @@
 
 	let minting = $state(Promise.resolve());
 
-	$inspect('balance', balance);
-
 	let balancePretty = $derived(
-		(balance / 1_000000n).toString() + '.' + (balance % 1_000_000n).toString()
+		balance === undefined
+			? '-'
+			: (balance / 1_000000n).toString() + '.' + (balance % 1_000_000n).toString()
 	);
-	$inspect(balancePretty);
 </script>
 
 <header class="fixed top-0 z-50 w-full bg-transparent">

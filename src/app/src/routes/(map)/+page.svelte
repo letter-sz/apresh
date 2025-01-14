@@ -30,8 +30,6 @@
 
 		selectMode = null;
 	}
-
-	$inspect(selectMode);
 </script>
 
 {#if selectMode !== null}
@@ -41,7 +39,7 @@
 		<Marker
 			callback={() =>
 				pushState(`/shipment/settle?id=${shipment.id}`, {
-					page: { mode: 'settle', id: shipment.id, shipment: shipment }
+					page: { mode: 'settle', id: shipment.id, shipment: shipment, balance: data.balance }
 				})}
 			location={shipment.info.destination}
 			name={shipment.id.toString()}
@@ -52,7 +50,7 @@
 		<Marker
 			callback={() =>
 				pushState(`/shipment/buy?id=${shipment.id}`, {
-					page: { mode: 'buy', id: shipment.id, shipment: shipment }
+					page: { mode: 'buy', id: shipment.id, shipment: shipment, balance: data.balance }
 				})}
 			location={shipment.info.source}
 			name={shipment.id.toString()}
@@ -64,7 +62,9 @@
 	currentIsOpen={$page.state?.page?.mode === 'map'}
 	onOpen={() => {
 		console.log('open');
-		pushState('/shipment/create', { page: { mode: 'create' } });
+		pushState('/shipment/create', {
+			page: { mode: 'create', balance: data.balance }
+		});
 	}}
 />
 

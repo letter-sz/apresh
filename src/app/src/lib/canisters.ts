@@ -8,7 +8,6 @@ import { AuthClient } from '@dfinity/auth-client';
 import { type ActorSubclass, type Identity } from '@dfinity/agent';
 import type { _SERVICE } from '$declarations/contract/contract.did';
 import type { _SERVICE as _ICRC1_SERVICE } from '$declarations/icrc1_ledger_canister/icrc1_ledger_canister.did';
-import { invalidate } from '$app/navigation';
 
 const host = `http://[::1]:4943`;
 
@@ -16,37 +15,20 @@ export function fetchBackend(fetchFunction: typeof fetch) {
 	return createActor(canisterId, { agentOptions: { host, fetch: fetchFunction } });
 }
 
+export function mintBackend(fetchFunction: typeof fetch) {
+	return createTokenActor(tokenCanisterId, {
+		agentOptions: {
+			host,
+			fetch: fetchFunction
+		}
+	});
+}
+
 export interface IConnection {
 	actor: ActorSubclass<_SERVICE>;
 	tokenActor: ActorSubclass<_ICRC1_SERVICE>;
-	anonymousTokenActor: ActorSubclass<_ICRC1_SERVICE>;
 	identity: Identity;
 }
-
-const tryConnect = async (): Promise<ConnectionOrConnect> => {
-	console.log('Trying to connect to backend');
-	const authClient = await AuthClient.create();
-	const isAuthenticated = await authClient.isAuthenticated();
-	if (!isAuthenticated)
-		return {
-			connected: false,
-			connect: async () => await connect()
-		};
-
-	return {
-		connected: true,
-		...initActors(authClient)
-	};
-};
-
-type ConnectionOrConnect =
-	| {
-			connected: false;
-			connect: () => Promise<IConnection>;
-	  }
-	| ({
-			connected: true;
-	  } & IConnection);
 
 export const connect = async (allowReconnect: boolean = true): Promise<IConnection> => {
 	console.log('Connecting to backend');
@@ -64,8 +46,6 @@ export const connect = async (allowReconnect: boolean = true): Promise<IConnecti
 			});
 		});
 	}
-
-	invalidate('token:balance');
 
 	return initActors(authClient);
 };
@@ -86,16 +66,10 @@ const initActors = (authClient: AuthClient): IConnection => {
 			fetch
 		}
 	});
-	const anonymousTokenActor = createTokenActor(tokenCanisterId, {
-		agentOptions: {
-			host,
-			fetch
-		}
-	});
 
 	console.log('Connected to backend as', identity.getPrincipal().toText());
 
-	return { actor, tokenActor, anonymousTokenActor, identity };
+	return { actor, tokenActor, identity };
 };
 
 // export const contractCanister = canisterIds.contract.local;

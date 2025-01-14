@@ -16,7 +16,7 @@
 		unwrap<null>(res);
 		console.log('Settled:', data.shipment.id);
 
-		invalidate('shipments:pending');
+		await invalidate('shipments:pending');
 	}
 
 	function onSettle() {

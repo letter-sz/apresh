@@ -8,7 +8,6 @@ export class Connection {
 	identity: Identity | null = $state(null);
 	actor: ActorSubclass<_SERVICE> | null = $state(null);
 	tokenActor: ActorSubclass<_ICRC1_SERVICE> | null = $state(null);
-	anonymousTokenActor: ActorSubclass<_ICRC1_SERVICE> | null = $state(null);
 
 	// Connects to the backend if not already connected
 	async ensureConnected(): Promise<IConnection> {
@@ -16,8 +15,7 @@ export class Connection {
 			return {
 				identity: this.identity!,
 				actor: this.actor!,
-				tokenActor: this.tokenActor!,
-				anonymousTokenActor: this.anonymousTokenActor!
+				tokenActor: this.tokenActor!
 			};
 
 		return this.connect(true);
@@ -29,10 +27,12 @@ export class Connection {
 		this.identity = connection.identity;
 		this.actor = connection.actor;
 		this.tokenActor = connection.tokenActor;
-		this.anonymousTokenActor = connection.anonymousTokenActor;
 
-		// TODO: This should work just fine.
-		// invalidate('shipments:pending');
+		console.log('here');
+		await invalidate('token:balance');
+		await invalidate('shipments:pending');
+
+		console.log('after invalidate');
 
 		return connection;
 	}
@@ -45,12 +45,12 @@ export class Connection {
 		return (await this.ensureConnected()).actor;
 	}
 
-	async getTokenActor(): Promise<ActorSubclass<_ICRC1_SERVICE>> {
-		return (await this.ensureConnected()).tokenActor;
+	async tryGetActor(): Promise<ActorSubclass<_SERVICE> | null> {
+		return this.actor;
 	}
 
-	async getAnonymousTokenActor(): Promise<ActorSubclass<_ICRC1_SERVICE>> {
-		return (await this.ensureConnected()).anonymousTokenActor;
+	async getTokenActor(): Promise<ActorSubclass<_ICRC1_SERVICE>> {
+		return (await this.ensureConnected()).tokenActor;
 	}
 
 	async getIdentity(): Promise<Identity> {
@@ -62,6 +62,4 @@ export class Connection {
 	}
 }
 
-// TODO: confirm that this will not slow down the app
-// export const connection = $state<ConnectionOrConnect>(await tryConnect());
 export let connection = $state<Connection>(new Connection());

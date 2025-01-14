@@ -8,8 +8,6 @@
 		data: LayoutData;
 		children: Snippet;
 	}>();
-
-	$inspect(data);
 </script>
 
 <main>

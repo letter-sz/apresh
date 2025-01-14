@@ -7,6 +7,7 @@ import type {
 	TransferResult
 } from '$declarations/icrc1_ledger_canister/icrc1_ledger_canister.did';
 import { invalidate } from '$app/navigation';
+import { mintBackend } from './canisters';
 
 class Wallet {
 	async owner() {
@@ -44,9 +45,10 @@ class Wallet {
 		return approveResult;
 	}
 
-	async balance() {
-		const tokenActor = await connection.getTokenActor();
+	async balance(fetchFunction: typeof fetch = fetch) {
+		const tokenActor = mintBackend(fetchFunction);
 		const owner = await connection.getIdentity();
+
 		const balance = await tokenActor.icrc1_balance_of({
 			owner: owner.getPrincipal(),
 			subaccount: []
@@ -57,7 +59,7 @@ class Wallet {
 
 	async mint(amount: bigint) {
 		console.log('Minting', amount);
-		const tokenActor = await connection.getAnonymousTokenActor();
+		const tokenActor = mintBackend(fetch);
 		const owner = await connection.getIdentity();
 		const mintResult = await tokenActor.icrc1_transfer({
 			amount,
@@ -70,7 +72,7 @@ class Wallet {
 
 		unwrap<TransferResult>(mintResult);
 
-		await invalidate('token:balance');
+		invalidate('token:balance');
 
 		return;
 	}

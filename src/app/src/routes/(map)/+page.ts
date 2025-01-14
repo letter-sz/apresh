@@ -15,6 +15,7 @@ export async function load({ fetch, depends, url }: LoadEvent): Promise<{
 	settleId: string | null;
 }> {
 	depends('shipments:pending');
+
 	const shipments = await fetchBackend(fetch).listPendingShipments();
 
 	const settleSecret = url.searchParams.get('settleSecret');
@@ -25,7 +26,7 @@ export async function load({ fetch, depends, url }: LoadEvent): Promise<{
 	let carried: Shipment[] = [];
 	let created: Shipment[] = [];
 
-	const actor = connection.actor;
+	const actor = await connection.tryGetActor();
 
 	if (actor !== null) {
 		console.log('Wallet connected');
