@@ -3,13 +3,13 @@
 	import type { ShipmentLocation } from '$declarations/contract/contract.did';
 	import Marker from '$components/Marker.svelte';
 	import Modal from '$components/modal/Modal.svelte';
-	import type { PageData } from './$types';
 	import MapButton from '$components/MapButton.svelte';
 	import { page } from '$app/stores';
-	import CreatePage from '../shipment/create/+page.svelte';
-	import BuyPage from '../shipment/buy/+page.svelte';
+	import CreatePage from '$routes/(header)/shipment/create/+page.svelte';
+	import BuyPage from '$routes/(header)/shipment/buy/+page.svelte';
 	import { MapEvents } from 'svelte-maplibre';
-	import SettlePage from '../shipment/settle/+page.svelte';
+	import SettlePage from '$routes/(header)/shipment/settle/+page.svelte';
+	import type { PageData } from './$types';
 
 	const { data }: { data: PageData } = $props();
 
