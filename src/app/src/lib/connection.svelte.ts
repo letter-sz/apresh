@@ -28,11 +28,7 @@ export class Connection {
 		this.actor = connection.actor;
 		this.tokenActor = connection.tokenActor;
 
-		console.log('here');
-		await invalidate('token:balance');
-		await invalidate('shipments:pending');
-
-		console.log('after invalidate');
+		await invalidateAll();
 
 		return connection;
 	}
@@ -45,7 +41,7 @@ export class Connection {
 		return (await this.ensureConnected()).actor;
 	}
 
-	async tryGetActor(): Promise<ActorSubclass<_SERVICE> | null> {
+	tryGetActor(): ActorSubclass<_SERVICE> | null {
 		return this.actor;
 	}
 

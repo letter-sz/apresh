@@ -1,6 +1,5 @@
 import type { Shipment } from '$declarations/contract/contract.did';
 import { fetchBackend } from '$lib/canisters';
-import { connection } from '$lib/connection.svelte';
 import { error, type LoadEvent } from '@sveltejs/kit';
 
 /** @type {import('./$types').PageLoad } */

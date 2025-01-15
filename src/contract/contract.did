@@ -35,7 +35,7 @@ type ShipmentStatus = variant {
   Bought;
   Cancelled;
   PickupCompleted;
-  Created;
+  Pending;
 };
 type SizeCategory = variant {
   Parcel : record { max_height : nat64; max_width : nat64; max_depth : nat64 };
@@ -44,6 +44,7 @@ type SizeCategory = variant {
 service : () -> {
   addEncryptedMessage : (text, nat64) -> (Result);
   buyShipment : (text, nat64) -> (Result);
+  carrier_shipments : () -> (vec Shipment) query;
   createShipment : (text, text, text, QrCodeOptions, ShipmentInfo) -> (
       Result_1,
     );
@@ -52,8 +53,8 @@ service : () -> {
   generateQr : (text, nat64) -> (Result_2) query;
   ibe_encryption_key : () -> (text);
   listPendingShipments : () -> (vec Shipment) query;
-  listUserShipments : () -> (vec Shipment, vec Shipment) query;
   readEncryptedMessage : (nat64) -> (Result_3);
   roles : () -> (bool, bool) query;
   shipments : () -> (vec Shipment) query;
+  shipper_shipments : () -> (vec Shipment) query;
 }

@@ -38,11 +38,15 @@
 		<div class="flex space-x-5">
 			{#if connection.identity !== null}
 				<Button onClick={() => (minting = wallet.mint(10_000000n))}>
-					{#await minting}
-						Minting...
-					{:then _}
-						Balance: {balancePretty}
-					{/await}
+					{#if balance === 0n}
+						Faucet
+					{:else}
+						{#await minting}
+							Minting...
+						{:then _}
+							Balance: {balancePretty}
+						{/await}
+					{/if}
 				</Button>
 			{/if}
 			<Button {onClick}>{content}</Button>

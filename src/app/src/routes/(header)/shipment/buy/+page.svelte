@@ -14,9 +14,6 @@
 	async function buy(shipment: Shipment) {
 		const actor = await connection.getActor();
 
-		// const fee = await wallet.getTransferFee();
-		// await wallet.approve(shipment.info.value + fee);
-
 		await wallet.approve(shipment.info.price);
 		const res = await actor.buyShipment('Jacek', shipment.id);
 		unwrap<null>(res);
@@ -30,14 +27,24 @@
 		// console.log(errorMessage);
 
 		invalidate('token:balance');
-		await invalidate('shipments:pending');
+		await invalidate('shipments:shipper');
+		invalidate('shipments:carrier');
 
 		bought?.();
 	}
 
 	let message = $state('');
+
+	let buttonText: 'Buy' | 'Insufficient funds' = $derived(
+		(data.balance ?? 0 >= data.shipment.info.price) ? 'Buy' : 'Insufficient funds'
+	);
 </script>
 
 <ShipmentInfo shipment={data.shipment} />
 <TextInput id="Message" label="Message" name="Message" bind:value={message} />
-<PillButton onClick={() => buy(data.shipment)} text="Buy" className="w-1/2 mx-auto" />
+<PillButton
+	onClick={() => buy(data.shipment)}
+	disabled={buttonText === 'Insufficient funds'}
+	text={buttonText}
+	className="w-1/2 mx-auto"
+/>

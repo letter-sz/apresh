@@ -1,63 +1,43 @@
 <script lang="ts">
 	import { pushState } from '$app/navigation';
-	import type { ShipmentLocation } from '$declarations/contract/contract.did';
 	import Marker from '$components/Marker.svelte';
 	import Modal from '$components/modal/Modal.svelte';
-	import MapButton from '$components/MapButton.svelte';
 	import { page } from '$app/stores';
-	import CreatePage from '$routes/(header)/shipment/create/+page.svelte';
 	import BuyPage from '$routes/(header)/shipment/buy/+page.svelte';
-	import { MapEvents } from 'svelte-maplibre';
-	import SettlePage from '$routes/(header)/shipment/settle/+page.svelte';
 	import type { PageData } from './$types';
 
 	const { data }: { data: PageData } = $props();
-
-	// Location selection data
-	let selectMode: 'Source' | 'Destination' | null = $state(null);
-	let sourceLocation: ShipmentLocation | undefined = $state(undefined);
-	let destinationLocation: ShipmentLocation | undefined = $state(undefined);
-
-	function getLocation(ev: CustomEvent<maplibregl.MapMouseEvent>) {
-		const { lng, lat } = ev.detail.lngLat;
-		const street = 'Some street';
-
-		if (selectMode === 'Source') {
-			sourceLocation = { lat, lng, street };
-		} else {
-			destinationLocation = { lat, lng, street };
-		}
-
-		selectMode = null;
-	}
 </script>
 
-{#each data.shipments as shipment}
-	<Marker
-		callback={() =>
-			pushState(`/shipment/buy?id=${shipment.id}`, {
-				page: { mode: 'buy', id: shipment.id, shipment: shipment, balance: data.balance }
-			})}
-		location={shipment.info.source}
-		name={shipment.id.toString()}
-	></Marker>
-{/each}
-
-<MapButton
-	isOpen={$page.state?.page?.mode === 'map'}
-	onOpen={() => {
-		console.log('open');
-		pushState('/shipment/create', {
-			page: { mode: 'create', balance: data.balance }
-		});
-	}}
-/>
+{#if data.carried.length > 0}
+	{#each data.carried as shipment (shipment.id)}
+		<Marker
+			callback={() =>
+				pushState(`/shipment/settle?id=${shipment.id}`, {
+					page: { mode: 'settle', id: shipment.id, shipment: shipment, balance: data.balance }
+				})}
+			location={shipment.info.destination}
+			name={shipment.id.toString()}
+		></Marker>
+	{/each}
+{:else}
+	{#each data.shipments as shipment (shipment.id)}
+		<Marker
+			callback={() =>
+				pushState(`/shipment/buy?id=${shipment.id}`, {
+					page: { mode: 'buy', id: shipment.id, shipment: shipment, balance: data.balance }
+				})}
+			location={shipment.info.source}
+			name={shipment.id.toString()}
+		></Marker>
+	{/each}
+{/if}
 
 {#if 'page' in $page.state}
 	<Modal
-		showModal={$page.state.page.mode !== 'map' && selectMode === null}
+		showModal={$page.state.page.mode !== 'map'}
 		onClose={() => {
-			if (selectMode === null) history.back();
+			history.back();
 		}}
 	>
 		{#if $page.state.page.mode === 'buy'}

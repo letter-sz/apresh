@@ -17,7 +17,8 @@
 		console.log('Settled:', data.shipment.id);
 
 		invalidate('token:balance');
-		await invalidate('shipments:pending');
+		await invalidate('shipments:carrier');
+		await invalidate('shipments:shipper');
 		settled?.();
 	}
 </script>

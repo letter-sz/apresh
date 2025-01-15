@@ -5,57 +5,21 @@ import { match } from '$lib/utils';
 import type { LoadEvent } from '@sveltejs/kit';
 
 /** @type {import('./$types').PageLoad } */
-export async function load({ fetch, depends, url }: LoadEvent): Promise<{
-	shipments: Shipment[];
-	registeredCarrier: boolean;
-	registeredCustomer: boolean;
-	carried: Shipment[];
-	created: Shipment[];
-	settleSecret: string | null;
-	settleId: string | null;
-}> {
-	depends('shipments:pending');
+export async function load({ depends, fetch }: LoadEvent) {
+	depends('shipments:carrier');
+
+	const actor = await connection.tryGetActor();
+	let carried: Shipment[] = [];
+
+	if (actor !== null) {
+		const carrierShipments = await actor.carrier_shipments();
+		carried = [...carrierShipments];
+	}
 
 	const shipments = await fetchBackend(fetch).listPendingShipments();
 
-	const settleSecret = url.searchParams.get('settleSecret');
-	const settleId = url.searchParams.get('settleId');
-
-	let registeredCarrier = false;
-	let registeredCustomer = false;
-	let carried: Shipment[] = [];
-	let created: Shipment[] = [];
-
-	const actor = await connection.tryGetActor();
-
-	if (actor !== null) {
-		console.log('Wallet connected');
-
-		// const [car, cus] = await stateWallet.actor.roles();
-		// registeredCarrier = car;
-		// registeredCustomer = cus;
-
-		// if (registeredCarrier) {
-		console.log('Carrier registered');
-
-		let [cus, car] = await actor.listUserShipments();
-		carried = car.filter((shipment) => !match(shipment.status, 'Delivered'));
-		created = cus.filter((shipment) => !match(shipment.status, 'Delivered'));
-		// }
-	}
-
-	console.log('Shipments:', shipments);
-	console.log('carried:', carried);
-	console.log('created:', created);
-	console.log('secret:', settleSecret);
-
 	return {
-		shipments,
-		registeredCarrier,
-		registeredCustomer,
 		carried,
-		created,
-		settleSecret,
-		settleId
+		shipments
 	};
 }

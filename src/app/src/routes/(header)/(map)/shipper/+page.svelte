@@ -10,6 +10,7 @@
 	import { MapEvents } from 'svelte-maplibre';
 	import SettlePage from '$routes/(header)/shipment/settle/+page.svelte';
 	import type { PageData } from './$types';
+	import { connection } from '$lib/connection.svelte';
 
 	const { data }: { data: PageData } = $props();
 
@@ -35,7 +36,7 @@
 {#if selectMode !== null}
 	<MapEvents on:click={getLocation} />
 {:else}
-	{#each data.created as shipment}
+	{#each data.created as shipment (shipment.id)}
 		<Marker
 			callback={() =>
 				pushState(`/shipment/settle?id=${shipment.id}`, {
@@ -50,7 +51,8 @@
 <MapButton
 	isOpen={$page.state?.page?.mode === 'map'}
 	onOpen={() => {
-		console.log('open');
+		connection.ensureConnected();
+		selectMode = null;
 		pushState('/shipment/create', {
 			page: { mode: 'create', balance: data.balance }
 		});

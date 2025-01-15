@@ -38,9 +38,6 @@
 		e.preventDefault();
 		const actor = await connection.getActor();
 
-		console.log('owner', await wallet.owner());
-		console.log('balance', await wallet.balance());
-
 		if (!sourceLocation || !destinationLocation) {
 			console.error('Source or destination location is not defined');
 			return;
@@ -54,8 +51,6 @@
 		const hash = sha256.create();
 		hash.update(secret);
 		const hashed = hash.hex();
-
-		console.log('creating shipment');
 
 		const res = await actor.createShipment(
 			'',
@@ -85,7 +80,8 @@
 			}
 		);
 
-		invalidate('shipments:pending');
+		invalidate('shipments:shipper');
+		invalidate('shipments:carrier');
 		invalidate('token:balance');
 
 		const id: bigint = unwrap<[number[], bigint]>(res)[1];
