@@ -7,6 +7,7 @@
 	import PillButton from '$components/common/PillButton.svelte';
 	import type { Shipment } from '$declarations/contract/contract.did';
 	import TextInput from '$components/common/Inputs/TextInput.svelte';
+	import { wallet } from '$lib/wallet.svelte';
 
 	let { data, bought }: { data: PageData; bought?: () => void } = $props();
 
@@ -16,6 +17,7 @@
 		// const fee = await wallet.getTransferFee();
 		// await wallet.approve(shipment.info.value + fee);
 
+		await wallet.approve(shipment.info.price);
 		const res = await actor.buyShipment('Jacek', shipment.id);
 		unwrap<null>(res);
 

@@ -34,7 +34,7 @@
 
 {#if selectMode !== null}
 	<MapEvents on:click={getLocation} />
-{:else if data.created.length > 0}
+{:else}
 	{#each data.created as shipment}
 		<Marker
 			callback={() =>
@@ -42,17 +42,6 @@
 					page: { mode: 'settle', id: shipment.id, shipment: shipment, balance: data.balance }
 				})}
 			location={shipment.info.destination}
-			name={shipment.id.toString()}
-		></Marker>
-	{/each}
-{:else}
-	{#each data.shipments as shipment}
-		<Marker
-			callback={() =>
-				pushState(`/shipment/buy?id=${shipment.id}`, {
-					page: { mode: 'buy', id: shipment.id, shipment: shipment, balance: data.balance }
-				})}
-			location={shipment.info.source}
 			name={shipment.id.toString()}
 		></Marker>
 	{/each}
