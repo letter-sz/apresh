@@ -103,10 +103,10 @@ pub enum ShipmentStatus {
 
 impl ShipmentStatus {
     pub fn is_finished(&self) -> bool {
-        match self {
-            ShipmentStatus::Cancelled | ShipmentStatus::DeliveryCompleted => true,
-            _ => false,
-        }
+        matches!(
+            self,
+            ShipmentStatus::Cancelled | ShipmentStatus::DeliveryCompleted
+        )
     }
 }
 

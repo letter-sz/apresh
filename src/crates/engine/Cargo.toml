@@ -7,15 +7,9 @@ edition = "2021"
 actor-derive = { workspace = true }
 
 candid = { workspace = true }
-ic-cdk = { workspace = true }
-ic-cdk-timers = { workspace = true }
 derive_deref = { workspace = true }
 serde = { workspace = true }
 icrc-ledger-types = { workspace = true }
 anyhow = { workspace = true }
-image = { workspace = true }
-qrcode-generator = { workspace = true }
-colorgrad = { workspace = true }
 sha2 = { workspace = true }
-hex-literal = { workspace = true }
 hex = { workspace = true }

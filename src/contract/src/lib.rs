@@ -156,9 +156,9 @@ async fn finalize_shipment(shipment_id: u64, secret_key: Option<String>) -> Resu
         .await
         .map_err(|e| e.to_string());
 
-    // if let Err(e) = transfer::transfer_out(transfer_out_carrier_args).await {
-    //     ic_cdk::trap(&e.to_string())
-    // }
+    if let Err(e) = transfer_out_carrier_result {
+        ic_cdk::trap(&e.to_string())
+    }
 
     ic_cdk::print(format!("Shipment finalized: {:?}", shipment_id).as_str());
 

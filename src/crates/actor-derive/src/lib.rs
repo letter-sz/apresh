@@ -1,6 +1,6 @@
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse_macro_input, DeriveInput, Data, Error};
+use syn::{parse_macro_input, Data, DeriveInput, Error};
 
 #[proc_macro_derive(IsActor)]
 pub fn derive_actor(input: TokenStream) -> TokenStream {
@@ -20,11 +20,16 @@ pub fn derive_actor(input: TokenStream) -> TokenStream {
     };
 
     // Check for a field named `base`
-    let has_base = fields.iter().any(|f| f.ident.as_ref().map(|i| i == "base").unwrap_or(false));
+    let has_base = fields
+        .iter()
+        .any(|f| f.ident.as_ref().map(|i| i == "base").unwrap_or(false));
     if !has_base {
-        return Error::new_spanned(name, "Struct must have a field named `base` to derive IsActor")
-            .to_compile_error()
-            .into();
+        return Error::new_spanned(
+            name,
+            "Struct must have a field named `base` to derive IsActor",
+        )
+        .to_compile_error()
+        .into();
     }
 
     // Split generics for use in impl

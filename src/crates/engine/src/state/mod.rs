@@ -4,7 +4,6 @@ mod shipments;
 use crate::actors::{carrier::Carrier, shipper::Shipper};
 use actor_collection::ActorCollection;
 use shipments::Shipments;
-use std::cell::RefCell;
 
 #[derive(Default)]
 pub struct CanisterState {

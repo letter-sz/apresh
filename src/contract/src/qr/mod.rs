@@ -1,3 +1,3 @@
 mod generator;
 
-pub use generator::generate; 
+pub use generator::generate;
