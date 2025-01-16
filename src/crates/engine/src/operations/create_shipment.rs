@@ -1,4 +1,4 @@
-use engine::models::shipment::{InternalShipment, ShipmentId, ShipmentInfo};
+use crate::models::shipment::{InternalShipment, ShipmentId, ShipmentInfo};
 
 use super::{CanisterState, StateOp};
 use crate::actors::{shipper::Shipper, Actor};
@@ -60,7 +60,7 @@ impl<'a> StateOp<ShipmentId> for CreateShipmentOp<'a> {
 
 #[cfg(test)]
 mod tests {
-    use engine::models::shipment::{ShipmentLocation, SizeCategory};
+    use crate::models::shipment::{ShipmentLocation, SizeCategory};
 
     use super::*;
     use candid::Principal;

@@ -1,5 +1,6 @@
 mod actor_collection;
 mod shipments;
+
 use crate::actors::{carrier::Carrier, shipper::Shipper};
 use actor_collection::ActorCollection;
 use shipments::Shipments;
@@ -11,8 +12,4 @@ pub struct CanisterState {
     pub carriers: ActorCollection<Carrier>,
     pub shipments: Shipments,
     pub shipment_counter: u64,
-}
-
-thread_local! {
-    pub static STATE: RefCell<CanisterState> = Default::default();
 }

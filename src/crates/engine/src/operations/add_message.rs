@@ -1,5 +1,6 @@
-use super::StateOp;
 use crate::state::CanisterState;
+
+use super::StateOp;
 use anyhow::anyhow;
 use candid::Principal;
 

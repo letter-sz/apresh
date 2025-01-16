@@ -1,4 +1,4 @@
-use engine::models::shipment::ShipmentId;
+use crate::models::shipment::ShipmentId;
 
 use candid::Principal;
 use serde::{Deserialize, Serialize};

@@ -1,30 +1,35 @@
-mod actors;
-mod operations;
 mod qr;
-mod state;
 mod transfer;
 mod utils;
 mod vetkd;
 
-use engine::models::{
-    qrcode::QrCodeOptions,
-    shipment::{Shipment, ShipmentInfo, ShipmentLocation, ShipmentStatus, SizeCategory},
+use std::cell::RefCell;
+
+use engine::{
+    actors::{carrier::Carrier, shipper::Shipper},
+    models::{
+        qrcode::QrCodeOptions,
+        shipment::{Shipment, ShipmentInfo, ShipmentLocation, ShipmentStatus, SizeCategory},
+    },
+    operations::{
+        AddMessageOp, BuyShipmentOp, CreateShipmentOp, FinalizeShipmentOp, ReadMessageOp, StateOp,
+    },
+    state::CanisterState,
 };
 
-use actors::{carrier::Carrier, shipper::Shipper};
 use candid::Principal;
 use ic_cdk::{init, query, update};
 use icrc_ledger_types::icrc1::transfer::NumTokens;
-use operations::{
-    AddMessageOp, BuyShipmentOp, CreateShipmentOp, FinalizeShipmentOp, ReadMessageOp, StateOp,
-};
-use state::STATE;
 use transfer::{transfer_in, transfer_out, TransferInParams, TransferOutParams, TransferParams};
 use utils::block_anonymous;
 
 pub use vetkd::{encrypted_ibe_decryption_key_for_caller, ibe_encryption_key};
 
 pub type ActorId = Principal;
+
+thread_local! {
+    pub static STATE: RefCell<CanisterState> = RefCell::new(CanisterState::default());
+}
 
 #[init]
 fn init() {
