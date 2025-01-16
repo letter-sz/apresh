@@ -1,12 +1,7 @@
+use engine::models::shipment::{ShipmentActions, ShipmentId};
+
 use super::StateOp;
-use crate::{
-    actors::{
-        carrier::{Carrier, CarrierId},
-        Actor,
-    },
-    models::shipment::{ShipmentActions, ShipmentId},
-    state::CanisterState,
-};
+use crate::{actors::carrier::Carrier, state::CanisterState};
 use anyhow::anyhow;
 
 pub type Cost = u64;

@@ -1,8 +1,14 @@
-use crate::{impl_deref_deref_mut, models::shipment::InternalShipment};
-use std::collections::HashMap;
-type ShipmentsStore = HashMap<u64, InternalShipment>;
+use candid::Principal;
+use derive_deref::{Deref, DerefMut};
+use engine::models::shipment::InternalShipment;
 
-#[derive(Default)]
+use std::collections::HashMap;
+type ShipmentsStore = HashMap<u64, InternalShipment<Principal>>;
+
+#[derive(Default, Deref, DerefMut)]
+
 pub struct Shipments(ShipmentsStore);
 
-impl_deref_deref_mut!(Shipments, ShipmentsStore);
+#[derive(Default, Deref, DerefMut)]
+
+pub struct A(i32);

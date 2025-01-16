@@ -1,12 +1,7 @@
-use super::{CanisterState, StateOp};
+use engine::models::shipment::{InternalShipment, ShipmentId, ShipmentInfo};
 
-use crate::{
-    actors::{
-        shipper::{Shipper, ShipperId},
-        Actor,
-    },
-    models::shipment::{InternalShipment, ShipmentId, ShipmentInfo},
-};
+use super::{CanisterState, StateOp};
+use crate::actors::{shipper::Shipper, Actor};
 
 #[derive(Debug)]
 pub struct CreateShipmentOp<'a> {
@@ -65,7 +60,7 @@ impl<'a> StateOp<ShipmentId> for CreateShipmentOp<'a> {
 
 #[cfg(test)]
 mod tests {
-    use crate::models::shipment::{ShipmentLocation, SizeCategory};
+    use engine::models::shipment::{ShipmentLocation, SizeCategory};
 
     use super::*;
     use candid::Principal;

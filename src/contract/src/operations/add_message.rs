@@ -11,7 +11,11 @@ pub struct AddMessageOp<'a> {
 
 impl<'a> AddMessageOp<'a> {
     pub fn new(shipment_id: u64, message: &'a str, caller: Principal) -> Self {
-        Self { shipment_id, message, caller }
+        Self {
+            shipment_id,
+            message,
+            caller,
+        }
     }
 }
 

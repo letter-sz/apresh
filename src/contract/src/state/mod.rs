@@ -1,12 +1,9 @@
 mod actor_collection;
 mod shipments;
+use crate::actors::{carrier::Carrier, shipper::Shipper};
 use actor_collection::ActorCollection;
 use shipments::Shipments;
 use std::cell::RefCell;
-use crate::actors::{carrier::Carrier, shipper::Shipper};
-
-#[macro_use]
-mod macros;
 
 #[derive(Default)]
 pub struct CanisterState {

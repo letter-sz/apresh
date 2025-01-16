@@ -1,20 +1,18 @@
+use engine::models::shipment::{ShipmentActions, ShipmentId};
+
 use super::StateOp;
-use crate::{
-    actors::{carrier::CarrierId, Actor},
-    models::shipment::{ShipmentActions, ShipmentId},
-    state::CanisterState,
-};
+use crate::{actors::Actor, state::CanisterState};
 use anyhow::anyhow;
 use candid::Principal;
 
 pub struct FinalizeShipmentResult {
-    carrier_id: CarrierId,
+    carrier_id: Principal,
     value: u64,
     price: u64,
 }
 
 impl FinalizeShipmentResult {
-    pub fn carrier_id(&self) -> &CarrierId {
+    pub fn carrier_id(&self) -> &Principal {
         &self.carrier_id
     }
 

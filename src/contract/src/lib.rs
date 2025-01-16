@@ -1,5 +1,4 @@
 mod actors;
-mod models;
 mod operations;
 mod qr;
 mod state;
@@ -7,14 +6,15 @@ mod transfer;
 mod utils;
 mod vetkd;
 
+use engine::models::{
+    qrcode::QrCodeOptions,
+    shipment::{Shipment, ShipmentInfo, ShipmentLocation, ShipmentStatus, SizeCategory},
+};
+
 use actors::{carrier::Carrier, shipper::Shipper};
 use candid::Principal;
 use ic_cdk::{init, query, update};
 use icrc_ledger_types::icrc1::transfer::NumTokens;
-use models::{
-    qrcode::QrCodeOptions,
-    shipment::{Shipment, ShipmentInfo, ShipmentLocation, ShipmentStatus, SizeCategory},
-};
 use operations::{
     AddMessageOp, BuyShipmentOp, CreateShipmentOp, FinalizeShipmentOp, ReadMessageOp, StateOp,
 };
@@ -23,6 +23,8 @@ use transfer::{transfer_in, transfer_out, TransferInParams, TransferOutParams, T
 use utils::block_anonymous;
 
 pub use vetkd::{encrypted_ibe_decryption_key_for_caller, ibe_encryption_key};
+
+pub type ActorId = Principal;
 
 #[init]
 fn init() {

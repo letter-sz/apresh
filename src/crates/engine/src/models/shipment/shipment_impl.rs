@@ -1,7 +1,5 @@
-use crate::actors::carrier::CarrierId;
-use crate::actors::shipper::ShipperId;
 use anyhow::Context;
-use candid::{CandidType, Principal};
+use candid::CandidType;
 use hex::FromHex;
 use serde::{Deserialize, Serialize};
 use sha2::Digest;
@@ -9,16 +7,20 @@ use sha2::Sha256;
 
 use super::info::ShipmentInfo;
 
-pub enum ShipmentActions<'a> {
-    Buy(CarrierId),
+pub enum ShipmentActions<'a, ActorId> {
+    Buy(ActorId),
     MarkDelivered {
         secret_key: Option<&'a str>,
-        caller: Principal,
+        caller: ActorId,
     },
 }
 
-impl InternalShipment {
-    pub fn action(&mut self, op: ShipmentActions) -> anyhow::Result<()> {
+impl<ActorId> InternalShipment<ActorId>
+where
+    ActorId: Copy,
+    ActorId: Eq,
+{
+    pub fn action(&mut self, op: ShipmentActions<ActorId>) -> anyhow::Result<()> {
         match op {
             ShipmentActions::Buy(carrier_id) => self.buy(carrier_id),
             ShipmentActions::MarkDelivered { secret_key, caller } => {
@@ -41,7 +43,7 @@ impl InternalShipment {
         }
     }
 
-    fn finalize(&mut self, secret_key: Option<&str>, caller: Principal) -> anyhow::Result<()> {
+    fn finalize(&mut self, secret_key: Option<&str>, caller: ActorId) -> anyhow::Result<()> {
         if self.status != ShipmentStatus::InTransit {
             return Err(anyhow::anyhow!("shipment is not ready to be finalized"));
         }
@@ -57,12 +59,12 @@ impl InternalShipment {
         Ok(())
     }
 
-    fn assign_carrier(&mut self, carrier_id: CarrierId) {
+    fn assign_carrier(&mut self, carrier_id: ActorId) {
         self.carrier = Some(carrier_id);
         self.status = ShipmentStatus::InTransit;
     }
 
-    fn buy(&mut self, carrier_id: CarrierId) -> anyhow::Result<()> {
+    fn buy(&mut self, carrier_id: ActorId) -> anyhow::Result<()> {
         if self.status != ShipmentStatus::Pending {
             return Err(anyhow::anyhow!(
                 "shipment is not created, invalid operation"
@@ -110,7 +112,7 @@ impl ShipmentStatus {
 
 // Shipment, but without principals, so JSON-able
 #[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct InternalShipment {
+pub struct InternalShipment<ActorId> {
     /// Shipment id
     id: ShipmentId,
     /// Shipment name
@@ -124,9 +126,9 @@ pub struct InternalShipment {
     /// Encrypted message from shipper to carrier, could be used to send contact information
     message: Option<String>,
     /// Carrier id
-    carrier: Option<Principal>, // TODO: I think we should use some internal id instead of principal here
+    carrier: Option<ActorId>, // TODO: I think we should use some internal id instead of principal here
     /// Shipper id
-    shipper: Principal,
+    shipper: ActorId,
     /// Shipment creation timestamp
     created_at: u64,
 }
@@ -144,8 +146,12 @@ pub struct Shipment {
     created_at: u64,
 }
 
-impl From<&InternalShipment> for Shipment {
-    fn from(shipment: &InternalShipment) -> Self {
+impl<ActorId> From<&InternalShipment<ActorId>> for Shipment
+where
+    ActorId: ToString,
+    ActorId: Copy,
+{
+    fn from(shipment: &InternalShipment<ActorId>) -> Self {
         Self {
             id: shipment.id,
             name: shipment.name.clone(),
@@ -160,10 +166,13 @@ impl From<&InternalShipment> for Shipment {
     }
 }
 
-impl InternalShipment {
+impl<ActorId> InternalShipment<ActorId>
+where
+    ActorId: Copy,
+{
     pub fn new(
         timestamp: u64,
-        shipper: ShipperId,
+        shipper: ActorId,
         id: ShipmentId,
         hashed_secret: &str,
         name: &str,
@@ -194,11 +203,11 @@ impl InternalShipment {
         &self.status
     }
 
-    pub fn shipper_id(&self) -> Principal {
+    pub fn shipper_id(&self) -> ActorId {
         self.shipper
     }
 
-    pub fn carrier_id(&self) -> Option<Principal> {
+    pub fn carrier_id(&self) -> Option<ActorId> {
         self.carrier
     }
 
