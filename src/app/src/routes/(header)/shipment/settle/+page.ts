@@ -15,7 +15,7 @@ export async function load({ url }: LoadEvent): Promise<{
 	}
 	const id = BigInt(idParam);
 	const actor = await connection.getActor();
-	const [carried, created] = await actor.listUserShipments();
+	const created = await actor.shipper_shipments();
 	const shipment = created.find((shipment: Shipment) => shipment.id === id);
 	if (shipment === undefined) {
 		error(404, {
