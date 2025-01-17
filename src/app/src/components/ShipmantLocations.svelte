@@ -1,7 +1,7 @@
 <script lang="ts">
 	import clsx from 'clsx';
 	import { Marker } from 'svelte-maplibre';
-	import type { Shipment } from '$declarations/contract/contract.did';
+	import type { PrintableShipment } from '$declarations/contract/contract.did';
 
 	let { shipments } = $props<{ shipments: Shipment[] }>();
 </script>

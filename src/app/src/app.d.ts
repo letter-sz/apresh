@@ -1,4 +1,4 @@
-import type { Shipment } from '$declarations/contract/contract.did';
+import type { PrintableShipment } from '$declarations/contract/contract.did';
 import type { PageData as CreateShipmentPageData } from './routes/(header)/shipment/create/$types';
 import type { PageData as BuyShipmentPageData } from './routes/(header)/shipment/buy/$types';
 import type { PageData as SettleShipmentPageData } from './routes/(header)/shipment/settle/$types';

@@ -1,6 +1,4 @@
-use crate::models::shipment::ShipmentId;
-
-use candid::Principal;
+use crate::{models::shipment::ShipmentId, ActorId};
 
 pub mod base;
 pub mod carrier;
@@ -47,7 +45,7 @@ pub enum ActorRole {
 pub trait Actor {
     /// Returns the unique Principal identifier of the actor.
     /// This is used for authentication and tracking ownership of actions.
-    fn id(&self) -> Principal;
+    fn id(&self) -> ActorId;
 
     /// Returns the human-readable name of the actor.
     /// This name is used for display purposes and user interaction.

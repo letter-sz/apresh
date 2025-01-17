@@ -1,4 +1,7 @@
-use crate::models::shipment::{ShipmentActions, ShipmentId};
+use crate::{
+    models::shipment::{ShipmentActions, ShipmentId},
+    ActorId,
+};
 
 use super::StateOp;
 use crate::{actors::Actor, state::CanisterState};
@@ -48,20 +51,24 @@ impl<'a> StateOp<FinalizeShipmentResult> for FinalizeShipmentOp<'a> {
         let shipment = state
             .shipments
             .get_mut(&self.shipment_id)
-            .ok_or(anyhow!("Shipment not found"))?;
+            .ok_or(crate::errors::Error::ShipmentNotFound)?;
+
+        let carrier_id = shipment
+            .carrier_id()
+            .ok_or(crate::errors::Error::CarrierNotSet)?;
 
         let carrier = state
             .carriers
-            .get_mut(&shipment.carrier_id().ok_or(anyhow!("Carrier not set"))?)
-            .ok_or(anyhow!("Carrier not found"))?;
+            .get_mut(&carrier_id)
+            .ok_or(crate::errors::Error::CarrierNotFound)?;
 
         shipment.action(ShipmentActions::MarkDelivered {
             secret_key: self.secret_key,
-            caller: self.caller,
+            caller: ActorId(self.caller),
         })?;
 
         Ok(FinalizeShipmentResult {
-            carrier_id: carrier.id(),
+            carrier_id: carrier.id().0,
             value: shipment.info().value(),
             price: shipment.info().price(),
         })

@@ -38,7 +38,7 @@ pub fn derive_actor(input: TokenStream) -> TokenStream {
     // Generate the Actor trait implementation
     let trait_impl = quote! {
         impl #impl_generics Actor for #name #ty_generics #where_clause {
-            fn id(&self) -> Principal {
+            fn id(&self) -> ActorId {
                 self.base.id()
             }
 

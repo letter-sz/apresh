@@ -1,4 +1,4 @@
-use crate::models::shipment::ShipmentId;
+use crate::{models::shipment::ShipmentId, ActorId};
 
 use candid::Principal;
 use serde::{Deserialize, Serialize};
@@ -26,7 +26,7 @@ use serde::{Deserialize, Serialize};
 pub struct ActorBase {
     /// The unique principal identifier of the actor.
     /// This is used for authentication and authorization throughout the system.
-    id: Principal,
+    id: ActorId,
 
     /// The human-readable name of the actor.
     /// This should be a meaningful identifier for the actor in the system.
@@ -54,7 +54,7 @@ impl ActorBase {
     /// A new ActorBase instance with empty shipment lists
     pub fn new(id: Principal, name: String) -> Self {
         Self {
-            id,
+            id: ActorId(id),
             name,
             active_shipments: vec![],
             shipments_history: vec![],
@@ -62,7 +62,7 @@ impl ActorBase {
     }
 
     /// Returns the Principal identifier of the actor.
-    pub fn id(&self) -> Principal {
+    pub fn id(&self) -> ActorId {
         self.id
     }
 

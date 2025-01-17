@@ -1,4 +1,4 @@
-use crate::models::shipment::{InternalShipment, ShipmentId, ShipmentInfo};
+use crate::models::shipment::{Shipment, ShipmentId, ShipmentInfo};
 
 use super::{CanisterState, StateOp};
 use crate::actors::{shipper::Shipper, Actor};
@@ -42,7 +42,7 @@ impl<'a> StateOp<ShipmentId> for CreateShipmentOp<'a> {
             None => state.shippers.create(self.creator.clone()),
         };
 
-        let shipment = InternalShipment::new(
+        let shipment = Shipment::new(
             self.timestamp,
             shipper.id(),
             new_shipment_id,
@@ -60,7 +60,10 @@ impl<'a> StateOp<ShipmentId> for CreateShipmentOp<'a> {
 
 #[cfg(test)]
 mod tests {
-    use crate::models::shipment::{ShipmentLocation, SizeCategory};
+    use crate::{
+        models::shipment::{ShipmentLocation, SizeCategory},
+        ActorId,
+    };
 
     use super::*;
     use candid::Principal;
@@ -104,12 +107,12 @@ mod tests {
         assert_eq!(state.shipment_counter, 1);
 
         let shipment = state.shipments.get(&shipment_id).unwrap();
-        assert_eq!(shipment.shipper_id(), creator_id);
+        assert_eq!(shipment.shipper_id(), ActorId(creator_id));
         assert_eq!(shipment._id(), shipment_id);
         assert_eq!(shipment._name(), shipment_name);
 
         let shipper = state.shippers.get(&creator_id).unwrap();
-        assert_eq!(shipper.id(), creator_id);
+        assert_eq!(shipper.id(), ActorId(creator_id));
         assert!(shipper.get_active_shipments().contains(&shipment_id));
         assert_eq!(shipper.name(), creator_name);
     }

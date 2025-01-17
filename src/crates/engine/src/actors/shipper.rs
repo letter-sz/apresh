@@ -1,4 +1,4 @@
-use crate::models::shipment::ShipmentId;
+use crate::{models::shipment::ShipmentId, ActorId};
 
 use super::{base::ActorBase, Actor, ActorRole};
 use actor_derive::IsActor;
@@ -17,7 +17,7 @@ impl Shipper {
         }
     }
 
-    pub fn id(&self) -> Principal {
+    pub fn id(&self) -> ActorId {
         self.base.id()
     }
 }

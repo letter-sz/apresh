@@ -1,4 +1,7 @@
-use crate::state::CanisterState;
+use crate::{
+    state::{CanisterShipments, CanisterState},
+    ActorId,
+};
 
 use super::StateOp;
 use anyhow::anyhow;
@@ -7,11 +10,11 @@ use candid::Principal;
 pub struct AddMessageOp<'a> {
     pub shipment_id: u64,
     pub message: &'a str,
-    pub caller: Principal,
+    pub caller: ActorId,
 }
 
 impl<'a> AddMessageOp<'a> {
-    pub fn new(shipment_id: u64, message: &'a str, caller: Principal) -> Self {
+    pub fn new(shipment_id: u64, message: &'a str, caller: ActorId) -> Self {
         Self {
             shipment_id,
             message,
@@ -21,19 +24,20 @@ impl<'a> AddMessageOp<'a> {
 }
 
 impl<'a> StateOp<()> for AddMessageOp<'a> {
-    type Error = anyhow::Error;
+    type Error = crate::Error;
 
     fn apply(&self, state: &mut CanisterState) -> Result<(), Self::Error> {
         let shipment = state
-            .shipments
-            .get_mut(&self.shipment_id)
-            .ok_or(anyhow!("Shipment not found"))?;
+            .shipment_mut(self.shipment_id)
+            .ok_or(crate::Error::ShipmentNotFound)?;
 
-        if shipment.carrier_id().is_some_and(|v| v == self.caller) {
-            shipment.attach_message(self.message.to_string());
-        } else {
-            return Err(anyhow!("Only the carrier can add an encrypted message"));
+        let carrier_id = shipment.carrier_id().ok_or(crate::Error::CarrierNotSet)?;
+
+        if carrier_id != self.caller {
+            return Err(crate::Error::NotAuthorizedAsCarrier);
         }
+
+        shipment.attach_message(self.message.to_string());
 
         Ok(())
     }

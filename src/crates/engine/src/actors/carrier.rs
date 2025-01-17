@@ -1,8 +1,7 @@
-use crate::models::shipment::ShipmentId;
+use crate::{models::shipment::ShipmentId, ActorId};
 
 use super::{base::ActorBase, Actor, ActorRole};
 use actor_derive::IsActor;
-use candid::Principal;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Deserialize, Serialize, IsActor)]
@@ -11,13 +10,13 @@ pub struct Carrier {
 }
 
 impl Carrier {
-    pub fn new(id: Principal, name: &str) -> Self {
+    pub fn new(id: ActorId, name: &str) -> Self {
         Self {
-            base: ActorBase::new(id, name.to_string()),
+            base: ActorBase::new(id.0, name.to_string()),
         }
     }
 
-    pub fn id(&self) -> Principal {
+    pub fn id(&self) -> ActorId {
         self.base.id()
     }
 

@@ -5,7 +5,7 @@
 	import { connection } from '$lib/connection.svelte';
 	import ShipmentInfo from '$components/ShipmentInfo.svelte';
 	import PillButton from '$components/common/PillButton.svelte';
-	import type { Shipment } from '$declarations/contract/contract.did';
+	import type { PrintableShipment } from '$declarations/contract/contract.did';
 	import TextInput from '$components/common/Inputs/TextInput.svelte';
 	import { wallet } from '$lib/wallet.svelte';
 

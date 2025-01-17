@@ -9,12 +9,16 @@ use engine::{
     actors::{carrier::Carrier, shipper::Shipper},
     models::{
         qrcode::QrCodeOptions,
-        shipment::{Shipment, ShipmentInfo, ShipmentLocation, ShipmentStatus, SizeCategory},
+        shipment::{
+            PrintableShipment, ShipmentInfo, ShipmentLocation, ShipmentStatus, SizeCategory,
+        },
     },
     operations::{
-        AddMessageOp, BuyShipmentOp, CreateShipmentOp, FinalizeShipmentOp, ReadMessageOp, StateOp,
+        AddMessageOp, BuyShipmentOp, CreateShipmentOp, FinalizeShipmentOp, ReadMessageOp,
+        RegisterActorOp, StateOp,
     },
     state::CanisterState,
+    ActorId,
 };
 
 use candid::Principal;
@@ -24,8 +28,6 @@ use transfer::{transfer_in, transfer_out, TransferInParams, TransferOutParams, T
 use utils::block_anonymous;
 
 pub use vetkd::{encrypted_ibe_decryption_key_for_caller, ibe_encryption_key};
-
-pub type ActorId = Principal;
 
 thread_local! {
     pub static STATE: RefCell<CanisterState> = RefCell::new(CanisterState::default());
@@ -116,7 +118,7 @@ fn init() {
 
 #[update(name = "addEncryptedMessage")]
 async fn add_encrypted_message(message: String, shipment_id: u64) -> Result<(), String> {
-    let caller: Principal = ic_cdk::caller();
+    let caller = ActorId(ic_cdk::caller());
 
     STATE
         .with_borrow_mut(|state| AddMessageOp::new(shipment_id, &message, caller).apply(state))
@@ -125,7 +127,7 @@ async fn add_encrypted_message(message: String, shipment_id: u64) -> Result<(), 
 
 #[update(name = "readEncryptedMessage")]
 async fn read_encrypted_message(shipment_id: u64) -> Result<Option<String>, String> {
-    let caller: Principal = ic_cdk::caller();
+    let caller = ActorId(ic_cdk::caller());
 
     STATE
         .with_borrow_mut(|state| ReadMessageOp::new(shipment_id, caller).apply(state))
@@ -166,23 +168,32 @@ async fn finalize_shipment(shipment_id: u64, secret_key: Option<String>) -> Resu
 }
 
 #[update(name = "buyShipment")]
-async fn buy_shipment(carrier_name: String, shipment_id: u64) -> Result<(), String> {
+async fn buy_shipment(carrier_name: Option<String>, shipment_id: u64) -> Result<(), String> {
     block_anonymous()?;
 
-    let carrier_id = ic_cdk::caller();
-    let carrier = Carrier::new(carrier_id, carrier_name.as_str());
-    let buy_shipment_op = BuyShipmentOp::new(carrier, shipment_id);
+    let caller = ActorId(ic_cdk::caller());
 
     let shipment_cost = STATE
-        .with_borrow_mut(|state| buy_shipment_op.apply(state))
-        .map_err(|e: anyhow::Error| e.to_string())?;
+        .with_borrow_mut(|state| {
+            if let Some(carrier_name) = carrier_name {
+                let carrier = Carrier::new(caller, carrier_name.as_str());
+
+                let op = RegisterActorOp::AddCarrier { carrier };
+                op.apply(state).map_err(|e| e.to_string()).unwrap();
+            }
+
+            let buy_shipment_op = BuyShipmentOp::new(caller, shipment_id);
+
+            buy_shipment_op.apply(state)
+        })
+        .unwrap();
 
     let transfer_in_args = TransferInParams {
         params: TransferParams {
             amount: NumTokens::from(shipment_cost),
             memo: None,
         },
-        from: carrier_id.into(),
+        from: caller.0.into(),
     };
 
     transfer_in(transfer_in_args)
@@ -225,7 +236,7 @@ async fn create_shipment(
             amount: NumTokens::from(amount),
             memo: None,
         },
-        from: shipper.id().into(),
+        from: shipper.id().0.into(),
     };
 
     transfer_in(transfer_in_args)
@@ -253,20 +264,20 @@ async fn create_shipment(
 }
 
 #[query(name = "listPendingShipments")]
-fn get_pending_shipments() -> Vec<Shipment> {
+fn get_pending_shipments() -> Vec<PrintableShipment> {
     STATE.with_borrow(|state| {
         state
             .shipments
             .values()
             .filter(|shipment| *shipment.status() == ShipmentStatus::Pending)
-            .map(Shipment::from)
+            .map(PrintableShipment::from)
             .collect()
     })
 }
 
 #[query]
-fn shipper_shipments() -> Vec<Shipment> {
-    let customer_id = ic_cdk::caller();
+fn shipper_shipments() -> Vec<PrintableShipment> {
+    let customer_id = ActorId(ic_cdk::caller());
 
     STATE.with_borrow(|state| {
         state
@@ -274,14 +285,14 @@ fn shipper_shipments() -> Vec<Shipment> {
             .values()
             .filter(|shipment| shipment.shipper_id() == customer_id)
             .filter(|shipment| !shipment.status().is_finished())
-            .map(Shipment::from)
+            .map(PrintableShipment::from)
             .collect()
     })
 }
 
 #[query]
-fn carrier_shipments() -> Vec<Shipment> {
-    let customer_id = ic_cdk::caller();
+fn carrier_shipments() -> Vec<PrintableShipment> {
+    let customer_id = ActorId(ic_cdk::caller());
 
     STATE.with_borrow(|state| {
         state
@@ -289,7 +300,7 @@ fn carrier_shipments() -> Vec<Shipment> {
             .values()
             .filter(|shipment| shipment.carrier_id() == Some(customer_id))
             .filter(|shipment| !shipment.status().is_finished())
-            .map(Shipment::from)
+            .map(PrintableShipment::from)
             .collect()
     })
 }
@@ -305,8 +316,14 @@ fn roles() -> (bool, bool) {
 }
 
 #[query]
-fn shipments() -> Vec<Shipment> {
-    STATE.with_borrow(|state| state.shipments.values().map(Shipment::from).collect())
+fn shipments() -> Vec<PrintableShipment> {
+    STATE.with_borrow(|state| {
+        state
+            .shipments
+            .values()
+            .map(PrintableShipment::from)
+            .collect()
+    })
 }
 
 ic_cdk::export_candid!();

@@ -1,4 +1,4 @@
-import type { Shipment } from '$declarations/contract/contract.did';
+import type { PrintableShipment } from '$declarations/contract/contract.did';
 import { fetchBackend } from '$lib/canisters';
 import { connection } from '$lib/connection.svelte';
 import { match } from '$lib/utils';

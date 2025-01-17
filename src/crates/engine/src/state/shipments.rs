@@ -1,9 +1,9 @@
-use crate::models::shipment::InternalShipment;
-use candid::Principal;
 use derive_deref::{Deref, DerefMut};
 
+use crate::models::shipment::Shipment;
 use std::collections::HashMap;
-type ShipmentsStore = HashMap<u64, InternalShipment<Principal>>;
+
+type ShipmentsStore = HashMap<u64, Shipment>;
 
 #[derive(Default, Deref, DerefMut)]
 

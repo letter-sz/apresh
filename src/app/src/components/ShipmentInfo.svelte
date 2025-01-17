@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { ibe_decrypt } from '$lib/encryption';
-	import type { Shipment } from '$declarations/contract/contract.did';
+	import type { PrintableShipment } from '$declarations/contract/contract.did';
 
-	let { shipment }: { shipment: Shipment } = $props();
+	let { shipment }: { shipment: PrintableShipment } = $props();
 	let parcel = $derived(Object.values(shipment.info.size_category)[0]);
 </script>
 

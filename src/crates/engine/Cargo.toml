@@ -9,7 +9,7 @@ actor-derive = { workspace = true }
 candid = { workspace = true }
 derive_deref = { workspace = true }
 serde = { workspace = true }
-icrc-ledger-types = { workspace = true }
+thiserror = { workspace = true }
 anyhow = { workspace = true }
 sha2 = { workspace = true }
 hex = { workspace = true }

@@ -1,4 +1,4 @@
-import type { Shipment } from '$declarations/contract/contract.did';
+import type { PrintableShipment } from '$declarations/contract/contract.did';
 import { connection } from '$lib/connection.svelte';
 import { error, type LoadEvent } from '@sveltejs/kit';
 
