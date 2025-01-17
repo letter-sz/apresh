@@ -145,7 +145,7 @@ async fn finalize_shipment(shipment_id: u64, secret_key: Option<String>) -> Resu
         to: (*finalize_shipment_result.carrier_id()).into(),
     };
 
-    let transfer_out_carrier_result = transfer_out(transfer_out_carrier_args)
+    let _transfer_out_carrier_result = transfer_out(transfer_out_carrier_args)
         .await
         .map_err(|e| e.to_string());
 
@@ -294,13 +294,7 @@ fn roles() -> (bool, bool) {
 
 #[query]
 fn shipments() -> Vec<Shipment> {
-    STATE.with_borrow(|state| {
-        state
-            .shipments
-            .values()
-            .map(|shipment| Shipment::from(shipment))
-            .collect()
-    })
+    STATE.with_borrow(|state| state.shipments.values().map(Shipment::from).collect())
 }
 
 ic_cdk::export_candid!();
