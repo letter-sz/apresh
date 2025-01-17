@@ -14,8 +14,8 @@ use engine::{
         },
     },
     operations::{
-        AddMessageOp, BuyShipmentOp, CreateShipmentOp, FinalizeShipmentOp, ReadMessageOp,
-        RegisterActorOp, StateOp,
+        AddMessageOp, BuyShipmentOp, CancelShipmentOp, CreateShipmentOp, FinalizeShipmentOp,
+        ReadMessageOp, RegisterActorOp, StateOp,
     },
     state::CanisterState,
     ActorId,
@@ -66,7 +66,7 @@ fn init() {
 
     let shippers = names
         .iter()
-        .map(|name| Shipper::new(default_principal, name))
+        .map(|name| Shipper::new(default_principal.into(), name))
         .collect::<Vec<_>>();
 
     let packages_names = [
@@ -178,7 +178,10 @@ async fn buy_shipment(carrier_name: Option<String>, shipment_id: u64) -> Result<
             if let Some(carrier_name) = carrier_name {
                 let carrier = Carrier::new(caller, carrier_name.as_str());
 
-                let op = RegisterActorOp::AddCarrier { carrier };
+                let op = RegisterActorOp::AddCarrier {
+                    id: carrier.id(),
+                    name: carrier_name,
+                };
                 op.apply(state).map_err(|e| e.to_string()).unwrap();
             }
 
@@ -229,7 +232,7 @@ async fn create_shipment(
     ic_cdk::print(format!("Creating a shipment: {}", customer_id).as_str());
 
     let amount = NumTokens::from(shipment_info.price());
-    let shipper = Shipper::new(customer_id, customer_name.as_str());
+    let shipper = Shipper::new(customer_id.into(), customer_name.as_str());
 
     let transfer_in_args = TransferInParams {
         params: TransferParams {
@@ -261,6 +264,17 @@ async fn create_shipment(
 
     ic_cdk::print(format!("Shipment created: {:?}", shipment_id).as_str());
     Ok((qr_code, shipment_id))
+}
+
+#[update]
+fn cancel_shipment(shipment_id: u64) -> Result<(), String> {
+    let caller = ActorId(ic_cdk::caller());
+
+    STATE
+        .with_borrow_mut(|state| CancelShipmentOp::new(caller, shipment_id).apply(state))
+        .map_err(|e| e.to_string())?;
+
+    Ok(())
 }
 
 #[query(name = "listPendingShipments")]
@@ -323,6 +337,16 @@ fn shipments() -> Vec<PrintableShipment> {
             .values()
             .map(PrintableShipment::from)
             .collect()
+    })
+}
+
+#[query]
+fn shipment(shipment_id: u64) -> Option<PrintableShipment> {
+    STATE.with_borrow(|state| {
+        state
+            .shipments
+            .get(&shipment_id)
+            .map(PrintableShipment::from)
     })
 }
 

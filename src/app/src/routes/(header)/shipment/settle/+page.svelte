@@ -3,10 +3,10 @@
 	import { invalidate } from '$app/navigation';
 	import { unwrap } from '$lib/utils';
 	import { connection } from '$lib/connection.svelte';
-	import ShipmentInfo from '$components/ShipmentInfo.svelte';
 	import PillButton from '$components/common/PillButton.svelte';
 	import QrCodeDisplay from '$components/QrCodeDisplay.svelte';
 	import { getLocalStorage } from '$lib/storage';
+	import ShipmentInfo from '$components/ShipmentInfo.svelte';
 
 	let { data, settled } = $props<{ data: PageData; settled?: () => void }>();
 

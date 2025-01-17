@@ -3,7 +3,7 @@
 	import { Marker } from 'svelte-maplibre';
 	import type { PrintableShipment } from '$declarations/contract/contract.did';
 
-	let { shipments } = $props<{ shipments: Shipment[] }>();
+	let { shipments } = $props<{ shipments: PrintableShipment[] }>();
 </script>
 
 {#each shipments as shipment}

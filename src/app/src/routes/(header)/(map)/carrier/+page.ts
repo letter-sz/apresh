@@ -9,7 +9,7 @@ export async function load({ depends, fetch }: LoadEvent) {
 	depends('shipments:carrier');
 
 	const actor = await connection.tryGetActor();
-	let carried: Shipment[] = [];
+	let carried: PrintableShipment[] = [];
 
 	if (actor !== null) {
 		const carrierShipments = await actor.carrier_shipments();

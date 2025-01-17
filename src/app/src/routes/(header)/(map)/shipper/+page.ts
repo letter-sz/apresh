@@ -8,7 +8,7 @@ export async function load({ depends }: LoadEvent) {
 	depends('shipments:shipper');
 
 	const actor = connection.tryGetActor();
-	let created: Shipment[] = [];
+	let created: PrintableShipment[] = [];
 
 	if (actor !== null) {
 		const shipperShipments = await actor.shipper_shipments();
