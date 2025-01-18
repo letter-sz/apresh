@@ -14,7 +14,7 @@ pub struct CanisterState {
     pub shippers: ActorCollection<Shipper>,
     pub carriers: ActorCollection<Carrier>,
     pub shipments: Shipments,
-    pub shipment_counter: u64,
+    shipment_counter: u64,
 }
 
 pub trait CanisterActors {
@@ -85,10 +85,9 @@ impl CanisterShipments for CanisterState {
 
     fn create_shipment(&mut self, shipment: Shipment) -> &mut Shipment {
         self.shipments.insert(self.shipment_counter, shipment);
+        let inserted_shipment = self.shipments.get_mut(&self.shipment_counter).unwrap();
         self.shipment_counter += 1;
-        self.shipments
-            .get_mut(&(self.shipment_counter - 1))
-            .unwrap()
+        inserted_shipment
     }
 
     fn shipments(&self) -> Vec<&Shipment> {

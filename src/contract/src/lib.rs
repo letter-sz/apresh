@@ -25,7 +25,7 @@ use candid::Principal;
 use ic_cdk::{init, query, update};
 use icrc_ledger_types::icrc1::transfer::NumTokens;
 use transfer::{transfer_in, transfer_out, TransferInParams, TransferOutParams, TransferParams};
-use utils::block_anonymous;
+use utils::{block_anonymous, memo};
 
 pub use vetkd::{encrypted_ibe_decryption_key_for_caller, ibe_encryption_key};
 
@@ -47,71 +47,57 @@ fn init() {
         ("F", -33.8688, 151.2093), // Sydney, Australia
     ];
 
-    let names: [&str; 10] = [
-        "John Doe",
-        "Jane Doe",
-        "Alice Smith",
-        "Bob Smith",
-        "Charlie Brown",
-        "Daisy Brown",
-        "Eve Green",
-        "Frank Green",
-        "Grace Black",
-        "Harry Black",
-    ];
-
     let default_principal =
         Principal::from_text("ryssj-xcbz7-gbw4s-p7fio-lolnx-5nr7a-yxufe-cvpfg-6iujw-2ypsz-rqe")
             .expect("Failed to create principal");
 
-    let shippers = names
-        .iter()
-        .map(|name| Shipper::new(default_principal.into(), name))
-        .collect::<Vec<_>>();
-
-    let packages_names = [
-        "Package 1",
-        "Package 2",
-        "Package 3",
-        "Package 4",
-        "Package 5",
-        "Package 6",
-        "Package 7",
-        "Package 8",
-        "Package 9",
-        "Package 10",
+    let names = [
+        ("Package 1", "John Doe"),
+        ("Package 2", "Jane Doe"),
+        ("Package 3", "Alice Smith"),
+        ("Package 4", "Bob Smith"),
+        ("Package 5", "Charlie Brown"),
+        ("Package 6", "Daisy Brown"),
+        ("Package 7", "Eve Green"),
+        ("Package 8", "Frank Green"),
+        ("Package 9", "Grace Black"),
+        ("Package 10", "Harry Black"),
     ];
 
-    for (i, (shipper, package_name)) in shippers
-        .into_iter()
-        .zip(packages_names.into_iter())
-        .enumerate()
-    {
+    for (i, (package_name, name)) in names.iter().enumerate() {
         let (origin_label, origin_lat, origin_lng) = &locations[i % locations.len()];
         let (dest_label, dest_lat, dest_lng) = &locations[(i + 1) % locations.len()];
 
-        let create_shipment_op = CreateShipmentOp::new(
-            shipper,
-            "hashed_secret",
-            package_name,
-            ShipmentInfo::new(
-                100u64 + i as u64,
-                10u64 + i as u64,
-                ShipmentLocation::new(origin_label.to_string(), *origin_lat, *origin_lng),
-                ShipmentLocation::new(dest_label.to_string(), *dest_lat, *dest_lng),
-                SizeCategory::Envelope,
-            ),
-            ic_cdk::api::time(),
-        );
-
         let shipment_id = STATE
-            .with_borrow_mut(|state| create_shipment_op.apply(state))
+            .with_borrow_mut(|state| {
+                RegisterActorOp::AddShipper {
+                    id: default_principal.into(),
+                    name: name.to_string(),
+                }
+                .apply(state)
+                .unwrap();
+
+                CreateShipmentOp::new(
+                    default_principal.into(),
+                    "hashed_secret",
+                    package_name,
+                    ShipmentInfo::new(
+                        100u64 + i as u64,
+                        10u64 + i as u64,
+                        ShipmentLocation::new(origin_label.to_string(), *origin_lat, *origin_lng),
+                        ShipmentLocation::new(dest_label.to_string(), *dest_lat, *dest_lng),
+                        SizeCategory::Envelope,
+                    ),
+                    ic_cdk::api::time(),
+                )
+                .apply(state)
+            })
             .map_err(|e| e.to_string())
             .expect("Failed to create shipment");
 
         ic_cdk::print(format!(
             "Shipment created: {:?}, shipment_id: {}",
-            create_shipment_op, shipment_id
+            shipment_id, shipment_id
         ));
     }
 }
@@ -125,45 +111,40 @@ async fn add_encrypted_message(message: String, shipment_id: u64) -> Result<(), 
         .map_err(|e| e.to_string())
 }
 
-#[update(name = "readEncryptedMessage")]
+#[query(name = "readEncryptedMessage")]
 async fn read_encrypted_message(shipment_id: u64) -> Result<Option<String>, String> {
     let caller = ActorId(ic_cdk::caller());
 
     STATE
-        .with_borrow_mut(|state| ReadMessageOp::new(shipment_id, caller).apply(state))
+        .with_borrow(|state| ReadMessageOp::new(shipment_id, caller).read(state))
         .map_err(|e| e.to_string())
 }
 
 #[update(name = "finalizeShipment")]
 async fn finalize_shipment(shipment_id: u64, secret_key: Option<String>) -> Result<(), String> {
-    let caller = ic_cdk::caller();
-
-    let finalize_shipment_op = FinalizeShipmentOp::new(shipment_id, secret_key.as_deref(), caller);
+    let caller = ActorId(ic_cdk::caller());
 
     let finalize_shipment_result = STATE
-        .with_borrow_mut(|state| finalize_shipment_op.apply(state))
+        .with_borrow_mut(|state| {
+            FinalizeShipmentOp::new(shipment_id, secret_key.as_deref(), caller).apply(state)
+        })
         .map_err(|e: anyhow::Error| e.to_string())?;
 
-    let transfer_out_carrier_args = TransferOutParams {
+    let transfer_args = TransferOutParams {
         params: TransferParams {
             amount: NumTokens::from(
                 finalize_shipment_result.value() + finalize_shipment_result.price(),
             ),
-            memo: None,
+            memo: memo("SETTLE", shipment_id),
         },
-        to: (*finalize_shipment_result.carrier_id()).into(),
+        to: (finalize_shipment_result.carrier_id().0).into(),
     };
 
-    let _transfer_out_carrier_result = transfer_out(transfer_out_carrier_args)
-        .await
-        .map_err(|e| e.to_string());
-
-    if let Err(e) = transfer_out_carrier_result {
+    if let Err(e) = transfer_out(transfer_args).await {
         ic_cdk::trap(&e.to_string())
     }
 
     ic_cdk::print(format!("Shipment finalized: {:?}", shipment_id).as_str());
-
     Ok(())
 }
 
@@ -173,39 +154,38 @@ async fn buy_shipment(carrier_name: Option<String>, shipment_id: u64) -> Result<
 
     let caller = ActorId(ic_cdk::caller());
 
-    let shipment_cost = STATE
+    let shipment_value = STATE
         .with_borrow_mut(|state| {
+            // Register carrier if carrier name is provided
             if let Some(carrier_name) = carrier_name {
                 let carrier = Carrier::new(caller, carrier_name.as_str());
 
-                let op = RegisterActorOp::AddCarrier {
+                RegisterActorOp::AddCarrier {
                     id: carrier.id(),
                     name: carrier_name,
-                };
-                op.apply(state).map_err(|e| e.to_string()).unwrap();
+                }
+                .apply(state)
+                .map_err(|e| e.to_string())
+                .unwrap();
             }
 
-            let buy_shipment_op = BuyShipmentOp::new(caller, shipment_id);
-
-            buy_shipment_op.apply(state)
+            BuyShipmentOp::new(caller, shipment_id).apply(state)
         })
         .unwrap();
 
-    let transfer_in_args = TransferInParams {
+    let transfer_args = TransferInParams {
         params: TransferParams {
-            amount: NumTokens::from(shipment_cost),
-            memo: None,
+            amount: NumTokens::from(shipment_value),
+            memo: memo("BUY", shipment_id),
         },
         from: caller.0.into(),
     };
 
-    transfer_in(transfer_in_args)
-        .await
-        .map_err(|e| e.to_string())
-        .unwrap();
+    if let Err(e) = transfer_in(transfer_args).await {
+        ic_cdk::trap(&e.to_string())
+    }
 
     ic_cdk::print(format!("Shipment bought: {:?}", shipment_id).as_str());
-
     Ok(())
 }
 
@@ -222,45 +202,55 @@ async fn generate_qr(link: String, size: usize) -> Result<Vec<u8>, String> {
 
 #[update(name = "createShipment")]
 async fn create_shipment(
-    customer_name: String,
+    customer_name: Option<String>,
     shipment_name: String,
     hashed_secret: String,
     qr_options: QrCodeOptions,
     shipment_info: ShipmentInfo,
 ) -> Result<(Vec<u8>, u64), String> {
-    let customer_id = ic_cdk::caller();
-    ic_cdk::print(format!("Creating a shipment: {}", customer_id).as_str());
-
-    let amount = NumTokens::from(shipment_info.price());
-    let shipper = Shipper::new(customer_id.into(), customer_name.as_str());
-
-    let transfer_in_args = TransferInParams {
-        params: TransferParams {
-            amount: NumTokens::from(amount),
-            memo: None,
-        },
-        from: shipper.id().0.into(),
-    };
-
-    transfer_in(transfer_in_args)
-        .await
-        .map_err(|e| e.to_string())?;
+    let caller = ActorId(ic_cdk::caller());
+    let price = shipment_info.price();
 
     let created_at = ic_cdk::api::time();
 
-    let create_shipment_op = CreateShipmentOp::new(
-        shipper,
-        &hashed_secret,
-        &shipment_name,
-        shipment_info,
-        created_at,
-    );
-
     let shipment_id = STATE
-        .with_borrow_mut(|state| create_shipment_op.apply(state))
+        .with_borrow_mut(|state| {
+            if let Some(customer_name) = customer_name {
+                let shipper = Shipper::new(caller, customer_name.as_str());
+
+                RegisterActorOp::AddShipper {
+                    id: shipper.id(),
+                    name: customer_name,
+                }
+                .apply(state)
+                .map_err(|e| e.to_string())
+                .unwrap();
+            }
+
+            CreateShipmentOp::new(
+                caller.into(),
+                &hashed_secret,
+                &shipment_name,
+                shipment_info,
+                created_at,
+            )
+            .apply(state)
+        })
         .map_err(|e| e.to_string())?;
 
     let qr_code = qr::generate(qr_options).unwrap_or_else(|err| ic_cdk::trap(&err.to_string()));
+
+    let transfer_args = TransferInParams {
+        params: TransferParams {
+            amount: NumTokens::from(price),
+            memo: memo("CREATE", shipment_id),
+        },
+        from: caller.0.into(),
+    };
+
+    if let Err(e) = transfer_in(transfer_args).await {
+        ic_cdk::trap(&e.to_string())
+    }
 
     ic_cdk::print(format!("Shipment created: {:?}", shipment_id).as_str());
     Ok((qr_code, shipment_id))

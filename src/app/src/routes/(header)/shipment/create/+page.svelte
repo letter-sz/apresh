@@ -53,7 +53,7 @@
 		const hashed = hash.hex();
 
 		const res = await actor.createShipment(
-			'',
+			['Janek'],
 			name,
 			hashed,
 			{

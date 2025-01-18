@@ -6,16 +6,15 @@ use crate::{
 use super::StateOp;
 use crate::{actors::Actor, state::CanisterState};
 use anyhow::anyhow;
-use candid::Principal;
 
 pub struct FinalizeShipmentResult {
-    carrier_id: Principal,
+    carrier_id: ActorId,
     value: u64,
     price: u64,
 }
 
 impl FinalizeShipmentResult {
-    pub fn carrier_id(&self) -> &Principal {
+    pub fn carrier_id(&self) -> &ActorId {
         &self.carrier_id
     }
 
@@ -29,13 +28,13 @@ impl FinalizeShipmentResult {
 }
 
 pub struct FinalizeShipmentOp<'a> {
-    caller: Principal,
+    caller: ActorId,
     shipment_id: ShipmentId,
     secret_key: Option<&'a str>,
 }
 
 impl<'a> FinalizeShipmentOp<'a> {
-    pub fn new(shipment_id: ShipmentId, secret_key: Option<&'a str>, caller: Principal) -> Self {
+    pub fn new(shipment_id: ShipmentId, secret_key: Option<&'a str>, caller: ActorId) -> Self {
         Self {
             shipment_id,
             secret_key,
@@ -64,11 +63,11 @@ impl<'a> StateOp<FinalizeShipmentResult> for FinalizeShipmentOp<'a> {
 
         shipment.action(ShipmentActions::MarkDelivered {
             secret_key: self.secret_key,
-            caller: ActorId(self.caller),
+            caller: self.caller,
         })?;
 
         Ok(FinalizeShipmentResult {
-            carrier_id: carrier.id().0,
+            carrier_id: carrier.id(),
             value: shipment.info().value(),
             price: shipment.info().price(),
         })
