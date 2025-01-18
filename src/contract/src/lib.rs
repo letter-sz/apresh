@@ -228,7 +228,7 @@ async fn create_shipment(
             }
 
             CreateShipmentOp::new(
-                caller.into(),
+                caller,
                 &hashed_secret,
                 &shipment_name,
                 shipment_info,
