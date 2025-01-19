@@ -22,30 +22,36 @@
 <div
 	onclick={onClick}
 	onmouseenter={onMouseEnter}
-	class={clsx(
+	class={[
 		'mx-5 my-12 rounded-3xl p-6 shadow-lg ring-0 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:ring-8',
 		{
 			'bg-orange-100 hover:ring-orange-200': color == 'orange',
 			'bg-violet-100 hover:ring-violet-200': color == 'violet',
 			'bg-blue-100 hover:ring-blue-200': color == 'blue'
 		}
-	)}
+	]}
 >
 	<h2
-		class={clsx(`mb-4 text-xl font-bold`, {
-			'text-orange-600': color == 'orange',
-			'text-violet-600': color == 'violet',
-			'text-blue-600': color == 'blue'
-		})}
+		class={[
+			'mb-4 text-xl font-bold',
+			{
+				'text-orange-600': color == 'orange',
+				'text-violet-600': color == 'violet',
+				'text-blue-600': color == 'blue'
+			}
+		]}
 	>
 		{title}
 	</h2>
 	<p
-		class={clsx(`text-${color}-500`, {
-			'text-orange-500': color == 'orange',
-			'text-violet-500': color == 'violet',
-			'text-blue-500': color == 'blue'
-		})}
+		class={[
+			`text-${color}-500`,
+			{
+				'text-orange-500': color == 'orange',
+				'text-violet-500': color == 'violet',
+				'text-blue-500': color == 'blue'
+			}
+		]}
 	>
 		{@render children()}
 	</p>
