@@ -15,13 +15,6 @@ use serde::{Deserialize, Serialize};
 /// - `active_shipments`: List of shipments currently in progress
 /// - `shipments_history`: Archive of completed or cancelled shipments
 ///
-/// # Usage
-/// ```rust
-/// #[derive(IsActor)]
-/// struct Carrier {
-///     base: ActorBase,
-/// }
-/// ```
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct ActorBase {
     /// The unique principal identifier of the actor.

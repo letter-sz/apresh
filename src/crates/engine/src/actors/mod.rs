@@ -37,7 +37,10 @@ pub enum ActorRole {
 ///
 /// # Example
 /// ```rust
-/// #[derive(IsActor)]
+/// use engine::actors::{base::ActorBase, Actor, ActorRole};
+/// use engine::{models::shipment::ShipmentId, ActorId};
+///
+/// #[derive(actor_derive::IsActor)]
 /// struct Carrier {
 ///     base: ActorBase,
 /// }
