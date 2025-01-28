@@ -9,7 +9,7 @@
 
 	let { data, bought }: { data: PageData; bought?: () => void } = $props();
 
-	async function buy(shipment: PrintableShipment) {
+	async function handle(shipment: PrintableShipment) {
 		const actor = await connection.getActor();
 
 		const res = await actor.cancel_shipment(shipment.id);
@@ -29,16 +29,7 @@
 
 		bought?.();
 	}
-
-	let buttonText = $derived(
-		(data.balance ?? 0 >= data.shipment.info.price) ? 'Cancel' : 'Insufficient funds'
-	);
 </script>
 
 <ShipmentInfo shipment={data.shipment} />
-<PillButton
-	onClick={() => buy(data.shipment)}
-	disabled={buttonText === 'Insufficient funds'}
-	text={buttonText}
-	className="w-1/2 mx-auto"
-/>
+<PillButton onClick={() => handle(data.shipment)} text="Cancel" className="w-1/2 mx-auto" />
