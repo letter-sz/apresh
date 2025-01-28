@@ -3,13 +3,14 @@
 	import type { ShipmentLocation } from '$declarations/contract/contract.did';
 	import Marker from '$components/Marker.svelte';
 	import Modal from '$components/modal/Modal.svelte';
-	import type { PageData } from './$types';
 	import MapButton from '$components/MapButton.svelte';
 	import { page } from '$app/stores';
-	import CreatePage from '../shipment/create/+page.svelte';
-	import BuyPage from '../shipment/buy/+page.svelte';
+	import CreatePage from '$routes/(header)/shipment/create/+page.svelte';
+	import BuyPage from '$routes/(header)/shipment/buy/+page.svelte';
 	import { MapEvents } from 'svelte-maplibre';
-	import SettlePage from '../shipment/settle/+page.svelte';
+	import SettlePage from '$routes/(header)/shipment/settle/+page.svelte';
+	import type { PageData } from './$types';
+	import { connection } from '$lib/connection.svelte';
 
 	const { data }: { data: PageData } = $props();
 
@@ -34,8 +35,8 @@
 
 {#if selectMode !== null}
 	<MapEvents on:click={getLocation} />
-{:else if data.created.length > 0}
-	{#each data.created as shipment}
+{:else}
+	{#each data.created as shipment (shipment.id)}
 		<Marker
 			callback={() =>
 				pushState(`/shipment/settle?id=${shipment.id}`, {
@@ -45,23 +46,13 @@
 			name={shipment.id.toString()}
 		></Marker>
 	{/each}
-{:else}
-	{#each data.shipments as shipment}
-		<Marker
-			callback={() =>
-				pushState(`/shipment/buy?id=${shipment.id}`, {
-					page: { mode: 'buy', id: shipment.id, shipment: shipment, balance: data.balance }
-				})}
-			location={shipment.info.source}
-			name={shipment.id.toString()}
-		></Marker>
-	{/each}
 {/if}
 
 <MapButton
 	isOpen={$page.state?.page?.mode === 'map'}
 	onOpen={() => {
-		console.log('open');
+		connection.ensureConnected();
+		selectMode = null;
 		pushState('/shipment/create', {
 			page: { mode: 'create', balance: data.balance }
 		});

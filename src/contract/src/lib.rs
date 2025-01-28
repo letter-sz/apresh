@@ -251,35 +251,40 @@ fn get_pending_shipments() -> Vec<Shipment> {
         state
             .shipments
             .values()
-            .filter(|shipment| *shipment.status() == ShipmentStatus::Created)
+            .filter(|shipment| *shipment.status() == ShipmentStatus::Pending)
             .map(Shipment::from)
             .collect()
     })
 }
 
-#[query(name = "listUserShipments")]
-fn get_user_shipments() -> (Vec<Shipment>, Vec<Shipment>) {
+#[query]
+fn shipper_shipments() -> Vec<Shipment> {
     let customer_id = ic_cdk::caller();
 
-    let shippers = STATE.with_borrow(|state| {
+    STATE.with_borrow(|state| {
         state
             .shipments
             .values()
             .filter(|shipment| shipment.shipper_id() == customer_id)
+            .filter(|shipment| !shipment.status().is_finished())
             .map(Shipment::from)
             .collect()
-    });
+    })
+}
 
-    let carriers = STATE.with_borrow(|state| {
+#[query]
+fn carrier_shipments() -> Vec<Shipment> {
+    let customer_id = ic_cdk::caller();
+
+    STATE.with_borrow(|state| {
         state
             .shipments
             .values()
             .filter(|shipment| shipment.carrier_id() == Some(customer_id))
+            .filter(|shipment| !shipment.status().is_finished())
             .map(Shipment::from)
             .collect()
-    });
-
-    (shippers, carriers)
+    })
 }
 
 #[query]

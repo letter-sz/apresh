@@ -63,7 +63,7 @@ impl InternalShipment {
     }
 
     fn buy(&mut self, carrier_id: CarrierId) -> anyhow::Result<()> {
-        if self.status != ShipmentStatus::Created {
+        if self.status != ShipmentStatus::Pending {
             return Err(anyhow::anyhow!(
                 "shipment is not created, invalid operation"
             ));
@@ -82,7 +82,7 @@ pub type ShipmentId = u64;
 pub enum ShipmentStatus {
     /// Shipment is created but not bought
     #[default]
-    Created,
+    Pending,
     /// Shipment is bought by carrier
     Bought,
     /// Shipment has pickup scheduled
@@ -97,6 +97,15 @@ pub enum ShipmentStatus {
     DeliveryCompleted,
     /// Shipment has been cancelled
     Cancelled,
+}
+
+impl ShipmentStatus {
+    pub fn is_finished(&self) -> bool {
+        match self {
+            ShipmentStatus::Cancelled | ShipmentStatus::DeliveryCompleted => true,
+            _ => false,
+        }
+    }
 }
 
 // Shipment, but without principals, so JSON-able

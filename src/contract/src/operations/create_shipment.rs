@@ -1,7 +1,10 @@
 use super::{CanisterState, StateOp};
 
 use crate::{
-    actors::{shipper::{Shipper, ShipperId}, Actor},
+    actors::{
+        shipper::{Shipper, ShipperId},
+        Actor,
+    },
     models::shipment::{InternalShipment, ShipmentId, ShipmentInfo},
 };
 
@@ -30,7 +33,7 @@ impl<'a> CreateShipmentOp<'a> {
             timestamp,
         }
     }
-}   
+}
 
 impl<'a> StateOp<ShipmentId> for CreateShipmentOp<'a> {
     type Error = anyhow::Error;
@@ -39,12 +42,10 @@ impl<'a> StateOp<ShipmentId> for CreateShipmentOp<'a> {
         let new_shipment_id = state.shipment_counter;
         state.shipment_counter += 1;
 
-        let shipper = match state
-            .shippers
-            .get_mut(&self.creator.id()) {
-                Some(shipper) => shipper,
-                None => state.shippers.create(self.creator.clone()),
-            };
+        let shipper = match state.shippers.get_mut(&self.creator.id()) {
+            Some(shipper) => shipper,
+            None => state.shippers.create(self.creator.clone()),
+        };
 
         let shipment = InternalShipment::new(
             self.timestamp,
