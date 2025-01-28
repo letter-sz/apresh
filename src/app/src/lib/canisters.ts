@@ -9,7 +9,7 @@ import { type ActorSubclass, type Identity } from '@dfinity/agent';
 import type { _SERVICE } from '$declarations/contract/contract.did';
 import type { _SERVICE as _ICRC1_SERVICE } from '$declarations/icrc1_ledger_canister/icrc1_ledger_canister.did';
 
-const host = `http://[::1]:4943`;
+const host = `http://localhost:4943`;
 
 export function fetchBackend(fetchFunction: typeof fetch) {
 	return createActor(canisterId, { agentOptions: { host, fetch: fetchFunction } });
@@ -32,7 +32,7 @@ export interface IConnection {
 
 export const connect = async (allowReconnect: boolean = true): Promise<IConnection> => {
 	console.log('Connecting to backend');
-	let authClient = await AuthClient.create();
+	const authClient = await AuthClient.create();
 
 	const authenticated = await authClient.isAuthenticated();
 	const canReconnect = authenticated && allowReconnect;
