@@ -1,12 +1,20 @@
 <script lang="ts">
 	import type { PrintableShipment } from '$declarations/contract/contract.did';
+	import { getDistance } from 'geolib';
 	import ShipmentRecord from './ShipmentRecord.svelte';
 
 	let { shipments }: { shipments: PrintableShipment[] } = $props();
 
+	let shipmentsWithDistance = $derived(
+		shipments.map((shipment) => ({
+			...shipment,
+			distance: getDistance(shipment.info.source, shipment.info.destination)
+		}))
+	);
+
 	let searchQuery = $state('');
 	let selectedCategory = $state('All');
-	let sortField = $state<'name' | 'price' | 'value' | 'category'>('name');
+	let sortField = $state<'name' | 'price' | 'value' | 'category' | 'distance'>('name');
 	let sortDirection = $state<'asc' | 'desc'>('asc');
 
 	let categories = $derived([
@@ -24,7 +32,7 @@
 	}
 
 	let filteredShipments = $derived(
-		shipments
+		shipmentsWithDistance
 			.filter((shipment) => {
 				const matchesSearch = shipment.name.toLowerCase().includes(searchQuery.toLowerCase());
 				const matchesCategory =
@@ -50,6 +58,10 @@
 					case 'category':
 						aValue = Object.keys(a.info.size_category)[0];
 						bValue = Object.keys(b.info.size_category)[0];
+						break;
+					case 'distance':
+						aValue = getDistance(a.info.source, a.info.destination);
+						bValue = getDistance(b.info.source, b.info.destination);
 						break;
 				}
 				const comparison = aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
@@ -102,7 +114,7 @@
 				<tr>
 					<th
 						class="cursor-pointer border-b-2 border-rose-200 p-3 text-left text-base font-semibold text-rose-600 hover:bg-rose-100"
-						on:click={() => toggleSort('name')}
+						onclick={() => toggleSort('name')}
 					>
 						Name
 						{#if sortField === 'name'}
@@ -111,7 +123,7 @@
 					</th>
 					<th
 						class="cursor-pointer border-b-2 border-rose-200 p-3 text-right text-base font-semibold text-rose-600 hover:bg-rose-100"
-						on:click={() => toggleSort('price')}
+						onclick={() => toggleSort('price')}
 					>
 						Price
 						{#if sortField === 'price'}
@@ -120,7 +132,7 @@
 					</th>
 					<th
 						class="cursor-pointer border-b-2 border-rose-200 p-3 text-right text-base font-semibold text-rose-600 hover:bg-rose-100"
-						on:click={() => toggleSort('value')}
+						onclick={() => toggleSort('value')}
 					>
 						Value
 						{#if sortField === 'value'}
@@ -129,10 +141,19 @@
 					</th>
 					<th
 						class="cursor-pointer border-b-2 border-rose-200 p-3 text-left text-base font-semibold text-rose-600 hover:bg-rose-100"
-						on:click={() => toggleSort('category')}
+						onclick={() => toggleSort('category')}
 					>
 						Category
 						{#if sortField === 'category'}
+							<span class="ml-1">{sortDirection === 'asc' ? '↑' : '↓'}</span>
+						{/if}
+					</th>
+					<th
+						class="cursor-pointer border-b-2 border-rose-200 p-3 text-right text-base font-semibold text-rose-600 hover:bg-rose-100"
+						onclick={() => toggleSort('distance')}
+					>
+						Distance
+						{#if sortField === 'distance'}
 							<span class="ml-1">{sortDirection === 'asc' ? '↑' : '↓'}</span>
 						{/if}
 					</th>
