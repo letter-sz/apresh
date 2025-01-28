@@ -5,17 +5,14 @@
 	import { connection } from '$lib/connection.svelte';
 	import PillButton from '$components/common/PillButton.svelte';
 	import type { PrintableShipment } from '$declarations/contract/contract.did';
-	import TextInput from '$components/common/Inputs/TextInput.svelte';
-	import { wallet } from '$lib/wallet.svelte';
 	import ShipmentInfo from '$components/ShipmentInfo.svelte';
 
 	let { data, bought }: { data: PageData; bought?: () => void } = $props();
 
-	async function buy(shipment: PrintableShipment) {
+	async function handle(shipment: PrintableShipment) {
 		const actor = await connection.getActor();
 
-		await wallet.approve(shipment.info.price);
-		const res = await actor.buyShipment(['Jacek'], shipment.id);
+		const res = await actor.cancel_shipment(shipment.id);
 		unwrap<null>(res);
 
 		// const encryptedMessage = await ibe_encrypt(
@@ -32,19 +29,7 @@
 
 		bought?.();
 	}
-
-	let message = $state('');
-
-	let buttonText: 'Buy' | 'Insufficient funds' = $derived(
-		(data.balance ?? 0 >= data.shipment.info.price) ? 'Buy' : 'Insufficient funds'
-	);
 </script>
 
 <ShipmentInfo shipment={data.shipment} />
-<TextInput id="Message" label="Message" name="Message" bind:value={message} />
-<PillButton
-	onClick={() => buy(data.shipment)}
-	disabled={buttonText === 'Insufficient funds'}
-	text={buttonText}
-	className="w-1/2 mx-auto"
-/>
+<PillButton onClick={() => handle(data.shipment)} text="Cancel" className="w-1/2 mx-auto" />

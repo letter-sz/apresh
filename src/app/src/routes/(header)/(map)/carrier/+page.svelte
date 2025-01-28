@@ -4,6 +4,7 @@
 	import Modal from '$components/modal/Modal.svelte';
 	import { page } from '$app/stores';
 	import BuyPage from '$routes/(header)/shipment/buy/+page.svelte';
+	import CancelPage from '$routes/(header)/shipment/cancel/+page.svelte';
 	import type { PageData } from './$types';
 
 	const { data }: { data: PageData } = $props();
@@ -13,8 +14,8 @@
 	{#each data.carried as shipment (shipment.id)}
 		<Marker
 			callback={() =>
-				pushState(`/shipment/settle?id=${shipment.id}`, {
-					page: { mode: 'settle', id: shipment.id, shipment: shipment, balance: data.balance }
+				pushState(`/shipment/cancel?id=${shipment.id}`, {
+					page: { mode: 'cancel', id: shipment.id, shipment: shipment, balance: data.balance }
 				})}
 			location={shipment.info.destination}
 			name={shipment.id.toString()}
@@ -42,8 +43,8 @@
 	>
 		{#if $page.state.page.mode === 'buy'}
 			<BuyPage data={$page.state.page} />
-		{:else}
-			TODO - cancel
+		{:else if $page.state.page.mode === 'cancel'}
+			<CancelPage data={$page.state.page} />
 		{/if}
 	</Modal>
 {/if}

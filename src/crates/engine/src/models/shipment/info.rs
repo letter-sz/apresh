@@ -16,7 +16,6 @@ impl ShipmentLocation {
     }
 }
 
-
 // SIZE CATEGORY
 #[derive(Deserialize, Serialize, Debug, Clone, CandidType)]
 pub enum SizeCategory {

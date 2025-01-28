@@ -1,5 +1,4 @@
-use crate::models::shipment::ShipmentId;
-use candid::Principal;
+use crate::{models::shipment::ShipmentId, ActorId};
 
 pub mod base;
 pub mod carrier;
@@ -27,18 +26,21 @@ pub enum ActorRole {
 
 #[allow(dead_code)]
 /// Core trait that defines the behavior and properties of all actors in the system.
-/// 
+///
 /// An actor represents a participant in the shipping system, such as a shipper or carrier.
 /// Each actor has a unique identity (Principal), a name, and maintains lists of their
 /// active and completed shipments.
-/// 
+///
 /// # Implementation
 /// This trait is typically implemented using the `IsActor` derive macro, which requires
 /// the implementing struct to have a `base: ActorBase` field.
-/// 
+///
 /// # Example
 /// ```rust
-/// #[derive(IsActor)]
+/// use engine::actors::{base::ActorBase, Actor, ActorRole};
+/// use engine::{models::shipment::ShipmentId, ActorId};
+///
+/// #[derive(actor_derive::IsActor)]
 /// struct Carrier {
 ///     base: ActorBase,
 /// }
@@ -46,7 +48,7 @@ pub enum ActorRole {
 pub trait Actor {
     /// Returns the unique Principal identifier of the actor.
     /// This is used for authentication and tracking ownership of actions.
-    fn id(&self) -> Principal;
+    fn id(&self) -> ActorId;
 
     /// Returns the human-readable name of the actor.
     /// This name is used for display purposes and user interaction.

@@ -53,7 +53,7 @@
 		const hashed = hash.hex();
 
 		const res = await actor.createShipment(
-			'',
+			['Janek'],
 			name,
 			hashed,
 			{
@@ -99,6 +99,10 @@
 			// TODO: this should be handled better
 		}
 	};
+
+	let buttonText: 'Create Shipment' | 'Insufficient funds' = $derived(
+		(data.balance ?? 0n) >= BigInt(price) ? 'Create Shipment' : 'Insufficient funds'
+	);
 </script>
 
 <form method="POST" class="flex w-full flex-col space-y-7" onsubmit={createShipment}>
@@ -139,7 +143,7 @@
 		</Tabs.Content>
 	</Tabs.Root>
 
-	<PillButton text="Create Shipment" />
+	<PillButton text={buttonText} disabled={buttonText === 'Insufficient funds'} />
 </form>
 
 {#snippet locationButton(

@@ -1,34 +1,48 @@
-use crate::actors::carrier::CarrierId;
-use crate::actors::shipper::ShipperId;
-use anyhow::Context;
-use candid::{CandidType, Principal};
+use candid::CandidType;
 use hex::FromHex;
 use serde::{Deserialize, Serialize};
 use sha2::Digest;
 use sha2::Sha256;
 
+use crate::ActorId;
+
 use super::info::ShipmentInfo;
 
-pub enum ShipmentActions<'a> {
-    Buy(CarrierId),
+pub enum ShipmentActions<'a, ActorId> {
+    Buy(ActorId),
     MarkDelivered {
         secret_key: Option<&'a str>,
-        caller: Principal,
+        caller: ActorId,
+    },
+    Cancel {
+        shipper: ActorId,
     },
 }
 
-impl InternalShipment {
-    pub fn action(&mut self, op: ShipmentActions) -> anyhow::Result<()> {
+impl Shipment {
+    pub fn action(&mut self, op: ShipmentActions<ActorId>) -> crate::errors::Result<()> {
         match op {
             ShipmentActions::Buy(carrier_id) => self.buy(carrier_id),
             ShipmentActions::MarkDelivered { secret_key, caller } => {
                 self.finalize(secret_key, caller)
             }
+            ShipmentActions::Cancel { shipper } => self.cancel(shipper),
         }
     }
 
-    fn validate_secret(&self, secret: &str) -> anyhow::Result<()> {
-        let hex = Vec::from_hex(self.hashed_secret.clone()).context("invalid hex")?;
+    fn cancel(&mut self, shipper: ActorId) -> crate::errors::Result<()> {
+        if self.shipper != shipper {
+            return Err(crate::errors::Error::NotAuthorizedAsShipper);
+        }
+
+        self.status = ShipmentStatus::Cancelled;
+
+        Ok(())
+    }
+
+    fn validate_secret(&self, secret: &str) -> crate::errors::Result<()> {
+        let hex = Vec::from_hex(self.hashed_secret.clone())
+            .map_err(|_| crate::errors::Error::SecretKeyIsInvalid)?;
 
         let mut hasher = Sha256::new();
         hasher.update(secret);
@@ -37,17 +51,17 @@ impl InternalShipment {
         if result[..] == hex {
             Ok(())
         } else {
-            Err(anyhow::anyhow!("secret verification failed"))
+            Err(crate::errors::Error::SecretKeyIsInvalid)
         }
     }
 
-    fn finalize(&mut self, secret_key: Option<&str>, caller: Principal) -> anyhow::Result<()> {
+    fn finalize(&mut self, secret_key: Option<&str>, caller: ActorId) -> crate::errors::Result<()> {
         if self.status != ShipmentStatus::InTransit {
-            return Err(anyhow::anyhow!("shipment is not ready to be finalized"));
+            return Err(crate::errors::Error::ShipmentNotReadyToBeFinalized);
         }
 
         if caller != self.shipper {
-            let secret_key = secret_key.ok_or(anyhow::anyhow!("missing secret"))?;
+            let secret_key = secret_key.ok_or(crate::errors::Error::SecretKeyIsInvalid)?;
 
             self.validate_secret(secret_key)?;
         }
@@ -57,16 +71,14 @@ impl InternalShipment {
         Ok(())
     }
 
-    fn assign_carrier(&mut self, carrier_id: CarrierId) {
+    fn assign_carrier(&mut self, carrier_id: ActorId) {
         self.carrier = Some(carrier_id);
         self.status = ShipmentStatus::InTransit;
     }
 
-    fn buy(&mut self, carrier_id: CarrierId) -> anyhow::Result<()> {
-        if self.status != ShipmentStatus::Pending {
-            return Err(anyhow::anyhow!(
-                "shipment is not created, invalid operation"
-            ));
+    fn buy(&mut self, carrier_id: ActorId) -> crate::errors::Result<()> {
+        if self.status != ShipmentStatus::Pending || self.carrier.is_some() {
+            return Err(crate::errors::Error::CarrierAlreadySet);
         }
 
         self.assign_carrier(carrier_id);
@@ -101,16 +113,16 @@ pub enum ShipmentStatus {
 
 impl ShipmentStatus {
     pub fn is_finished(&self) -> bool {
-        match self {
-            ShipmentStatus::Cancelled | ShipmentStatus::DeliveryCompleted => true,
-            _ => false,
-        }
+        matches!(
+            self,
+            ShipmentStatus::Cancelled | ShipmentStatus::DeliveryCompleted
+        )
     }
 }
 
 // Shipment, but without principals, so JSON-able
 #[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct InternalShipment {
+pub struct Shipment {
     /// Shipment id
     id: ShipmentId,
     /// Shipment name
@@ -124,15 +136,15 @@ pub struct InternalShipment {
     /// Encrypted message from shipper to carrier, could be used to send contact information
     message: Option<String>,
     /// Carrier id
-    carrier: Option<Principal>, // TODO: I think we should use some internal id instead of principal here
+    carrier: Option<ActorId>, // TODO: I think we should use some internal id instead of principal here
     /// Shipper id
-    shipper: Principal,
+    shipper: ActorId,
     /// Shipment creation timestamp
     created_at: u64,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, CandidType)]
-pub struct Shipment {
+pub struct PrintableShipment {
     id: ShipmentId,
     name: String,
     hashed_secret: String,
@@ -144,8 +156,8 @@ pub struct Shipment {
     created_at: u64,
 }
 
-impl From<&InternalShipment> for Shipment {
-    fn from(shipment: &InternalShipment) -> Self {
+impl From<&Shipment> for PrintableShipment {
+    fn from(shipment: &Shipment) -> Self {
         Self {
             id: shipment.id,
             name: shipment.name.clone(),
@@ -160,10 +172,10 @@ impl From<&InternalShipment> for Shipment {
     }
 }
 
-impl InternalShipment {
+impl Shipment {
     pub fn new(
         timestamp: u64,
-        shipper: ShipperId,
+        shipper: ActorId,
         id: ShipmentId,
         hashed_secret: &str,
         name: &str,
@@ -194,11 +206,11 @@ impl InternalShipment {
         &self.status
     }
 
-    pub fn shipper_id(&self) -> Principal {
+    pub fn shipper_id(&self) -> ActorId {
         self.shipper
     }
 
-    pub fn carrier_id(&self) -> Option<Principal> {
+    pub fn carrier_id(&self) -> Option<ActorId> {
         self.carrier
     }
 

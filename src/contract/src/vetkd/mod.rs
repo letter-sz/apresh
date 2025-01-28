@@ -1,8 +1,8 @@
 mod types;
 
-pub use types::*;
 use ic_cdk::{api::management_canister::main::CanisterId, update};
 use std::str::FromStr;
+pub use types::*;
 
 const VETKD_SYSTEM_API_CANISTER_ID: &str = "s55qq-oqaaa-aaaaa-aaakq-cai";
 
@@ -65,4 +65,4 @@ fn debug_println_caller(method_name: &str) {
         ic_cdk::caller().to_text(),
         ic_cdk::caller() == candid::Principal::anonymous()
     );
-} 
+}

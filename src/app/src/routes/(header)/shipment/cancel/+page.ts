@@ -1,9 +1,9 @@
 import type { PrintableShipment } from '$declarations/contract/contract.did';
-import { connection } from '$lib/connection.svelte';
+import { fetchBackend } from '$lib/canisters';
 import { error, type LoadEvent } from '@sveltejs/kit';
 
 /** @type {import('./$types').PageLoad } */
-export async function load({ url }: LoadEvent): Promise<{
+export async function load({ fetch, url }: LoadEvent): Promise<{
 	id: bigint;
 	shipment: PrintableShipment;
 }> {
@@ -13,19 +13,19 @@ export async function load({ url }: LoadEvent): Promise<{
 			message: 'Missing shipment ID'
 		});
 	}
+
 	const id = BigInt(idParam);
-	const actor = await connection.getActor();
-	const created = await actor.shipper_shipments();
-	const shipment = created.find((shipment: PrintableShipment) => shipment.id === id);
-	if (shipment === undefined) {
+	const shipment = await fetchBackend(fetch).shipment(id);
+	if (shipment.length === 0) {
 		error(404, {
 			message: 'Shipment not found'
 		});
 	}
+
 	// TODO: We should be able to only get the shipment we need
 	console.log('load', shipment);
 	return {
 		id,
-		shipment
+		shipment: shipment[0]
 	};
 }

@@ -9,16 +9,19 @@ edition = "2021"
 crate-type = ["cdylib"]
 
 [dependencies]
-candid = "0.10"
-ic-cdk = "0.13"
-ic-cdk-timers = "0.7"                                                      # Feel free to remove this dependency if you don't need timers
-serde = { version = "1.0.209", features = ["derive"] }
-icrc-ledger-types = "0.1.6"
-anyhow = "1.0.86"
-image = { version = "0.24", features = ["png"], default-features = false }
-qrcode-generator = "4.1"
-colorgrad = "0.6"
-sha2 = "0.10.8"
-hex-literal = "0.4.1"
-hex = "0.4.3"
-actor-derive = { path = "../actor-derive" }
+candid = { workspace = true }
+ic-cdk = { workspace = true }
+ic-cdk-timers = { workspace = true }
+derive_deref = { workspace = true }
+serde = { workspace = true }
+icrc-ledger-types = { workspace = true }
+anyhow = { workspace = true }
+image = { workspace = true }
+qrcode-generator = { workspace = true }
+colorgrad = { workspace = true }
+sha2 = { workspace = true }
+hex-literal = { workspace = true }
+hex = { workspace = true }
+
+actor-derive = { workspace = true }
+engine = { workspace = true }

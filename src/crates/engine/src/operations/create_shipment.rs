@@ -1,16 +1,15 @@
-use super::{CanisterState, StateOp};
-
 use crate::{
-    actors::{
-        shipper::{Shipper, ShipperId},
-        Actor,
-    },
-    models::shipment::{InternalShipment, ShipmentId, ShipmentInfo},
+    models::shipment::{Shipment, ShipmentId, ShipmentInfo},
+    state::{CanisterActors, CanisterShipments},
+    ActorId,
 };
+
+use super::{CanisterState, StateOp};
+use crate::actors::Actor;
 
 #[derive(Debug)]
 pub struct CreateShipmentOp<'a> {
-    creator: Shipper,
+    creator: ActorId,
     hashed_secret: &'a str,
     shipment_name: &'a str,
     info: ShipmentInfo,
@@ -19,7 +18,7 @@ pub struct CreateShipmentOp<'a> {
 
 impl<'a> CreateShipmentOp<'a> {
     pub fn new(
-        creator: Shipper,
+        creator: ActorId,
         hashed_secret: &'a str,
         shipment_name: &'a str,
         info: ShipmentInfo,
@@ -36,18 +35,16 @@ impl<'a> CreateShipmentOp<'a> {
 }
 
 impl<'a> StateOp<ShipmentId> for CreateShipmentOp<'a> {
-    type Error = anyhow::Error;
+    type Error = crate::errors::Error;
 
-    fn apply(&self, state: &mut CanisterState) -> Result<ShipmentId, anyhow::Error> {
-        let new_shipment_id = state.shipment_counter;
-        state.shipment_counter += 1;
+    fn apply(&self, state: &mut CanisterState) -> crate::Result<ShipmentId> {
+        let new_shipment_id = state.shipment_counter();
 
-        let shipper = match state.shippers.get_mut(&self.creator.id()) {
-            Some(shipper) => shipper,
-            None => state.shippers.create(self.creator.clone()),
-        };
+        let mut shipper = state
+            .shipper_mut(self.creator)
+            .ok_or(crate::Error::ShipperNotFound)?;
 
-        let shipment = InternalShipment::new(
+        let shipment = Shipment::new(
             self.timestamp,
             shipper.id(),
             new_shipment_id,
@@ -56,8 +53,8 @@ impl<'a> StateOp<ShipmentId> for CreateShipmentOp<'a> {
             self.info.clone(),
         );
 
-        state.shipments.insert(new_shipment_id, shipment);
         shipper.add_shipment(new_shipment_id);
+        state.create_shipment(shipment);
 
         Ok(new_shipment_id)
     }
@@ -65,7 +62,11 @@ impl<'a> StateOp<ShipmentId> for CreateShipmentOp<'a> {
 
 #[cfg(test)]
 mod tests {
-    use crate::models::shipment::{ShipmentLocation, SizeCategory};
+    use crate::{
+        models::shipment::{ShipmentLocation, SizeCategory},
+        operations::RegisterActorOp,
+        ActorId,
+    };
 
     use super::*;
     use candid::Principal;
@@ -91,10 +92,15 @@ mod tests {
             SizeCategory::Envelope,
         );
 
-        let creator = Shipper::new(creator_id, creator_name);
+        let register_op = RegisterActorOp::AddShipper {
+            id: creator_id.into(),
+            name: creator_name.to_string(),
+        };
+
+        register_op.apply(&mut state);
 
         let op = CreateShipmentOp::new(
-            creator,
+            creator_id.into(),
             hashed_secret,
             shipment_name,
             info.clone(),
@@ -106,15 +112,15 @@ mod tests {
         assert!(result.is_ok());
         let shipment_id = result.unwrap();
         assert_eq!(shipment_id, 0);
-        assert_eq!(state.shipment_counter, 1);
+        assert_eq!(state.shipment_counter(), 1);
 
         let shipment = state.shipments.get(&shipment_id).unwrap();
-        assert_eq!(shipment.shipper_id(), creator_id);
+        assert_eq!(shipment.shipper_id(), ActorId(creator_id));
         assert_eq!(shipment._id(), shipment_id);
         assert_eq!(shipment._name(), shipment_name);
 
         let shipper = state.shippers.get(&creator_id).unwrap();
-        assert_eq!(shipper.id(), creator_id);
+        assert_eq!(shipper.id(), ActorId(creator_id));
         assert!(shipper.get_active_shipments().contains(&shipment_id));
         assert_eq!(shipper.name(), creator_name);
     }

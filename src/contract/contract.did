@@ -1,14 +1,4 @@
-type QrCodeOptions = record {
-  transparent : bool;
-  gradient : bool;
-  link : text;
-  size : nat64;
-};
-type Result = variant { Ok; Err : text };
-type Result_1 = variant { Ok : record { blob; nat64 }; Err : text };
-type Result_2 = variant { Ok : blob; Err : text };
-type Result_3 = variant { Ok : opt text; Err : text };
-type Shipment = record {
+type PrintableShipment = record {
   id : nat64;
   shipper : text;
   status : ShipmentStatus;
@@ -19,6 +9,16 @@ type Shipment = record {
   hashed_secret : text;
   carrier : opt text;
 };
+type QrCodeOptions = record {
+  transparent : bool;
+  gradient : bool;
+  link : text;
+  size : nat64;
+};
+type Result = variant { Ok; Err : text };
+type Result_1 = variant { Ok : record { blob; nat64 }; Err : text };
+type Result_2 = variant { Ok : blob; Err : text };
+type Result_3 = variant { Ok : opt text; Err : text };
 type ShipmentInfo = record {
   destination : ShipmentLocation;
   value : nat64;
@@ -43,18 +43,20 @@ type SizeCategory = variant {
 };
 service : () -> {
   addEncryptedMessage : (text, nat64) -> (Result);
-  buyShipment : (text, nat64) -> (Result);
-  carrier_shipments : () -> (vec Shipment) query;
-  createShipment : (text, text, text, QrCodeOptions, ShipmentInfo) -> (
+  buyShipment : (opt text, nat64) -> (Result);
+  cancel_shipment : (nat64) -> (Result);
+  carrier_shipments : () -> (vec PrintableShipment) query;
+  createShipment : (opt text, text, text, QrCodeOptions, ShipmentInfo) -> (
       Result_1,
     );
   encrypted_ibe_decryption_key_for_caller : (blob) -> (text);
   finalizeShipment : (nat64, opt text) -> (Result);
   generateQr : (text, nat64) -> (Result_2) query;
   ibe_encryption_key : () -> (text);
-  listPendingShipments : () -> (vec Shipment) query;
-  readEncryptedMessage : (nat64) -> (Result_3);
+  listPendingShipments : () -> (vec PrintableShipment) query;
+  readEncryptedMessage : (nat64) -> (Result_3) query;
   roles : () -> (bool, bool) query;
-  shipments : () -> (vec Shipment) query;
-  shipper_shipments : () -> (vec Shipment) query;
+  shipment : (nat64) -> (opt PrintableShipment) query;
+  shipments : () -> (vec PrintableShipment) query;
+  shipper_shipments : () -> (vec PrintableShipment) query;
 }

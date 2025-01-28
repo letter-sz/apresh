@@ -1,20 +1,20 @@
-use super::StateOp;
 use crate::{
-    actors::{carrier::CarrierId, Actor},
     models::shipment::{ShipmentActions, ShipmentId},
-    state::CanisterState,
+    ActorId,
 };
+
+use super::StateOp;
+use crate::{actors::Actor, state::CanisterState};
 use anyhow::anyhow;
-use candid::Principal;
 
 pub struct FinalizeShipmentResult {
-    carrier_id: CarrierId,
+    carrier_id: ActorId,
     value: u64,
     price: u64,
 }
 
 impl FinalizeShipmentResult {
-    pub fn carrier_id(&self) -> &CarrierId {
+    pub fn carrier_id(&self) -> &ActorId {
         &self.carrier_id
     }
 
@@ -28,13 +28,13 @@ impl FinalizeShipmentResult {
 }
 
 pub struct FinalizeShipmentOp<'a> {
-    caller: Principal,
+    caller: ActorId,
     shipment_id: ShipmentId,
     secret_key: Option<&'a str>,
 }
 
 impl<'a> FinalizeShipmentOp<'a> {
-    pub fn new(shipment_id: ShipmentId, secret_key: Option<&'a str>, caller: Principal) -> Self {
+    pub fn new(shipment_id: ShipmentId, secret_key: Option<&'a str>, caller: ActorId) -> Self {
         Self {
             shipment_id,
             secret_key,
@@ -50,12 +50,16 @@ impl<'a> StateOp<FinalizeShipmentResult> for FinalizeShipmentOp<'a> {
         let shipment = state
             .shipments
             .get_mut(&self.shipment_id)
-            .ok_or(anyhow!("Shipment not found"))?;
+            .ok_or(crate::errors::Error::ShipmentNotFound)?;
+
+        let carrier_id = shipment
+            .carrier_id()
+            .ok_or(crate::errors::Error::CarrierNotSet)?;
 
         let carrier = state
             .carriers
-            .get_mut(&shipment.carrier_id().ok_or(anyhow!("Carrier not set"))?)
-            .ok_or(anyhow!("Carrier not found"))?;
+            .get_mut(&carrier_id)
+            .ok_or(crate::errors::Error::CarrierNotFound)?;
 
         shipment.action(ShipmentActions::MarkDelivered {
             secret_key: self.secret_key,

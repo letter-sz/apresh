@@ -1,8 +1,8 @@
+use engine::models::qrcode::QrCodeOptions;
+
 use image::{ImageBuffer, Rgba};
 use qrcode_generator::QrCodeEcc;
 use std::io::Cursor;
-
-use crate::models::qrcode::QrCodeOptions;
 
 /// Generates a QR code image in PNG format for the given input text.
 /// The requested image size should be specified in pixels.
@@ -62,4 +62,4 @@ fn add_gradient(qr: &mut ImageBuffer<Rgba<u8>, Vec<u8>>) {
             *pixel = image::Rgba(rgba);
         }
     }
-} 
+}
