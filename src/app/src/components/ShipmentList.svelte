@@ -75,8 +75,8 @@
 		<h2 class="text-xl font-semibold text-gray-900">Shipments</h2>
 	</div>
 
-	<div class="mb-4 flex flex-col space-y-3">
-		<div class="relative">
+	<div class="mb-4 flex gap-2">
+		<div class="relative flex-1">
 			<input
 				type="text"
 				placeholder="Search shipments..."
@@ -100,7 +100,7 @@
 
 		<select
 			bind:value={selectedCategory}
-			class="w-full rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm text-gray-900 focus:border-rose-400 focus:outline-none"
+			class="w-40 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm text-gray-900 focus:border-rose-400 focus:outline-none"
 		>
 			{#each categories as category}
 				<option value={category}>{category}</option>
