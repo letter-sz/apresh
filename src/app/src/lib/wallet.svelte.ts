@@ -25,7 +25,6 @@ class Wallet {
 	}
 
 	async approve(amount: bigint) {
-		const owner = await connection.getIdentity();
 		const tokenActor = await connection.getTokenActor();
 
 		const spender = Principal.fromText(canisterIds.contract.local);
