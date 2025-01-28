@@ -11,10 +11,7 @@
 	import SettlePage from '$routes/(header)/shipment/settle/+page.svelte';
 	import type { PageData } from './$types';
 	import { connection } from '$lib/connection.svelte';
-	import Right from '$components/sideMenu/Right.svelte';
-	import ShipmentInfo from '$components/ShipmentInfo.svelte';
-	import ShipmentRecord from '$components/ShipmentRecord.svelte';
-	import ShipmentList from '$components/ShipmentList.svelte';
+	import RightShipments from '$components/sideMenu/RightShipments.svelte';
 
 	const { data }: { data: PageData } = $props();
 
@@ -38,17 +35,7 @@
 </script>
 
 {#if data.created.length !== 0}
-	<Right isMobileOpen={false}>
-		<ShipmentList shipments={data.created} />
-
-		<!-- <div class="flex flex-1 items-center">
-			<p
-				class="from-primary to-secondary mb-5 bg-gradient-to-r bg-clip-text text-center text-xl text-transparent"
-			>
-				Nothing found
-			</p>
-		</div> -->
-	</Right>
+	<RightShipments shipments={data.created} />
 {/if}
 
 {#if selectMode !== null}
