@@ -112,51 +112,11 @@
 		<table class="w-full border-collapse rounded-lg bg-white shadow-sm">
 			<thead class="sticky top-0 z-10 bg-rose-50">
 				<tr>
-					<th
-						class="cursor-pointer border-b-2 border-rose-200 p-3 text-left text-base font-semibold text-rose-600 hover:bg-rose-100"
-						onclick={() => toggleSort('name')}
-					>
-						Name
-						{#if sortField === 'name'}
-							<span class="ml-1">{sortDirection === 'asc' ? '↑' : '↓'}</span>
-						{/if}
-					</th>
-					<th
-						class="cursor-pointer border-b-2 border-rose-200 p-3 text-right text-base font-semibold text-rose-600 hover:bg-rose-100"
-						onclick={() => toggleSort('price')}
-					>
-						Price
-						{#if sortField === 'price'}
-							<span class="ml-1">{sortDirection === 'asc' ? '↑' : '↓'}</span>
-						{/if}
-					</th>
-					<th
-						class="cursor-pointer border-b-2 border-rose-200 p-3 text-right text-base font-semibold text-rose-600 hover:bg-rose-100"
-						onclick={() => toggleSort('value')}
-					>
-						Value
-						{#if sortField === 'value'}
-							<span class="ml-1">{sortDirection === 'asc' ? '↑' : '↓'}</span>
-						{/if}
-					</th>
-					<th
-						class="cursor-pointer border-b-2 border-rose-200 p-3 text-left text-base font-semibold text-rose-600 hover:bg-rose-100"
-						onclick={() => toggleSort('category')}
-					>
-						Category
-						{#if sortField === 'category'}
-							<span class="ml-1">{sortDirection === 'asc' ? '↑' : '↓'}</span>
-						{/if}
-					</th>
-					<th
-						class="cursor-pointer border-b-2 border-rose-200 p-3 text-right text-base font-semibold text-rose-600 hover:bg-rose-100"
-						onclick={() => toggleSort('distance')}
-					>
-						Distance
-						{#if sortField === 'distance'}
-							<span class="ml-1">{sortDirection === 'asc' ? '↑' : '↓'}</span>
-						{/if}
-					</th>
+					{@render columnHeader('name')}
+					{@render columnHeader('price')}
+					{@render columnHeader('value')}
+					{@render columnHeader('category')}
+					{@render columnHeader('distance')}
 				</tr>
 			</thead>
 			<tbody class="divide-y divide-gray-100">
@@ -167,3 +127,17 @@
 		</table>
 	</div>
 </div>
+
+{#snippet columnHeader(label: 'name' | 'price' | 'value' | 'category' | 'distance')}
+	<th
+		class="cursor-pointer border-b-2 border-rose-200 p-3 text-left text-base font-semibold text-rose-600 hover:bg-rose-100"
+		onclick={() => toggleSort(label)}
+	>
+		{label.charAt(0).toUpperCase() + label.slice(1)}
+		{#if sortField === label}
+			<span class="ml-1">{sortDirection === 'asc' ? '↑' : '↓'}</span>
+		{:else}
+			&nbsp;
+		{/if}
+	</th>
+{/snippet}
