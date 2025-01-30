@@ -3,7 +3,7 @@
 	import { getDistance } from 'geolib';
 
 	let { shipment }: { shipment: PrintableShipment & { distance: number } } = $props();
-	let category = $derived(Object.values(shipment.info.size_category)[0]);
+	let category = $derived(Object.keys(shipment.info.size_category)[0]);
 
 	let userLocation = $state<{ latitude: number; longitude: number } | null>(null);
 	let relativeDistance = $derived(
