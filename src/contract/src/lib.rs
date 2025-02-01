@@ -18,6 +18,7 @@ use engine::{
         ReadMessageOp, RegisterActorOp, StateOp,
     },
     state::CanisterState,
+    utils::hash_secret,
     ActorId,
 };
 
@@ -79,7 +80,7 @@ fn init() {
 
                 CreateShipmentOp::new(
                     default_principal.into(),
-                    "hashed_secret",
+                    hash_secret(b"secret"),
                     package_name,
                     ShipmentInfo::new(
                         100u64 + i as u64,
@@ -126,7 +127,7 @@ async fn finalize_shipment(shipment_id: u64, secret_key: Option<String>) -> Resu
 
     let finalize_shipment_result = STATE
         .with_borrow_mut(|state| {
-            FinalizeShipmentOp::new(shipment_id, secret_key.as_deref(), caller).apply(state)
+            FinalizeShipmentOp::new(shipment_id, secret_key, caller).apply(state)
         })
         .map_err(|e: anyhow::Error| e.to_string())?;
 
@@ -204,7 +205,7 @@ async fn generate_qr(link: String, size: usize) -> Result<Vec<u8>, String> {
 async fn create_shipment(
     customer_name: Option<String>,
     shipment_name: String,
-    hashed_secret: String,
+    hashed_secret: Vec<u8>,
     qr_options: QrCodeOptions,
     shipment_info: ShipmentInfo,
 ) -> Result<(Vec<u8>, u64), String> {
@@ -229,7 +230,7 @@ async fn create_shipment(
 
             CreateShipmentOp::new(
                 caller,
-                &hashed_secret,
+                hashed_secret,
                 &shipment_name,
                 shipment_info,
                 created_at,

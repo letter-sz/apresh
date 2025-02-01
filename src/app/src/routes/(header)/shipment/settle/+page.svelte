@@ -7,12 +7,17 @@
 	import QrCodeDisplay from '$components/QrCodeDisplay.svelte';
 	import { getLocalStorage } from '$lib/storage';
 	import ShipmentInfo from '$components/ShipmentInfo.svelte';
+	import { fetchBackend } from '$lib/canisters';
 
 	let { data, settled } = $props<{ data: PageData; settled?: () => void }>();
 
 	async function settle() {
 		const actor = await connection.getActor();
-		const res = await actor.finalizeShipment(data.shipment.id, []);
+		// const res = await actor.finalizeShipment(data.shipment.id, []);
+		const secret = getLocalStorage(data.shipment.id.toString()) as string;
+		console.log('Secret:', secret);
+		const res = await fetchBackend(fetch).finalizeShipment(data.shipment.id, [secret]);
+
 		unwrap<null>(res);
 		console.log('Settled:', data.shipment.id);
 

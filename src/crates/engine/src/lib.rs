@@ -6,7 +6,7 @@ mod errors;
 pub mod models;
 pub mod operations;
 pub mod state;
-
+pub mod utils;
 pub use errors::{Error, Result};
 
 #[derive(

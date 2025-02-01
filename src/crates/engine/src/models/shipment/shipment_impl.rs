@@ -1,17 +1,15 @@
 use candid::CandidType;
-use hex::FromHex;
 use serde::{Deserialize, Serialize};
-use sha2::Digest;
-use sha2::Sha256;
 
+use crate::utils::hash_secret;
 use crate::ActorId;
 
 use super::info::ShipmentInfo;
 
-pub enum ShipmentActions<'a, ActorId> {
+pub enum ShipmentActions<ActorId> {
     Buy(ActorId),
     MarkDelivered {
-        secret_key: Option<&'a str>,
+        secret_key: Option<String>,
         caller: ActorId,
     },
     Cancel {
@@ -40,29 +38,25 @@ impl Shipment {
         Ok(())
     }
 
-    fn validate_secret(&self, secret: &str) -> crate::errors::Result<()> {
-        let hex = Vec::from_hex(self.hashed_secret.clone())
-            .map_err(|_| crate::errors::Error::SecretKeyIsInvalid)?;
-
-        let mut hasher = Sha256::new();
-        hasher.update(secret);
-        let result = hasher.finalize();
-
-        if result[..] == hex {
-            Ok(())
-        } else {
-            Err(crate::errors::Error::SecretKeyIsInvalid)
+    fn validate_secret(&self, secret: String) -> crate::errors::Result<()> {
+        if hash_secret(secret.as_bytes()) != self.hashed_secret {
+            return Err(crate::errors::Error::SecretKeyIsInvalid);
         }
+
+        Ok(())
     }
 
-    fn finalize(&mut self, secret_key: Option<&str>, caller: ActorId) -> crate::errors::Result<()> {
+    fn finalize(
+        &mut self,
+        secret_key: Option<String>,
+        caller: ActorId,
+    ) -> crate::errors::Result<()> {
         if self.status != ShipmentStatus::InTransit {
             return Err(crate::errors::Error::ShipmentNotReadyToBeFinalized);
         }
 
         if caller != self.shipper {
             let secret_key = secret_key.ok_or(crate::errors::Error::SecretKeyIsInvalid)?;
-
             self.validate_secret(secret_key)?;
         }
 
@@ -128,7 +122,7 @@ pub struct Shipment {
     /// Shipment name
     name: String,
     /// Hashed secret, used to verify the secret in delivery
-    hashed_secret: String,
+    hashed_secret: Vec<u8>,
     /// Shipment info
     info: ShipmentInfo,
     /// Shipment status
@@ -147,7 +141,7 @@ pub struct Shipment {
 pub struct PrintableShipment {
     id: ShipmentId,
     name: String,
-    hashed_secret: String,
+    hashed_secret: Vec<u8>,
     info: ShipmentInfo,
     status: ShipmentStatus,
     message: Option<String>,
@@ -177,7 +171,7 @@ impl Shipment {
         timestamp: u64,
         shipper: ActorId,
         id: ShipmentId,
-        hashed_secret: &str,
+        hashed_secret: Vec<u8>,
         name: &str,
         info: ShipmentInfo,
     ) -> Self {
@@ -186,7 +180,7 @@ impl Shipment {
             info,
             name: name.to_string(),
             message: None,
-            hashed_secret: hashed_secret.to_string(),
+            hashed_secret: hashed_secret.to_vec(),
             status: ShipmentStatus::default(),
             carrier: None,
             shipper,

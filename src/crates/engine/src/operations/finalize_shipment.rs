@@ -27,14 +27,14 @@ impl FinalizeShipmentResult {
     }
 }
 
-pub struct FinalizeShipmentOp<'a> {
+pub struct FinalizeShipmentOp {
     caller: ActorId,
     shipment_id: ShipmentId,
-    secret_key: Option<&'a str>,
+    secret_key: Option<String>,
 }
 
-impl<'a> FinalizeShipmentOp<'a> {
-    pub fn new(shipment_id: ShipmentId, secret_key: Option<&'a str>, caller: ActorId) -> Self {
+impl FinalizeShipmentOp {
+    pub fn new(shipment_id: ShipmentId, secret_key: Option<String>, caller: ActorId) -> Self {
         Self {
             shipment_id,
             secret_key,
@@ -43,7 +43,7 @@ impl<'a> FinalizeShipmentOp<'a> {
     }
 }
 
-impl<'a> StateOp<FinalizeShipmentResult> for FinalizeShipmentOp<'a> {
+impl StateOp<FinalizeShipmentResult> for FinalizeShipmentOp {
     type Error = anyhow::Error;
 
     fn apply(&self, state: &mut CanisterState) -> Result<FinalizeShipmentResult, anyhow::Error> {
@@ -62,7 +62,7 @@ impl<'a> StateOp<FinalizeShipmentResult> for FinalizeShipmentOp<'a> {
             .ok_or(crate::errors::Error::CarrierNotFound)?;
 
         shipment.action(ShipmentActions::MarkDelivered {
-            secret_key: self.secret_key,
+            secret_key: self.secret_key.clone(),
             caller: self.caller,
         })?;
 

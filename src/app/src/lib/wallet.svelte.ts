@@ -44,6 +44,10 @@ class Wallet {
 		return approveResult;
 	}
 
+	async approveDoubleFee(amount: bigint) {
+		await this.approve(amount + (await this.getTransferFee()));
+	}
+
 	async balance(fetchFunction: typeof fetch = fetch) {
 		const tokenActor = mintBackend(fetchFunction);
 		const owner = await connection.getIdentity();

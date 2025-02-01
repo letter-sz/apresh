@@ -6,7 +6,7 @@ type PrintableShipment = record {
   name : text;
   created_at : nat64;
   message : opt text;
-  hashed_secret : text;
+  hashed_secret : blob;
   carrier : opt text;
 };
 type QrCodeOptions = record {
@@ -46,7 +46,7 @@ service : () -> {
   buyShipment : (opt text, nat64) -> (Result);
   cancel_shipment : (nat64) -> (Result);
   carrier_shipments : () -> (vec PrintableShipment) query;
-  createShipment : (opt text, text, text, QrCodeOptions, ShipmentInfo) -> (
+  createShipment : (opt text, text, blob, QrCodeOptions, ShipmentInfo) -> (
       Result_1,
     );
   encrypted_ibe_decryption_key_for_caller : (blob) -> (text);
