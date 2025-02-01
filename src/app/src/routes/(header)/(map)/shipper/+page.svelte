@@ -11,6 +11,7 @@
 	import SettlePage from '$routes/(header)/shipment/settle/+page.svelte';
 	import type { PageData } from './$types';
 	import { connection } from '$lib/connection.svelte';
+	import RightShipments from '$components/sideMenu/RightShipments.svelte';
 
 	const { data }: { data: PageData } = $props();
 
@@ -32,6 +33,10 @@
 		selectMode = null;
 	}
 </script>
+
+{#if data.created.length !== 0}
+	<RightShipments shipments={data.created} />
+{/if}
 
 {#if selectMode !== null}
 	<MapEvents on:click={getLocation} />
