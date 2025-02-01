@@ -298,7 +298,6 @@ dependencies = [
  "candid",
  "derive_deref",
  "hex",
- "ic-cdk",
  "serde",
  "sha2",
  "thiserror 2.0.11",
