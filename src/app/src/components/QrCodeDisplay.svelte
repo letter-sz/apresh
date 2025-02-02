@@ -8,7 +8,10 @@
 	}>();
 
 	const baseUrl = 'http://localhost:3000';
-	const settleUrl = $derived(`${baseUrl}/?settleId=${settleId}&settleSecret=${settleSecret ?? ''}`);
+	// const settleUrl = $derived(`${baseUrl}/?settleId=${settleId}&settleSecret=${settleSecret ?? ''}`);
+	const settleUrl = $derived(
+		`${baseUrl}/shipment/confirm?id=${settleId}&secret=${settleSecret ?? ''}`
+	);
 
 	async function getQrCode(url: string) {
 		const data = await fetchBackend(fetch).generateQr(url, BigInt(320));
