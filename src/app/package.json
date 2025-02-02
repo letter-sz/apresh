@@ -31,6 +31,7 @@
 		"isomorphic-fetch": "^3.0.0",
 		"js-sha256": "^0.11.0",
 		"lucide-svelte": "0.460.1",
+		"maplibre-gl": "^5.1.0",
 		"svelte-maplibre": "^0.9.14",
 		"wasm": "file:../crates/apresh-wasm/pkg"
 	},

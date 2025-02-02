@@ -2,6 +2,9 @@
 	import type { PrintableShipment } from '$declarations/contract/contract.did';
 	import { getDistance } from 'geolib';
 	import ShipmentRecord from './ShipmentRecord.svelte';
+	import type { MapContext } from 'svelte-maplibre/dist/context';
+	import { getContext } from 'svelte';
+	import { flyToLocation } from '$lib/map.ts/focus';
 
 	let { shipments }: { shipments: PrintableShipment[] } = $props();
 
@@ -16,6 +19,7 @@
 	let selectedCategory = $state('All');
 	let sortField = $state<'name' | 'price' | 'value' | 'category' | 'distance'>('name');
 	let sortDirection = $state<'asc' | 'desc'>('asc');
+	let selected = $state<PrintableShipment | null>(null);
 
 	let categories = $derived([
 		'All',
@@ -68,6 +72,15 @@
 				return sortDirection === 'asc' ? comparison : -comparison;
 			})
 	);
+
+	let mapStore = getContext<MapContext>(Symbol.for('svelte-maplibre'))?.map;
+	let map: maplibregl.Map | null = $derived($mapStore);
+
+	$effect(() => {
+		if (selected !== null && map !== null) {
+			flyToLocation(map, selected);
+		}
+	});
 </script>
 
 <div class="flex h-full w-full flex-col px-2">
@@ -121,7 +134,7 @@
 			</thead>
 			<tbody class="divide-y divide-gray-100">
 				{#each filteredShipments as shipment}
-					<ShipmentRecord {shipment} />
+					<ShipmentRecord {shipment} bind:selected />
 				{/each}
 			</tbody>
 		</table>
