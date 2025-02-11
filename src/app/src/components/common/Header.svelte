@@ -3,6 +3,7 @@
 	import { connection } from '$lib/connection.svelte';
 	import { wallet } from '$lib/wallet.svelte';
 	import Button from './Buttons/Button.svelte';
+	import { base } from '$app/paths';
 
 	let { balance }: { balance: bigint } = $props();
 
@@ -31,11 +32,13 @@
 </script>
 
 <header class="fixed top-0 z-50 w-full bg-transparent">
-	<div class="flex items-center justify-between px-8 py-6">
-		<div class="flex space-x-5">
-			<Button onClick={() => goto('/')}>Apresh</Button>
+	<div class="flex items-center justify-between px-4 py-3">
+		<div class="flex">
+			<a class="pl-1" href="/">
+				<img class="h-24 w-auto" src="{base}/logo.svg" alt="Logo" />
+			</a>
 		</div>
-		<div class="flex space-x-5">
+		<div class="flex items-center space-x-5 px-4">
 			{#if connection.identity !== null}
 				<Button onClick={() => (minting = wallet.mint(10_000000n))}>
 					{#if balance === 0n}
