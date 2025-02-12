@@ -15,8 +15,8 @@ use engine::{
         AddMessageOp, BuyShipmentOp, CancelShipmentOp, CreateShipmentOp, FinalizeShipmentOp,
         ReadMessageOp, RegisterActorOp, StateOp,
     },
-    state::CanisterState,
-    state::{CanisterActors, CanisterShipments},
+    state::{CanisterActors, CanisterShipments, CanisterState},
+    utils::hash_secret,
     ActorId,
 };
 use ic_cdk::{init, query, update};
