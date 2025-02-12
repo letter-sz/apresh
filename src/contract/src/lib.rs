@@ -14,7 +14,7 @@ use engine::{
         AddMessageOp, BuyShipmentOp, CancelShipmentOp, CreateShipmentOp, FinalizeShipmentOp,
         ReadMessageOp, RegisterActorOp, StateOp,
     },
-    state::CanisterState,
+    state::{CanisterActors, CanisterShipments, CanisterState},
     utils::hash_secret,
     ActorId,
 };
@@ -79,9 +79,9 @@ fn init() {
 
                 CreateShipmentOp::new(
                     default_principal.into(),
-                    hash_secret(b"secret"),
+                    &hash_secret(b"secret"),
                     package_name,
-                    ShipmentInfo::new(
+                    &ShipmentInfo::new(
                         100u64 + i as u64,
                         10u64 + i as u64,
                         ShipmentLocation::new(origin_label.to_string(), *origin_lat, *origin_lng),
@@ -245,9 +245,9 @@ async fn create_shipment(
 
             CreateShipmentOp::new(
                 caller,
-                hashed_secret,
+                &hashed_secret,
                 &shipment_name,
-                shipment_info,
+                &shipment_info,
                 created_at,
             )
             .apply(state)
@@ -287,10 +287,10 @@ fn cancel_shipment(shipment_id: u64) -> Result<(), String> {
 fn get_pending_shipments() -> Vec<PrintableShipment> {
     STATE.with_borrow(|state| {
         state
-            .shipments
-            .values()
+            .shipments()
+            .iter()
             .filter(|shipment| *shipment.status() == ShipmentStatus::Pending)
-            .map(PrintableShipment::from)
+            .map(|shipment| PrintableShipment::from(*shipment))
             .collect()
     })
 }
@@ -301,11 +301,11 @@ fn shipper_shipments() -> Vec<PrintableShipment> {
 
     STATE.with_borrow(|state| {
         state
-            .shipments
-            .values()
+            .shipments()
+            .iter()
             .filter(|shipment| shipment.shipper_id() == customer_id)
             .filter(|shipment| !shipment.status().is_finished())
-            .map(PrintableShipment::from)
+            .map(|shipment| PrintableShipment::from(*shipment))
             .collect()
     })
 }
@@ -316,11 +316,11 @@ fn carrier_shipments() -> Vec<PrintableShipment> {
 
     STATE.with_borrow(|state| {
         state
-            .shipments
-            .values()
+            .shipments()
+            .iter()
             .filter(|shipment| shipment.carrier_id() == Some(customer_id))
             .filter(|shipment| !shipment.status().is_finished())
-            .map(PrintableShipment::from)
+            .map(|shipment| PrintableShipment::from(*shipment))
             .collect()
     })
 }
@@ -329,8 +329,8 @@ fn carrier_shipments() -> Vec<PrintableShipment> {
 fn roles() -> (bool, bool) {
     let caller = ic_cdk::caller();
 
-    let carrier = STATE.with_borrow(|state| state.carriers.get(&caller).is_some());
-    let shipper = STATE.with_borrow(|state| state.shippers.get(&caller).is_some());
+    let carrier = STATE.with_borrow(|state| state.carrier(&caller.into()).is_some());
+    let shipper = STATE.with_borrow(|state| state.shipper(&caller.into()).is_some());
 
     (carrier, shipper)
 }
@@ -339,9 +339,9 @@ fn roles() -> (bool, bool) {
 fn shipments() -> Vec<PrintableShipment> {
     STATE.with_borrow(|state| {
         state
-            .shipments
-            .values()
-            .map(PrintableShipment::from)
+            .shipments()
+            .iter()
+            .map(|shipment| PrintableShipment::from(*shipment))
             .collect()
     })
 }
@@ -350,8 +350,7 @@ fn shipments() -> Vec<PrintableShipment> {
 fn shipment(shipment_id: u64) -> Option<PrintableShipment> {
     STATE.with_borrow(|state| {
         state
-            .shipments
-            .get(&shipment_id)
+            .shipment(shipment_id)
             .map(PrintableShipment::from)
     })
 }

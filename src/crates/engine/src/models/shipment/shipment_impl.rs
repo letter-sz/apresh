@@ -171,13 +171,13 @@ impl Shipment {
         timestamp: u64,
         shipper: ActorId,
         id: ShipmentId,
-        hashed_secret: Vec<u8>,
+        hashed_secret: &[u8],
         name: &str,
-        info: ShipmentInfo,
+        info: &ShipmentInfo,
     ) -> Self {
         Self {
             id,
-            info,
+            info: info.clone(),
             name: name.to_string(),
             message: None,
             hashed_secret: hashed_secret.to_vec(),
@@ -208,7 +208,7 @@ impl Shipment {
         self.carrier
     }
 
-    pub fn _id(&self) -> ShipmentId {
+    pub fn id(&self) -> ShipmentId {
         self.id
     }
 

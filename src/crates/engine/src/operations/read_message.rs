@@ -26,8 +26,7 @@ impl StateOp<Option<String>> for ReadMessageOp {
 
     fn read(&self, state: &CanisterState) -> crate::Result<Option<String>> {
         Ok(state
-            .shipments
-            .get(&self.shipment_id)
+            .shipment(self.shipment_id)
             .filter(|&v| v.shipper_id() == self.caller)
             .and_then(|v| v.message())
             .map(|v| v.to_string()))

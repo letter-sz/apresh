@@ -1,6 +1,5 @@
 use crate::{
-    models::shipment::{ShipmentActions, ShipmentId},
-    ActorId,
+    models::shipment::{ShipmentActions, ShipmentId}, state::{CanisterActors, CanisterShipments}, ActorId
 };
 
 use super::StateOp;
@@ -27,19 +26,20 @@ impl StateOp<Cost> for BuyShipmentOp {
     type Error = crate::Error;
 
     fn apply(&self, state: &mut CanisterState) -> crate::Result<Cost> {
-        let carrier = state
-            .carriers
-            .get_mut(&self.carrier_id)
-            .ok_or(crate::Error::CarrierNotFound)?;
-
+        if state.carrier(&self.carrier_id).is_none() {
+            return Err(crate::Error::CarrierNotFound);
+        }
+        
         let shipment = state
-            .shipments
-            .get_mut(&self.shipment_id)
+            .shipment_mut(self.shipment_id)
             .ok_or(crate::Error::ShipmentNotFound)?;
 
         shipment.action(ShipmentActions::Buy(self.carrier_id))?;
+        let value = shipment.info().value();
+
+        let carrier = state.carrier_mut(&self.carrier_id).unwrap();
         carrier.add_shipment(self.shipment_id);
 
-        Ok(shipment.info().value())
+        Ok(value)
     }
 }
