@@ -1,6 +1,5 @@
 use crate::{
-    models::shipment::{ShipmentActions, ShipmentId},
-    ActorId,
+    models::shipment::{ShipmentActions, ShipmentId}, state::{CanisterActors, CanisterShipments}, ActorId
 };
 
 use super::StateOp;
@@ -28,13 +27,11 @@ impl StateOp<Cost> for CancelShipmentOp {
 
     fn apply(&self, state: &mut CanisterState) -> crate::Result<Cost> {
         let shipper = state
-            .shippers
-            .get_mut(&self.shipper)
+            .shipper_mut(&self.shipper)
             .ok_or(crate::Error::ShipperNotFound)?;
 
         let shipment = state
-            .shipments
-            .get_mut(&self.shipment_id)
+            .shipment_mut(self.shipment_id)
             .ok_or(crate::Error::ShipmentNotFound)?;
 
         shipment.action(ShipmentActions::Cancel {

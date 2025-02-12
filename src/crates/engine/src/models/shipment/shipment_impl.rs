@@ -175,11 +175,11 @@ impl Shipment {
         hashed_secret: Vec<u8>,
         channel_key: ChannelKey,
         name: &str,
-        info: ShipmentInfo,
+        info: &ShipmentInfo,
     ) -> Self {
         Self {
             id,
-            info,
+            info: info.clone(),
             name: name.to_string(),
             channel: Channel::new(channel_key),
             hashed_secret: hashed_secret.to_vec(),
@@ -214,7 +214,7 @@ impl Shipment {
         self.carrier
     }
 
-    pub fn _id(&self) -> ShipmentId {
+    pub fn id(&self) -> ShipmentId {
         self.id
     }
 

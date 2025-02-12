@@ -1,5 +1,6 @@
 use crate::{
     models::shipment::{ChannelKey, ShipmentActions, ShipmentId},
+    state::{CanisterActors, CanisterShipments},
     ActorId,
 };
 
@@ -29,20 +30,24 @@ impl StateOp<Cost> for BuyShipmentOp {
     type Error = crate::Error;
 
     fn apply(&self, state: &mut CanisterState) -> crate::Result<Cost> {
-        let carrier = state
-            .carriers
-            .get_mut(&self.carrier_id)
-            .ok_or(crate::Error::CarrierNotFound)?;
+        if state.carrier(&self.carrier_id).is_none() {
+            return Err(crate::Error::CarrierNotFound);
+        }
 
-        let shipment = state
-            .shipments
-            .get_mut(&self.shipment_id)
-            .ok_or(crate::Error::ShipmentNotFound)?;
+        let value = {
+            let shipment = state
+                .shipment_mut(self.shipment_id)
+                .ok_or(crate::Error::ShipmentNotFound)?;
 
-        shipment.action(ShipmentActions::Buy(self.carrier_id))?;
+            shipment.action(ShipmentActions::Buy(self.carrier_id))?;
+            shipment.add_guest_to_channel(self.channel_key.clone());
+            let value = shipment.info().value();
+            value
+        };
+
+        let carrier = state.carrier_mut(&self.carrier_id).unwrap();
         carrier.add_shipment(self.shipment_id);
-        shipment.add_guest_to_channel(self.channel_key.clone());
 
-        Ok(shipment.info().value())
+        Ok(value)
     }
 }

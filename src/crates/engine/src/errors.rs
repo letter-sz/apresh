@@ -28,4 +28,6 @@ pub enum Error {
     NotAuthorizedAsNeitherCarrierNorShipper,
     #[error("Message too long")]
     MessageTooLong,
+    #[error("Shipment limit reached")]
+    ShipmentLimitReached,
 }

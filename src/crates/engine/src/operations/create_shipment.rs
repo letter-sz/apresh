@@ -13,7 +13,7 @@ pub struct CreateShipmentOp<'a> {
     hashed_secret: Vec<u8>,
     channel_key: ChannelKey,
     shipment_name: &'a str,
-    info: ShipmentInfo,
+    info: &'a ShipmentInfo,
     timestamp: u64,
 }
 
@@ -23,7 +23,7 @@ impl<'a> CreateShipmentOp<'a> {
         hashed_secret: Vec<u8>,
         channel_key: ChannelKey,
         shipment_name: &'a str,
-        info: ShipmentInfo,
+        info: &'a ShipmentInfo,
         timestamp: u64,
     ) -> Self {
         Self {
@@ -43,8 +43,12 @@ impl<'a> StateOp<ShipmentId> for CreateShipmentOp<'a> {
     fn apply(&self, state: &mut CanisterState) -> crate::Result<ShipmentId> {
         let new_shipment_id = state.shipment_counter();
 
+        if new_shipment_id == u64::MAX {
+            return Err(crate::Error::ShipmentLimitReached);
+        }
+
         let mut shipper = state
-            .shipper_mut(self.creator)
+            .shipper_mut(&self.creator)
             .ok_or(crate::Error::ShipperNotFound)?;
 
         let shipment = Shipment::new(
@@ -54,7 +58,7 @@ impl<'a> StateOp<ShipmentId> for CreateShipmentOp<'a> {
             self.hashed_secret.clone(),
             self.channel_key.clone(),
             self.shipment_name,
-            self.info.clone(),
+            &self.info,
         );
 
         shipper.add_shipment(new_shipment_id);
@@ -110,7 +114,7 @@ mod tests {
             hashed_secret,
             channel_key,
             shipment_name,
-            info.clone(),
+            &info,
             timestamp,
         );
 
@@ -121,12 +125,12 @@ mod tests {
         assert_eq!(shipment_id, 0);
         assert_eq!(state.shipment_counter(), 1);
 
-        let shipment = state.shipments.get(&shipment_id).unwrap();
+        let shipment = state.shipment(shipment_id).unwrap();
         assert_eq!(shipment.shipper_id(), ActorId(creator_id));
-        assert_eq!(shipment._id(), shipment_id);
+        assert_eq!(shipment.id(), shipment_id);
         assert_eq!(shipment._name(), shipment_name);
 
-        let shipper = state.shippers.get(&creator_id).unwrap();
+        let shipper = state.shipper(&ActorId(creator_id)).unwrap();
         assert_eq!(shipper.id(), ActorId(creator_id));
         assert!(shipper.get_active_shipments().contains(&shipment_id));
         assert_eq!(shipper.name(), creator_name);

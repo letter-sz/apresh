@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 // LOCATION
 
-#[derive(Deserialize, Serialize, Debug, Clone, CandidType)]
+#[derive(Deserialize, Serialize, Debug, Clone, CandidType, PartialEq)]
 pub struct ShipmentLocation {
     street: String,
     lat: f64,
@@ -11,13 +11,13 @@ pub struct ShipmentLocation {
 }
 
 impl ShipmentLocation {
-    pub fn new(street: String, lat: f64, lng: f64) -> Self {
+    pub const fn new(street: String, lat: f64, lng: f64) -> Self {
         Self { street, lat, lng }
     }
 }
 
 // SIZE CATEGORY
-#[derive(Deserialize, Serialize, Debug, Clone, CandidType)]
+#[derive(Deserialize, Serialize, Debug, Clone, CandidType, PartialEq, Eq)]
 pub enum SizeCategory {
     Envelope,
     Parcel {
@@ -29,7 +29,7 @@ pub enum SizeCategory {
 
 // INFO
 
-#[derive(Deserialize, Serialize, Debug, Clone, CandidType)]
+#[derive(Deserialize, Serialize, Debug, Clone, CandidType, PartialEq)]
 pub struct ShipmentInfo {
     /// Shipment value, used in insurance
     value: u64,
@@ -52,7 +52,11 @@ impl ShipmentInfo {
         self.value
     }
 
-    pub fn new(
+    pub fn size_category(&self) -> &SizeCategory {
+        &self.size_category
+    }
+
+    pub const fn new(
         value: u64,
         price: u64,
         source: ShipmentLocation,
