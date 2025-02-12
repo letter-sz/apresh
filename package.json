@@ -9,6 +9,7 @@
     "prebuild": "npm run prebuild --workspaces --if-present",
     "pretest": "npm run prebuild --workspaces --if-present",
     "start": "npm start --workspaces --if-present",
+    "dev": "npm run start --workspaces --if-present",
     "test": "npm test --workspaces --if-present",
     "storybook": "cd src/app && bun run storybook",
     "contract": "dfx canister stop contract && dfx canister delete contract && dfx deploy contract",

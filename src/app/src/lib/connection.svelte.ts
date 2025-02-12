@@ -3,9 +3,10 @@ import { type _SERVICE } from '$declarations/contract/contract.did.js';
 import type { _SERVICE as _ICRC1_SERVICE } from '$declarations/icrc1_ledger_canister/icrc1_ledger_canister.did';
 import { connect, type IConnection } from './canisters';
 import { invalidateAll } from '$app/navigation';
+import type { Principal } from '@dfinity/principal';
 
 export class Connection {
-	identity: Identity | null = $state(null);
+	identity: Principal | null = $state(null);
 	actor: ActorSubclass<_SERVICE> | null = $state(null);
 	tokenActor: ActorSubclass<_ICRC1_SERVICE> | null = $state(null);
 
@@ -49,7 +50,7 @@ export class Connection {
 		return (await this.ensureConnected()).tokenActor;
 	}
 
-	async getIdentity(): Promise<Identity> {
+	async getIdentity(): Promise<Principal> {
 		return (await this.ensureConnected()).identity;
 	}
 

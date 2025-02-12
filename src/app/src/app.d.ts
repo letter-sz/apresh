@@ -16,6 +16,40 @@ declare global {
 		}
 		// interface Platform {}
 	}
+	declare interface Window {
+		ic?: {
+			plug?: {
+				createAgent: ({
+					whitelist,
+					host
+				}: {
+					whitelist: string[];
+					host: string;
+				}) => Promise<boolean>;
+				agent: HttpAgent;
+				requestConnect: ({
+					whitelist,
+					host,
+					timeout
+				}: {
+					whitelist?: string[];
+					host?: string;
+					timeout?: number;
+				}) => Promise<any>;
+				// fetchRootKey: () => Promise<void>;
+				createActor: <T>({
+					canisterId,
+					interfaceFactory
+				}: CreateActorArgs) => Promise<ActorSubclass<T>>;
+				isConnected: () => Promise<boolean>;
+				disconnect: () => Promise<void>;
+				principalId: string;
+				getPrincipal: () => Promise<Principal>;
+				onExternalDisconnect: (callback: () => void) => void;
+				onLockStateChange: (callback: (isLocked: boolean) => void) => void;
+			};
+		};
+	}
 }
 
 interface CreatePageState extends CreateShipmentPageData {

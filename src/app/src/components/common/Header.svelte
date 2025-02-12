@@ -17,7 +17,7 @@
 
 	let formattedIdentity = $derived(
 		connection.identity !== null
-			? 'Identity ' + connection.identity.getPrincipal().toText().substring(0, 6) + '...'
+			? 'Identity ' + connection.identity.toText().substring(0, 6) + '...'
 			: null
 	);
 	let content = $derived(formattedIdentity !== null ? formattedIdentity : 'Connect identity');
