@@ -56,7 +56,7 @@ impl Shipment {
         }
 
         if caller != self.shipper {
-            let secret_key = secret_key.ok_or(crate::errors::Error::SecretKeyIsInvalid)?;
+            let secret_key = secret_key.ok_or(crate::errors::Error::SecretKeyNotPresent)?;
             self.validate_secret(secret_key)?;
         }
 
