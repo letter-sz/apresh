@@ -32,8 +32,8 @@ pub use vetkd::{encrypted_ibe_decryption_key_for_caller, ibe_encryption_key};
 
 thread_local! {
     pub static STATE: RefCell<CanisterState> = RefCell::new(CanisterState::default());
-    pub static TRANSFER_FEE: RefCell<u64> = RefCell::new(10_000);
-    pub static DEAD_TOKENS: RefCell<u64> = RefCell::new(0); // Tokens, where transfer amount is less than the fee needed to transfer it.
+    pub static TRANSFER_FEE: RefCell<u64> = const { RefCell::new(10_000) };
+    pub static DEAD_TOKENS: RefCell<u64> = RefCell::default(); // Tokens, where transfer amount is less than the fee needed to transfer it.
 }
 
 #[init]
