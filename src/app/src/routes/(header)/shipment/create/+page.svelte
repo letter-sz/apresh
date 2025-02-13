@@ -11,6 +11,8 @@
 	import { unwrap } from '$lib/utils';
 	import { connection } from '$lib/connection.svelte';
 	import { wallet } from '$lib/wallet.svelte';
+	import bs58 from 'bs58';
+	import { get_secret_hash } from 'wasm';
 
 	const {
 		data,
@@ -45,12 +47,10 @@
 
 		const priceBigint = BigInt(price);
 
-		await wallet.approve(priceBigint);
-		const secret = 'secret';
-
-		const hash = sha256.create();
-		hash.update(secret);
-		const hashed = hash.hex();
+		await wallet.approveDoubleFee(priceBigint);
+		const secret = bs58.encode(crypto.getRandomValues(new Uint8Array(32)));
+		const hashed = get_secret_hash(secret);
+		console.log(hashed);
 
 		const res = await actor.createShipment(
 			['Janek'],
@@ -86,7 +86,7 @@
 
 		const id: bigint = unwrap<[number[], bigint]>(res)[1];
 		setLocalStorage(id.toString(), secret);
-		const loadedDone = getLocalStorage('done', secret);
+		console.log('Secret:', secret);
 
 		created?.();
 	};

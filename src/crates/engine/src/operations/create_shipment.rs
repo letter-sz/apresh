@@ -10,7 +10,7 @@ use crate::actors::Actor;
 #[derive(Debug)]
 pub struct CreateShipmentOp<'a> {
     creator: ActorId,
-    hashed_secret: &'a str,
+    hashed_secret: Vec<u8>,
     shipment_name: &'a str,
     info: ShipmentInfo,
     timestamp: u64,
@@ -19,7 +19,7 @@ pub struct CreateShipmentOp<'a> {
 impl<'a> CreateShipmentOp<'a> {
     pub fn new(
         creator: ActorId,
-        hashed_secret: &'a str,
+        hashed_secret: Vec<u8>,
         shipment_name: &'a str,
         info: ShipmentInfo,
         timestamp: u64,
@@ -48,7 +48,7 @@ impl<'a> StateOp<ShipmentId> for CreateShipmentOp<'a> {
             self.timestamp,
             shipper.id(),
             new_shipment_id,
-            self.hashed_secret,
+            self.hashed_secret.clone(),
             self.shipment_name,
             self.info.clone(),
         );
@@ -65,6 +65,7 @@ mod tests {
     use crate::{
         models::shipment::{ShipmentLocation, SizeCategory},
         operations::RegisterActorOp,
+        utils::hash_secret,
         ActorId,
     };
 
@@ -77,7 +78,7 @@ mod tests {
 
         let creator_id = Principal::anonymous();
         let creator_name = "John Doe";
-        let hashed_secret = "hashed_secret_123";
+        let hashed_secret = hash_secret(b"secret_key_123");
         let shipment_name = "Test Shipment";
         let timestamp = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)

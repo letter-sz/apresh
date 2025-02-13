@@ -1,10 +1,14 @@
+use candid::Nat;
 use icrc_ledger_types::icrc1::transfer::{BlockIndex, TransferArg, TransferError};
 
 use super::TransferOutParams;
 use crate::transfer::utils::get_ledger_principal;
 use anyhow::anyhow;
 
-pub async fn transfer_out(args: TransferOutParams) -> anyhow::Result<()> {
+pub async fn transfer_out(mut args: TransferOutParams, fee: u64) -> anyhow::Result<()> {
+    // The receiver pays the fee
+    args.params.amount -= Nat::from(fee);
+
     ic_cdk::println!(
         "Transferring {} tokens to account {}",
         &args.params.amount,
@@ -16,7 +20,7 @@ pub async fn transfer_out(args: TransferOutParams) -> anyhow::Result<()> {
         memo: args.params.memo,
         amount: args.params.amount,
         to: args.to,
-        fee: None,
+        fee: Some(Nat::from(fee)),
         created_at_time: None,
     };
 

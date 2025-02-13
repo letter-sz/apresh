@@ -2,7 +2,11 @@
 	import type { PrintableShipment } from '$declarations/contract/contract.did';
 	import { getDistance } from 'geolib';
 
-	let { shipment }: { shipment: PrintableShipment & { distance: number } } = $props();
+	let { shipment, selected = $bindable() } = $props<{
+		shipment: PrintableShipment & { distance: number };
+		selected: PrintableShipment | null;
+	}>();
+
 	let category = $derived(Object.keys(shipment.info.size_category)[0]);
 
 	let userLocation = $state<{ latitude: number; longitude: number } | null>(null);
@@ -35,7 +39,7 @@
 	});
 </script>
 
-<tr class="transition-colors hover:bg-rose-50">
+<tr class="cursor-pointer transition-colors hover:bg-rose-50" onclick={() => (selected = shipment)}>
 	<td class="p-3 text-left text-base text-gray-900">{shipment.name}</td>
 	<td class="p-3 text-right text-base font-medium text-gray-900">{shipment.info.price} ICP</td>
 	<td class="p-3 text-right text-base font-medium text-gray-900">{shipment.info.value} ICP</td>

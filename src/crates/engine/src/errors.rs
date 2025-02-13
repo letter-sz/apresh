@@ -18,6 +18,8 @@ pub enum Error {
     NotAuthorizedToFinalizeShipment,
     #[error("Secret key is invalid")]
     SecretKeyIsInvalid,
+    #[error("Secret key not present")]
+    SecretKeyNotPresent,
     #[error("Not authorized as carrier")]
     NotAuthorizedAsCarrier,
     #[error("Not authorized as shipper")]

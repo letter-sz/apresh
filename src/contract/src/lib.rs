@@ -1,23 +1,21 @@
-mod qr;
 mod transfer;
 mod utils;
 mod vetkd;
 
 use std::cell::RefCell;
 
+use apresh_qr::{generate, QrCodeOptions};
 use engine::{
     actors::{carrier::Carrier, shipper::Shipper},
-    models::{
-        qrcode::QrCodeOptions,
-        shipment::{
-            PrintableShipment, ShipmentInfo, ShipmentLocation, ShipmentStatus, SizeCategory,
-        },
+    models::shipment::{
+        PrintableShipment, ShipmentInfo, ShipmentLocation, ShipmentStatus, SizeCategory,
     },
     operations::{
         AddMessageOp, BuyShipmentOp, CancelShipmentOp, CreateShipmentOp, FinalizeShipmentOp,
         ReadMessageOp, RegisterActorOp, StateOp,
     },
     state::CanisterState,
+    utils::hash_secret,
     ActorId,
 };
 
@@ -31,6 +29,8 @@ pub use vetkd::{encrypted_ibe_decryption_key_for_caller, ibe_encryption_key};
 
 thread_local! {
     pub static STATE: RefCell<CanisterState> = RefCell::new(CanisterState::default());
+    pub static TRANSFER_FEE: RefCell<u64> = const { RefCell::new(10_000) };
+    pub static DEAD_TOKENS: RefCell<u64> = RefCell::default(); // Tokens, where transfer amount is less than the fee needed to transfer it.
 }
 
 #[init]
@@ -79,7 +79,7 @@ fn init() {
 
                 CreateShipmentOp::new(
                     default_principal.into(),
-                    "hashed_secret",
+                    hash_secret(b"secret"),
                     package_name,
                     ShipmentInfo::new(
                         100u64 + i as u64,
@@ -100,6 +100,16 @@ fn init() {
             shipment_id, shipment_id
         ));
     }
+}
+
+#[update(name = "setTransferFee")]
+fn set_transfer_fee(fee: u64) {
+    TRANSFER_FEE.set(fee);
+}
+
+#[query(name = "getTransferFee")]
+fn get_transfer_fee() -> u64 {
+    TRANSFER_FEE.with_borrow(|fee| *fee)
 }
 
 #[update(name = "addEncryptedMessage")]
@@ -126,22 +136,28 @@ async fn finalize_shipment(shipment_id: u64, secret_key: Option<String>) -> Resu
 
     let finalize_shipment_result = STATE
         .with_borrow_mut(|state| {
-            FinalizeShipmentOp::new(shipment_id, secret_key.as_deref(), caller).apply(state)
+            FinalizeShipmentOp::new(shipment_id, secret_key, caller).apply(state)
         })
         .map_err(|e: anyhow::Error| e.to_string())?;
 
-    let transfer_args = TransferOutParams {
-        params: TransferParams {
-            amount: NumTokens::from(
-                finalize_shipment_result.value() + finalize_shipment_result.price(),
-            ),
-            memo: memo("SETTLE", shipment_id),
-        },
-        to: (finalize_shipment_result.carrier_id().0).into(),
-    };
+    let fee = get_transfer_fee();
+    let amount = finalize_shipment_result.value() + finalize_shipment_result.price();
 
-    if let Err(e) = transfer_out(transfer_args).await {
-        ic_cdk::trap(&e.to_string())
+    // If the amount is greater than the fee, transfer the amount out
+    if amount > fee {
+        let transfer_args = TransferOutParams {
+            params: TransferParams {
+                amount: NumTokens::from(amount),
+                memo: memo("SETTLE", shipment_id),
+            },
+            to: (finalize_shipment_result.carrier_id().0).into(),
+        };
+
+        if let Err(e) = transfer_out(transfer_args, get_transfer_fee()).await {
+            ic_cdk::trap(&e.to_string())
+        }
+    } else {
+        DEAD_TOKENS.with_borrow_mut(|dead_tokens| *dead_tokens += amount);
     }
 
     ic_cdk::print(format!("Shipment finalized: {:?}", shipment_id).as_str());
@@ -191,7 +207,7 @@ async fn buy_shipment(carrier_name: Option<String>, shipment_id: u64) -> Result<
 
 #[query(name = "generateQr")]
 async fn generate_qr(link: String, size: usize) -> Result<Vec<u8>, String> {
-    qr::generate(QrCodeOptions {
+    generate(QrCodeOptions {
         gradient: false,
         link,
         size,
@@ -204,7 +220,7 @@ async fn generate_qr(link: String, size: usize) -> Result<Vec<u8>, String> {
 async fn create_shipment(
     customer_name: Option<String>,
     shipment_name: String,
-    hashed_secret: String,
+    hashed_secret: Vec<u8>,
     qr_options: QrCodeOptions,
     shipment_info: ShipmentInfo,
 ) -> Result<(Vec<u8>, u64), String> {
@@ -229,7 +245,7 @@ async fn create_shipment(
 
             CreateShipmentOp::new(
                 caller,
-                &hashed_secret,
+                hashed_secret,
                 &shipment_name,
                 shipment_info,
                 created_at,
@@ -238,7 +254,7 @@ async fn create_shipment(
         })
         .map_err(|e| e.to_string())?;
 
-    let qr_code = qr::generate(qr_options).unwrap_or_else(|err| ic_cdk::trap(&err.to_string()));
+    let qr_code = generate(qr_options).unwrap_or_else(|err| ic_cdk::trap(&err.to_string()));
 
     let transfer_args = TransferInParams {
         params: TransferParams {
