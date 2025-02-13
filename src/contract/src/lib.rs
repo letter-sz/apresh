@@ -32,6 +32,8 @@ pub use vetkd::{encrypted_ibe_decryption_key_for_caller, ibe_encryption_key};
 
 thread_local! {
     pub static STATE: RefCell<CanisterState> = RefCell::new(CanisterState::default());
+    pub static TRANSFER_FEE: RefCell<u64> = RefCell::new(10_000);
+    pub static DEAD_TOKENS: RefCell<u64> = RefCell::new(0); // Tokens, where transfer amount is less than the fee needed to transfer it.
 }
 
 #[init]
@@ -103,6 +105,16 @@ fn init() {
     }
 }
 
+#[update(name = "setTransferFee")]
+fn set_transfer_fee(fee: u64) {
+    TRANSFER_FEE.set(fee);
+}
+
+#[query(name = "getTransferFee")]
+fn get_transfer_fee() -> u64 {
+    TRANSFER_FEE.with_borrow(|fee| *fee)
+}
+
 #[update(name = "addEncryptedMessage")]
 async fn add_encrypted_message(message: String, shipment_id: u64) -> Result<(), String> {
     let caller = ActorId(ic_cdk::caller());
@@ -131,18 +143,24 @@ async fn finalize_shipment(shipment_id: u64, secret_key: Option<String>) -> Resu
         })
         .map_err(|e: anyhow::Error| e.to_string())?;
 
-    let transfer_args = TransferOutParams {
-        params: TransferParams {
-            amount: NumTokens::from(
-                finalize_shipment_result.value() + finalize_shipment_result.price(),
-            ),
-            memo: memo("SETTLE", shipment_id),
-        },
-        to: (finalize_shipment_result.carrier_id().0).into(),
-    };
+    let fee = get_transfer_fee();
+    let amount = finalize_shipment_result.value() + finalize_shipment_result.price();
 
-    if let Err(e) = transfer_out(transfer_args).await {
-        ic_cdk::trap(&e.to_string())
+    // If the amount is greater than the fee, transfer the amount out
+    if amount > fee {
+        let transfer_args = TransferOutParams {
+            params: TransferParams {
+                amount: NumTokens::from(amount),
+                memo: memo("SETTLE", shipment_id),
+            },
+            to: (finalize_shipment_result.carrier_id().0).into(),
+        };
+
+        if let Err(e) = transfer_out(transfer_args, get_transfer_fee()).await {
+            ic_cdk::trap(&e.to_string())
+        }
+    } else {
+        DEAD_TOKENS.with_borrow_mut(|dead_tokens| *dead_tokens += amount);
     }
 
     ic_cdk::print(format!("Shipment finalized: {:?}", shipment_id).as_str());
