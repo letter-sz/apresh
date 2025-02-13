@@ -58,7 +58,7 @@ impl<'a> StateOp<ShipmentId> for CreateShipmentOp<'a> {
         );
 
         shipper.add_shipment(new_shipment_id);
-        state.create_shipment(shipment);
+        state.create_shipment(shipment)?;
 
         Ok(new_shipment_id)
     }
