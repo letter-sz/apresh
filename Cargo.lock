@@ -30,6 +30,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "34ac096ce696dc2fcabef30516bb13c0a68a11d30131d3df6f04711467681b04"
 
 [[package]]
+name = "apresh-qr"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "candid",
+ "colorgrad",
+ "engine",
+ "image",
+ "qrcode-generator",
+ "serde",
+]
+
+[[package]]
 name = "arrayvec"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -181,6 +194,7 @@ version = "0.1.0"
 dependencies = [
  "actor-derive",
  "anyhow",
+ "apresh-qr",
  "candid",
  "colorgrad",
  "derive_deref",
@@ -1086,6 +1100,7 @@ dependencies = [
 name = "wasm"
 version = "0.1.0"
 dependencies = [
+ "apresh-qr",
  "console_error_panic_hook",
  "engine",
  "wasm-bindgen",

@@ -25,3 +25,4 @@ hex = { workspace = true }
 
 actor-derive = { workspace = true }
 engine = { workspace = true }
+apresh-qr = { workspace = true }

@@ -1,16 +1,23 @@
 [workspace]
-members = ["src/contract", "src/crates/actor-derive", "src/crates/apresh-wasm", "src/crates/engine"]
+members = [
+    "src/contract", 
+    "src/crates/actor-derive",
+    "src/crates/apresh-qr",
+    "src/crates/apresh-wasm",
+    "src/crates/engine"
+   ]
 resolver = "2"
 
 
 [workspace.dependencies]
 actor-derive = { path = "src/crates/actor-derive" }
 engine = { path = "src/crates/engine" }
+apresh-qr = { path = "src/crates/apresh-qr" }
 
 candid = "0.10.12"
 derive_deref = "1.1.1"
 ic-cdk = "0.17.1"
-ic-cdk-timers = "0.11.0"                                                      # Feel free to remove this dependency if you don't need timers
+ic-cdk-timers = "0.11.0" 
 serde = { version = "1.0.217", features = ["derive"] }
 icrc-ledger-types = "0.1.6"
 anyhow = "1.0.95"

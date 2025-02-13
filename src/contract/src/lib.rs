@@ -1,17 +1,14 @@
-mod qr;
 mod transfer;
 mod utils;
 mod vetkd;
 
 use std::cell::RefCell;
 
+use apresh_qr::{generate, QrCodeOptions};
 use engine::{
     actors::{carrier::Carrier, shipper::Shipper},
-    models::{
-        qrcode::QrCodeOptions,
-        shipment::{
-            PrintableShipment, ShipmentInfo, ShipmentLocation, ShipmentStatus, SizeCategory,
-        },
+    models::shipment::{
+        PrintableShipment, ShipmentInfo, ShipmentLocation, ShipmentStatus, SizeCategory,
     },
     operations::{
         AddMessageOp, BuyShipmentOp, CancelShipmentOp, CreateShipmentOp, FinalizeShipmentOp,
@@ -210,7 +207,7 @@ async fn buy_shipment(carrier_name: Option<String>, shipment_id: u64) -> Result<
 
 #[query(name = "generateQr")]
 async fn generate_qr(link: String, size: usize) -> Result<Vec<u8>, String> {
-    qr::generate(QrCodeOptions {
+    generate(QrCodeOptions {
         gradient: false,
         link,
         size,
@@ -257,7 +254,7 @@ async fn create_shipment(
         })
         .map_err(|e| e.to_string())?;
 
-    let qr_code = qr::generate(qr_options).unwrap_or_else(|err| ic_cdk::trap(&err.to_string()));
+    let qr_code = generate(qr_options).unwrap_or_else(|err| ic_cdk::trap(&err.to_string()));
 
     let transfer_args = TransferInParams {
         params: TransferParams {

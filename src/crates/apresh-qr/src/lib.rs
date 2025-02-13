@@ -1,8 +1,17 @@
-use engine::models::qrcode::QrCodeOptions;
-
 use image::{ImageBuffer, Rgba};
 use qrcode_generator::QrCodeEcc;
 use std::io::Cursor;
+
+use candid::CandidType;
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Serialize, Deserialize, CandidType)]
+pub struct QrCodeOptions {
+    pub link: String,
+    pub size: usize,
+    pub gradient: bool,
+    pub transparent: bool,
+}
 
 /// Generates a QR code image in PNG format for the given input text.
 /// The requested image size should be specified in pixels.

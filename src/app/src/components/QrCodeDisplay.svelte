@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { fetchBackend } from '$lib/canisters';
+	import { generate_qr } from 'wasm';
 	import PillButton from './common/PillButton.svelte';
 
 	let { settleId, settleSecret } = $props<{
@@ -14,14 +15,24 @@
 	);
 
 	async function getQrCode(url: string) {
-		const data = await fetchBackend(fetch).generateQr(url, BigInt(320));
-		if (Object.keys(data)[0] == 'Ok') {
-			const blob = new Blob([Object.values(data)[0]], { type: 'image/png' });
-			const url = await convertToDataUrl(blob);
-			return url as string;
+		// const data = await fetchBackend(fetch).generateQr(url, BigInt(320));
+		// if (Object.keys(data)[0] == 'Ok') {
+		// 	const blob = new Blob([Object.values(data)[0]], { type: 'image/png' });
+		// 	const url = await convertToDataUrl(blob);
+		// 	return url as string;
+		// }
+		try {
+			const data = await generate_qr(url, 320);
+			if (data) {
+				const blob = new Blob([data], { type: 'image/png' });
+				const url = await convertToDataUrl(blob);
+				return url as string;
+			}
+		} catch (error) {
+			console.error('Cannot get QR code: ' + error);
 		}
 
-		throw new Error('Cannot get QR code');
+		return null;
 	}
 
 	function convertToDataUrl(blob: Blob) {
