@@ -31,10 +31,14 @@ thread_local! {
     pub static STATE: RefCell<CanisterState> = RefCell::new(CanisterState::default());
     pub static TRANSFER_FEE: RefCell<u64> = const { RefCell::new(10_000) };
     pub static DEAD_TOKENS: RefCell<u64> = RefCell::default(); // Tokens, where transfer amount is less than the fee needed to transfer it.
+    pub static ADMIN: RefCell<Principal> = RefCell::new(Principal::anonymous());
 }
 
+#[cfg(not(feature = "mainnet"))]
 #[init]
 fn init() {
+    ADMIN.with_borrow_mut(|caller| *caller = ic_cdk::caller());
+
     ic_cdk::print("Initializing the shipment service");
 
     // Define a set of realistic coordinates for shipment locations
@@ -104,6 +108,10 @@ fn init() {
 
 #[update(name = "setTransferFee")]
 fn set_transfer_fee(fee: u64) {
+    if ADMIN.with_borrow(|caller| *caller != ic_cdk::caller()) {
+        ic_cdk::trap("Not authorized");
+    }
+
     TRANSFER_FEE.set(fee);
 }
 
