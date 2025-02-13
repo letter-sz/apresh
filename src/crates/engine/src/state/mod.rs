@@ -35,7 +35,7 @@ pub trait CanisterActors {
 pub trait CanisterShipments {
     fn shipment(&self, id: ShipmentId) -> Option<&Shipment>;
     fn shipment_mut(&mut self, id: ShipmentId) -> Option<&mut Shipment>;
-    fn create_shipment(&mut self, shipment: Shipment);
+    fn create_shipment(&mut self, shipment: Shipment) -> Result<(), crate::errors::Error>;
     fn shipments(&self) -> Vec<&Shipment>;
     fn shipment_counter(&self) -> u64;
     fn shipper_and_shipment(
@@ -85,9 +85,14 @@ impl CanisterShipments for CanisterState {
         self.shipments.get_mut(&id)
     }
 
-    fn create_shipment(&mut self, shipment: Shipment) {
+    fn create_shipment(&mut self, shipment: Shipment) -> Result<(), crate::errors::Error> {
         self.shipments.insert(shipment.id(), shipment);
-        self.shipment_counter = self.shipment_counter.saturating_add(1);
+        self.shipment_counter = self
+            .shipment_counter
+            .checked_add(1)
+            .ok_or(crate::errors::Error::ShipmentLimitReached)?;
+
+        Ok(())
     }
 
     fn shipments(&self) -> Vec<&Shipment> {
