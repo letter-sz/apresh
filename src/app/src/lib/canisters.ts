@@ -8,8 +8,10 @@ import { AuthClient } from '@dfinity/auth-client';
 import { type ActorSubclass, type Identity } from '@dfinity/agent';
 import type { _SERVICE } from '$declarations/contract/contract.did';
 import type { _SERVICE as _ICRC1_SERVICE } from '$declarations/icrc1_ledger_canister/icrc1_ledger_canister.did';
+import { connectPlug } from './connector/plug';
+import type { Principal } from '@dfinity/principal';
 
-const host = `http://localhost:4943`;
+export const host = `http://localhost:4943`;
 
 export function fetchBackend(fetchFunction: typeof fetch) {
 	return createActor(canisterId, { agentOptions: { host, fetch: fetchFunction } });
@@ -27,10 +29,20 @@ export function mintBackend(fetchFunction: typeof fetch) {
 export interface IConnection {
 	actor: ActorSubclass<_SERVICE>;
 	tokenActor: ActorSubclass<_ICRC1_SERVICE>;
-	identity: Identity;
+	identity: Principal;
 }
 
 export const connect = async (allowReconnect: boolean = true): Promise<IConnection> => {
+	// Assuming user prefers to connect with plug wallet, if present.
+	const plugConnection = await connectPlug();
+
+	if (plugConnection) {
+		console.log('Plug connection', plugConnection);
+		if (plugConnection) return plugConnection;
+	} else {
+		console.log('No plug connection');
+	}
+
 	console.log('Connecting to backend');
 	const authClient = await AuthClient.create();
 
@@ -68,8 +80,9 @@ const initActors = (authClient: AuthClient): IConnection => {
 	});
 
 	console.log('Connected to backend as', identity.getPrincipal().toText());
+	const principal = identity.getPrincipal();
 
-	return { actor, tokenActor, identity };
+	return { actor, tokenActor, identity: principal };
 };
 
 // export const contractCanister = canisterIds.contract.local;

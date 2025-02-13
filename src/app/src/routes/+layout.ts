@@ -14,7 +14,7 @@ export const load: LayoutLoad = async ({ depends, fetch }): Promise<{ balance?: 
 		const tokenActor = mintBackend(fetch);
 
 		balance = await tokenActor.icrc1_balance_of({
-			owner: connection.identity.getPrincipal(),
+			owner: connection.identity,
 			subaccount: []
 		});
 	}

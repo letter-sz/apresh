@@ -49,7 +49,7 @@ class Wallet {
 		const owner = await connection.getIdentity();
 
 		const balance = await tokenActor.icrc1_balance_of({
-			owner: owner.getPrincipal(),
+			owner,
 			subaccount: []
 		});
 
@@ -62,7 +62,7 @@ class Wallet {
 		const owner = await connection.getIdentity();
 		const mintResult = await tokenActor.icrc1_transfer({
 			amount,
-			to: { owner: owner.getPrincipal(), subaccount: [] },
+			to: { owner, subaccount: [] },
 			fee: [],
 			memo: [],
 			from_subaccount: [],
