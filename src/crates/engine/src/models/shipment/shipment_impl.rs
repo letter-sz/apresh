@@ -34,6 +34,10 @@ impl Shipment {
             return Err(crate::errors::Error::NotAuthorizedAsShipper);
         }
 
+        if self.status != ShipmentStatus::Pending || self.carrier.is_some() {
+            return Err(crate::errors::Error::ShipmentNotReadyToBeCanceled);
+        }
+
         self.status = ShipmentStatus::Cancelled;
 
         Ok(())
