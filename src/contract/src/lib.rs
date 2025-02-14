@@ -11,7 +11,7 @@ use apresh_qr::{generate, QrCodeOptions};
 use candid::Principal;
 use engine::{
     actors::{carrier::Carrier, shipper::Shipper},
-    models::shipment::{PrintableShipment, ShipmentInfo, ShipmentStatus},
+    models::shipment::{Message, PrintableShipment, ShipmentInfo, ShipmentStatus},
     operations::{
         AddMessageOp, BuyShipmentOp, CancelShipmentOp, CreateShipmentOp, FinalizeShipmentOp,
         ReadMessageOp, RegisterActorOp, StateOp,
@@ -66,19 +66,19 @@ fn get_transfer_fee() -> u64 {
     TRANSFER_FEE.with_borrow(|fee| *fee)
 }
 
-#[update(name = "addEncryptedMessage")]
-async fn add_encrypted_message(message: String, shipment_id: u64) -> Result<(), String> {
+#[update]
+async fn add_message(message: Vec<u8>, shipment_id: u64) -> Result<(), String> {
     assert_whitelisted();
 
     let caller = ActorId(ic_cdk::caller());
 
     STATE
-        .with_borrow_mut(|state| AddMessageOp::new(shipment_id, &message, caller).apply(state))
+        .with_borrow_mut(|state| AddMessageOp::new(shipment_id, message, caller).apply(state))
         .map_err(|e| e.to_string())
 }
 
-#[query(name = "readEncryptedMessage")]
-async fn read_encrypted_message(shipment_id: u64) -> Result<Option<String>, String> {
+#[query]
+async fn read_message(shipment_id: u64) -> Result<Vec<Message>, String> {
     let caller = ActorId(ic_cdk::caller());
 
     STATE

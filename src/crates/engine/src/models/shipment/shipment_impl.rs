@@ -17,6 +17,8 @@ pub enum ShipmentActions<ActorId> {
     },
 }
 
+pub type Message = Vec<u8>;
+
 impl Shipment {
     pub fn action(&mut self, op: ShipmentActions<ActorId>) -> crate::errors::Result<()> {
         match op {
@@ -128,7 +130,7 @@ pub struct Shipment {
     /// Shipment status
     status: ShipmentStatus,
     /// Encrypted message from shipper to carrier, could be used to send contact information
-    message: Option<String>,
+    messages: Vec<Message>,
     /// Carrier id
     carrier: Option<ActorId>, // TODO: I think we should use some internal id instead of principal here
     /// Shipper id
@@ -144,7 +146,7 @@ pub struct PrintableShipment {
     hashed_secret: Vec<u8>,
     info: ShipmentInfo,
     status: ShipmentStatus,
-    message: Option<String>,
+    messages: Vec<Message>,
     carrier: Option<String>,
     shipper: String,
     created_at: u64,
@@ -158,7 +160,7 @@ impl From<&Shipment> for PrintableShipment {
             hashed_secret: shipment.hashed_secret.clone(),
             info: shipment.info.clone(),
             status: shipment.status,
-            message: shipment.message.clone(),
+            messages: shipment.messages.clone(),
             carrier: shipment.carrier.map(|id| id.to_string()),
             shipper: shipment.shipper.to_string(),
             created_at: shipment.created_at,
@@ -179,7 +181,7 @@ impl Shipment {
             id,
             info,
             name: name.to_string(),
-            message: None,
+            messages: Vec::new(),
             hashed_secret: hashed_secret.to_vec(),
             status: ShipmentStatus::default(),
             carrier: None,
@@ -188,12 +190,12 @@ impl Shipment {
         }
     }
 
-    pub fn attach_message(&mut self, message: String) {
-        self.message = Some(message);
+    pub fn attach_message(&mut self, message: Message) {
+        self.messages.push(message);
     }
 
-    pub fn message(&self) -> Option<&str> {
-        self.message.as_deref()
+    pub fn messages(&self) -> &Vec<Message> {
+        &self.messages
     }
 
     pub fn status(&self) -> &ShipmentStatus {

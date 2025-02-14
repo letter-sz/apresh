@@ -2,10 +2,10 @@ type PrintableShipment = record {
   id : nat64;
   shipper : text;
   status : ShipmentStatus;
+  messages : vec blob;
   info : ShipmentInfo;
   name : text;
   created_at : nat64;
-  message : opt text;
   hashed_secret : blob;
   carrier : opt text;
 };
@@ -18,7 +18,7 @@ type QrCodeOptions = record {
 type Result = variant { Ok; Err : text };
 type Result_1 = variant { Ok : record { blob; nat64 }; Err : text };
 type Result_2 = variant { Ok : blob; Err : text };
-type Result_3 = variant { Ok : opt text; Err : text };
+type Result_3 = variant { Ok : vec blob; Err : text };
 type ShipmentInfo = record {
   destination : ShipmentLocation;
   value : nat64;
@@ -42,8 +42,8 @@ type SizeCategory = variant {
   Envelope;
 };
 service : () -> {
-  addEncryptedMessage : (text, nat64) -> (Result);
   addWhitelisted : (principal) -> ();
+  add_message : (blob, nat64) -> (Result);
   buyShipment : (opt text, nat64) -> (Result);
   cancel_shipment : (nat64) -> (Result);
   carrier_shipments : () -> (vec PrintableShipment) query;
@@ -57,7 +57,7 @@ service : () -> {
   ibe_encryption_key : () -> (text);
   is_mainnet : () -> (bool) query;
   listPendingShipments : () -> (vec PrintableShipment) query;
-  readEncryptedMessage : (nat64) -> (Result_3) query;
+  read_message : (nat64) -> (Result_3) query;
   roles : () -> (bool, bool) query;
   setTransferFee : (nat64) -> ();
   shipment : (nat64) -> (opt PrintableShipment) query;

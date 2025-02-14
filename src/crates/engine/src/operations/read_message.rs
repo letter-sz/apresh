@@ -2,7 +2,7 @@ use candid::Principal;
 
 use super::StateOp;
 use crate::{
-    models::shipment::ShipmentId,
+    models::shipment::{Message, ShipmentId},
     state::{CanisterShipments, CanisterState},
     ActorId,
 };
@@ -21,15 +21,14 @@ impl ReadMessageOp {
     }
 }
 
-impl StateOp<Option<String>> for ReadMessageOp {
+impl StateOp<Vec<Message>> for ReadMessageOp {
     type Error = crate::Error;
-
-    fn read(&self, state: &CanisterState) -> crate::Result<Option<String>> {
-        Ok(state
-            .shipments
-            .get(&self.shipment_id)
+    fn read(&self, state: &CanisterState) -> crate::Result<Vec<Message>> {
+        let shipment = state
+            .shipment(self.shipment_id)
             .filter(|&v| v.shipper_id() == self.caller)
-            .and_then(|v| v.message())
-            .map(|v| v.to_string()))
+            .ok_or(crate::Error::NotAuthorizedAsShipper)?;
+
+        Ok(shipment.messages().clone())
     }
 }
