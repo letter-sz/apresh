@@ -1,11 +1,21 @@
 use candid::Principal;
 use icrc_ledger_types::icrc1::transfer::Memo;
 
-pub fn block_anonymous() -> Result<(), String> {
+pub fn assert_admin() {
+    #[cfg(feature = "admin")]
+    if ADMIN.with_borrow(|caller| *caller != ic_cdk::caller()) {
+        ic_cdk::trap("Not authorized");
+    }
+}
+
+pub fn assert_whitelisted() {
+    #[cfg(feature = "whitelist")]
+    if !WHITELIST.with_borrow(|whitelist| whitelist.contains(&ic_cdk::caller())) {
+        ic_cdk::trap("Not whitelisted");
+    }
+    #[cfg(not(feature = "whitelist"))]
     if ic_cdk::caller() == Principal::anonymous() {
-        Err("Cannot be called anonymously".to_string())
-    } else {
-        Ok(())
+        ic_cdk::trap("Caller is anonymous");
     }
 }
 

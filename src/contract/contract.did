@@ -43,6 +43,7 @@ type SizeCategory = variant {
 };
 service : () -> {
   addEncryptedMessage : (text, nat64) -> (Result);
+  addWhitelisted : (principal) -> ();
   buyShipment : (opt text, nat64) -> (Result);
   cancel_shipment : (nat64) -> (Result);
   carrier_shipments : () -> (vec PrintableShipment) query;
@@ -54,6 +55,7 @@ service : () -> {
   generateQr : (text, nat64) -> (Result_2) query;
   getTransferFee : () -> (nat64) query;
   ibe_encryption_key : () -> (text);
+  is_mainnet : () -> (bool) query;
   listPendingShipments : () -> (vec PrintableShipment) query;
   readEncryptedMessage : (nat64) -> (Result_3) query;
   roles : () -> (bool, bool) query;

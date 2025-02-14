@@ -8,6 +8,7 @@ mod mock_data;
 use std::cell::RefCell;
 
 use apresh_qr::{generate, QrCodeOptions};
+use candid::Principal;
 use engine::{
     actors::{carrier::Carrier, shipper::Shipper},
     models::shipment::{PrintableShipment, ShipmentInfo, ShipmentStatus},
@@ -18,12 +19,10 @@ use engine::{
     state::CanisterState,
     ActorId,
 };
-
-use candid::Principal;
 use ic_cdk::{init, query, update};
 use icrc_ledger_types::icrc1::transfer::NumTokens;
 use transfer::{transfer_in, transfer_out, TransferInParams, TransferOutParams, TransferParams};
-use utils::{block_anonymous, memo};
+use utils::{assert_admin, assert_whitelisted, memo};
 
 pub use vetkd::{encrypted_ibe_decryption_key_for_caller, ibe_encryption_key};
 
@@ -31,22 +30,8 @@ thread_local! {
     pub static STATE: RefCell<CanisterState> = RefCell::new(CanisterState::default());
     pub static TRANSFER_FEE: RefCell<u64> = const { RefCell::new(10_000) };
     pub static DEAD_TOKENS: RefCell<u64> = RefCell::default(); // Tokens, where transfer amount is less than the fee needed to transfer it.
-    pub static ADMIN: RefCell<Principal> = RefCell::new(Principal::anonymous());
-    pub static WHITELIST: RefCell<Vec<Principal>> = RefCell::new(vec![]);
-}
-
-fn assert_admin() {
-    #[cfg(feature = "admin")]
-    if ADMIN.with_borrow(|caller| *caller != ic_cdk::caller()) {
-        ic_cdk::trap("Not authorized");
-    }
-}
-
-fn assert_whitelisted() {
-    #[cfg(feature = "whitelist")]
-    if !WHITELIST.with_borrow(|whitelist| whitelist.contains(&ic_cdk::caller())) {
-        ic_cdk::trap("Not whitelisted");
-    }
+    pub static ADMIN: RefCell<Principal> = const{ RefCell::new(Principal::anonymous()) };
+    pub static WHITELIST: RefCell<Vec<Principal>> = RefCell::default();
 }
 
 #[init]
@@ -55,6 +40,11 @@ fn init() {
 
     #[cfg(not(feature = "no-mocks"))]
     mock_data::mock_shipments();
+}
+
+#[query]
+fn is_mainnet() -> bool {
+    cfg!(feature = "mainnet")
 }
 
 #[update(name = "addWhitelisted")]
@@ -134,8 +124,6 @@ async fn finalize_shipment(shipment_id: u64, secret_key: Option<String>) -> Resu
 #[update(name = "buyShipment")]
 async fn buy_shipment(carrier_name: Option<String>, shipment_id: u64) -> Result<(), String> {
     assert_whitelisted();
-    block_anonymous()?;
-
     let caller = ActorId(ic_cdk::caller());
 
     let shipment_value = STATE
@@ -194,8 +182,8 @@ async fn create_shipment(
 ) -> Result<(Vec<u8>, u64), String> {
     assert_whitelisted();
     let caller = ActorId(ic_cdk::caller());
-    let price = shipment_info.price();
 
+    let price = shipment_info.price();
     let created_at = ic_cdk::api::time();
 
     let shipment_id = STATE
