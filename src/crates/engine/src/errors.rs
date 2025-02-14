@@ -36,4 +36,6 @@ pub enum Error {
     ShipmentCannotBeBought,
     #[error("Shipment limit reached")]
     ShipmentLimitReached,
+    #[error("Shipment cannot be bought")]
+    ShipmentCannotBeBought,
 }
