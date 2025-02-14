@@ -1,6 +1,7 @@
 mod transfer;
 mod utils;
 mod vetkd;
+mod tests;
 
 use std::cell::RefCell;
 

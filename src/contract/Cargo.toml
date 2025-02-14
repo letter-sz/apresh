@@ -2,6 +2,7 @@
 name = "contract"
 version = "0.1.0"
 edition = "2021"
+build = "build.rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -26,3 +27,4 @@ hex = { workspace = true }
 actor-derive = { workspace = true }
 engine = { workspace = true }
 apresh-qr = { workspace = true }
+pocket-ic = "6.0.0"
