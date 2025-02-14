@@ -33,6 +33,10 @@ impl Shipment {
             return Err(crate::errors::Error::NotAuthorizedAsShipper);
         }
 
+        if self.status != ShipmentStatus::Pending || self.carrier.is_some() {
+            return Err(crate::errors::Error::ShipmentNotReadyToBeCanceled);
+        }
+
         self.status = ShipmentStatus::Cancelled;
 
         Ok(())
@@ -71,7 +75,11 @@ impl Shipment {
     }
 
     fn buy(&mut self, carrier_id: ActorId) -> crate::errors::Result<()> {
-        if self.status != ShipmentStatus::Pending || self.carrier.is_some() {
+        if self.status != ShipmentStatus::Pending {
+            return Err(crate::errors::Error::ShipmentCannotBeBought);
+        }
+
+        if self.carrier.is_some() {
             return Err(crate::errors::Error::CarrierAlreadySet);
         }
 
