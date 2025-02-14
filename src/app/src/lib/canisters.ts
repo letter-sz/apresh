@@ -5,7 +5,7 @@ import {
 	createActor as createTokenActor
 } from '$declarations/icrc1_ledger_canister';
 import { AuthClient } from '@dfinity/auth-client';
-import { type ActorSubclass, type Identity } from '@dfinity/agent';
+import { type ActorSubclass } from '@dfinity/agent';
 import type { _SERVICE } from '$declarations/contract/contract.did';
 import type { _SERVICE as _ICRC1_SERVICE } from '$declarations/icrc1_ledger_canister/icrc1_ledger_canister.did';
 import { connectPlug } from './connector/plug';
