@@ -28,4 +28,6 @@ pub enum Error {
     NotAuthorizedAsShipper,
     #[error("Shipment limit reached")]
     ShipmentLimitReached,
+    #[error("Shipment cannot be bought")]
+    ShipmentCannotBeBought,
 }

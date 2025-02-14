@@ -162,7 +162,7 @@ mod tests {
     }
 
     #[test]
-    fn test_carrier_cancel_shipment() {
+    fn test_carrier_cannot_cancel_shipment() {
         let mut state = setup_test_state();
         let shipment_id = 0;
 
