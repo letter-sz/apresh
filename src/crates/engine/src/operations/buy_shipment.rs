@@ -55,7 +55,7 @@ impl StateOp<Cost> for BuyShipmentOp {
 #[cfg(test)]
 mod tests {
     use crate::{
-        actors::Actor, models::shipment::{Shipment, ShipmentInfo, ShipmentLocation, ShipmentStatus, SizeCategory}, operations::RegisterActorOp, utils::hash_secret, ActorId, Error
+        actors::Actor, models::shipment::{Shipment, ShipmentInfo, ShipmentLocation, ShipmentStatus, SizeCategory}, operations::{RegisterActorOp, CancelShipmentOp}, utils::hash_secret, ActorId, Error
     };
     use super::*;
     use candid::Principal;
@@ -126,7 +126,7 @@ mod tests {
         let result = op.apply(&mut state);
         assert!(result.is_ok());
         let result = op.apply(&mut state);
-        assert!(matches!(result, Err(Error::CarrierAlreadySet)));
+        assert!(matches!(result, Err(Error::ShipmentCannotBeBought)));
     }
 
     #[test]
@@ -148,5 +148,36 @@ mod tests {
         assert!(carrier.get_active_shipments().contains(&shipment_id));
         assert_eq!(shipment.status(), &ShipmentStatus::InTransit);
         assert_eq!(shipment.carrier_id(), Some(REGISTERED_CARRIER_ID));
+    }
+
+    #[test]
+    fn test_canceled_shipment_cannot_be_bought() {
+        let mut state = setup_test_state();
+
+        let info = ShipmentInfo::new(
+            100,
+            10,
+            ShipmentLocation::new("Warsaw".to_string(), 52.23, 21.01),
+            ShipmentLocation::new("Krakow".to_string(), 54.44, 18.23),
+            SizeCategory::Envelope,
+        );
+        let new_shipment = Shipment::new(
+            1234567890,
+            REGISTERED_SHIPPER_ID,
+            1,
+            &hash_secret(b"test_secret"),
+            "Test Shipment",
+            &info,
+        );
+
+        state.create_shipment(new_shipment).unwrap();
+
+        let shipment_id = 1;
+        let op = CancelShipmentOp::new(REGISTERED_SHIPPER_ID, shipment_id);
+        op.apply(&mut state).unwrap();
+
+        let buy_op = BuyShipmentOp::new(REGISTERED_CARRIER_ID, shipment_id);
+        let result = buy_op.apply(&mut state);
+        assert!(matches!(result, Err(Error::ShipmentCannotBeBought)));
     }
 }
