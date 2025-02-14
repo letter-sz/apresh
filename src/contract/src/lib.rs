@@ -2,7 +2,7 @@ mod transfer;
 mod utils;
 mod vetkd;
 
-#[cfg(not(feature = "mainnet"))]
+#[cfg(not(feature = "no-mocks"))]
 mod mock_data;
 
 use std::cell::RefCell;
@@ -10,15 +10,12 @@ use std::cell::RefCell;
 use apresh_qr::{generate, QrCodeOptions};
 use engine::{
     actors::{carrier::Carrier, shipper::Shipper},
-    models::shipment::{
-        PrintableShipment, ShipmentInfo, ShipmentLocation, ShipmentStatus, SizeCategory,
-    },
+    models::shipment::{PrintableShipment, ShipmentInfo, ShipmentStatus},
     operations::{
         AddMessageOp, BuyShipmentOp, CancelShipmentOp, CreateShipmentOp, FinalizeShipmentOp,
         ReadMessageOp, RegisterActorOp, StateOp,
     },
     state::CanisterState,
-    utils::hash_secret,
     ActorId,
 };
 
@@ -35,21 +32,41 @@ thread_local! {
     pub static TRANSFER_FEE: RefCell<u64> = const { RefCell::new(10_000) };
     pub static DEAD_TOKENS: RefCell<u64> = RefCell::default(); // Tokens, where transfer amount is less than the fee needed to transfer it.
     pub static ADMIN: RefCell<Principal> = RefCell::new(Principal::anonymous());
+    pub static WHITELIST: RefCell<Vec<Principal>> = RefCell::new(vec![]);
+}
+
+fn assert_admin() {
+    #[cfg(feature = "admin")]
+    if ADMIN.with_borrow(|caller| *caller != ic_cdk::caller()) {
+        ic_cdk::trap("Not authorized");
+    }
+}
+
+fn assert_whitelisted() {
+    #[cfg(feature = "whitelist")]
+    if !WHITELIST.with_borrow(|whitelist| whitelist.contains(&ic_cdk::caller())) {
+        ic_cdk::trap("Not whitelisted");
+    }
 }
 
 #[init]
 fn init() {
     ADMIN.with_borrow_mut(|caller| *caller = ic_cdk::caller());
 
-    #[cfg(not(feature = "mainnet"))]
+    #[cfg(not(feature = "no-mocks"))]
     mock_data::mock_shipments();
+}
+
+#[update(name = "addWhitelisted")]
+fn add_whitelisted(principal: Principal) {
+    assert_admin();
+
+    WHITELIST.with_borrow_mut(|whitelist| whitelist.push(principal));
 }
 
 #[update(name = "setTransferFee")]
 fn set_transfer_fee(fee: u64) {
-    if ADMIN.with_borrow(|caller| *caller != ic_cdk::caller()) {
-        ic_cdk::trap("Not authorized");
-    }
+    assert_admin();
 
     TRANSFER_FEE.set(fee);
 }
@@ -61,6 +78,8 @@ fn get_transfer_fee() -> u64 {
 
 #[update(name = "addEncryptedMessage")]
 async fn add_encrypted_message(message: String, shipment_id: u64) -> Result<(), String> {
+    assert_whitelisted();
+
     let caller = ActorId(ic_cdk::caller());
 
     STATE
@@ -79,6 +98,7 @@ async fn read_encrypted_message(shipment_id: u64) -> Result<Option<String>, Stri
 
 #[update(name = "finalizeShipment")]
 async fn finalize_shipment(shipment_id: u64, secret_key: Option<String>) -> Result<(), String> {
+    assert_whitelisted();
     let caller = ActorId(ic_cdk::caller());
 
     let finalize_shipment_result = STATE
@@ -113,6 +133,7 @@ async fn finalize_shipment(shipment_id: u64, secret_key: Option<String>) -> Resu
 
 #[update(name = "buyShipment")]
 async fn buy_shipment(carrier_name: Option<String>, shipment_id: u64) -> Result<(), String> {
+    assert_whitelisted();
     block_anonymous()?;
 
     let caller = ActorId(ic_cdk::caller());
@@ -171,6 +192,7 @@ async fn create_shipment(
     qr_options: QrCodeOptions,
     shipment_info: ShipmentInfo,
 ) -> Result<(Vec<u8>, u64), String> {
+    assert_whitelisted();
     let caller = ActorId(ic_cdk::caller());
     let price = shipment_info.price();
 
@@ -221,6 +243,7 @@ async fn create_shipment(
 
 #[update]
 fn cancel_shipment(shipment_id: u64) -> Result<(), String> {
+    assert_whitelisted();
     let caller = ActorId(ic_cdk::caller());
 
     STATE
