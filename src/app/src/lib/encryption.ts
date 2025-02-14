@@ -2,6 +2,8 @@
 
 import type { Principal } from '@dfinity/principal';
 import type { IConnection } from './canisters';
+import type { _SERVICE } from '$declarations/contract/contract.did';
+import type { ActorSubclass } from '@dfinity/agent';
 
 export async function ibe_decrypt(ibe_ciphertext_hex: string) {
 	// const tsk_seed = window.crypto.getRandomValues(new Uint8Array(32));
@@ -48,4 +50,12 @@ export async function ibe_encrypt(wallet: IConnection, message: string, principa
 
 	// return hex_encode(ibe_ciphertext.serialize());
 	return hex_encode(new Uint8Array());
+}
+
+export function plainEncrypt(message: string): Uint8Array {
+	return new TextEncoder().encode(message);
+}
+
+export function plainDecrypt(encrypted_message: Uint8Array): string {
+	return new TextDecoder().decode(encrypted_message);
 }

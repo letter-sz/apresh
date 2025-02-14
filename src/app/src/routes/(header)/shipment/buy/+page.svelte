@@ -8,6 +8,7 @@
 	import { unwrap } from '$lib/utils';
 	import { wallet } from '$lib/wallet.svelte';
 	import type { PageData } from './$types';
+	import SendMessage from '$components/SendMessage.svelte';
 
 	let { data, bought }: { data: PageData; bought?: () => void } = $props();
 
@@ -41,7 +42,7 @@
 </script>
 
 <ShipmentInfo shipment={data.shipment} />
-<TextInput id="Message" label="Message" name="Message" bind:value={message} class="w-full" />
+<SendMessage shipment={data.shipment} />
 <PillButton
 	onClick={() => buy(data.shipment)}
 	disabled={buttonText === 'Insufficient funds'}

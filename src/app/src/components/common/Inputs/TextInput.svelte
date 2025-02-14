@@ -39,6 +39,7 @@
 			{placeholder}
 			{id}
 			{required}
+			on:keydown
 		/>
 	</div>
 </InputWrapper>

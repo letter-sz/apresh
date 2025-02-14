@@ -26,8 +26,11 @@ impl StateOp<Vec<Message>> for ReadMessageOp {
     fn read(&self, state: &CanisterState) -> crate::Result<Vec<Message>> {
         let shipment = state
             .shipment(self.shipment_id)
-            .filter(|&v| v.shipper_id() == self.caller)
-            .ok_or(crate::Error::NotAuthorizedAsShipper)?;
+            .ok_or(crate::Error::ShipmentNotFound)?;
+
+        if shipment.shipper_id() != self.caller {
+            return Err(crate::Error::NotAuthorizedAsShipper);
+        }
 
         Ok(shipment.messages().clone())
     }

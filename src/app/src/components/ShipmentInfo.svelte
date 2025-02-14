@@ -27,11 +27,11 @@
 			</div>
 		</div>
 
-		{#if shipment.message.length > 0}
-			<div class="col-span-3 flex flex-col space-y-3 text-center">
-				<span class="text-base font-semibold text-orange-500">Message</span>
-				<span class="text-sm"
-					>{#await ibe_decrypt(shipment.message[0]!)}
+		{#if shipment.messages.length > 0}
+			<div class="col-span-2 flex flex-col space-y-3 text-center">
+				<span class="text-lg font-semibold text-rose-500">Message</span>
+				<span class="text-base"
+					>{#await ibe_decrypt(shipment.messages[0]!.toString())}
 						<p>Loading...</p>
 					{:then decrypted}
 						{decrypted}
