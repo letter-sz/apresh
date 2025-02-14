@@ -1,17 +1,17 @@
 <script lang="ts">
 	import { pushState } from '$app/navigation';
-	import type { ShipmentLocation } from '$declarations/contract/contract.did';
+	import { page } from '$app/stores';
+	import MapButton from '$components/MapButton.svelte';
 	import Marker from '$components/Marker.svelte';
 	import Modal from '$components/modal/Modal.svelte';
-	import MapButton from '$components/MapButton.svelte';
-	import { page } from '$app/stores';
-	import CreatePage from '$routes/(header)/shipment/create/+page.svelte';
-	import BuyPage from '$routes/(header)/shipment/buy/+page.svelte';
-	import { MapEvents } from 'svelte-maplibre';
-	import SettlePage from '$routes/(header)/shipment/settle/+page.svelte';
-	import type { PageData } from './$types';
-	import { connection } from '$lib/connection.svelte';
 	import RightShipments from '$components/sideMenu/RightShipments.svelte';
+	import type { ShipmentLocation } from '$declarations/contract/contract.did';
+	import { connection } from '$lib/connection.svelte';
+	import BuyPage from '$routes/(header)/shipment/buy/+page.svelte';
+	import CreatePage from '$routes/(header)/shipment/create/+page.svelte';
+	import SettlePage from '$routes/(header)/shipment/settle/+page.svelte';
+	import { MapEvents } from 'svelte-maplibre';
+	import type { PageData } from './$types';
 
 	const { data }: { data: PageData } = $props();
 
@@ -49,6 +49,9 @@
 				})}
 			location={shipment.info.destination}
 			name={shipment.id.toString()}
+			markerType={connection.identity && shipment.shipper === connection.identity.toText()
+				? 'owner'
+				: undefined}
 		></Marker>
 	{/each}
 {/if}

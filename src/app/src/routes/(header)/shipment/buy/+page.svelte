@@ -1,13 +1,13 @@
 <script lang="ts">
-	import type { PageData } from './$types';
 	import { invalidate } from '$app/navigation';
-	import { unwrap } from '$lib/utils';
-	import { connection } from '$lib/connection.svelte';
-	import PillButton from '$components/common/PillButton.svelte';
-	import type { PrintableShipment } from '$declarations/contract/contract.did';
 	import TextInput from '$components/common/Inputs/TextInput.svelte';
-	import { wallet } from '$lib/wallet.svelte';
+	import PillButton from '$components/common/PillButton.svelte';
 	import ShipmentInfo from '$components/ShipmentInfo.svelte';
+	import type { PrintableShipment } from '$declarations/contract/contract.did';
+	import { connection } from '$lib/connection.svelte';
+	import { unwrap } from '$lib/utils';
+	import { wallet } from '$lib/wallet.svelte';
+	import type { PageData } from './$types';
 
 	let { data, bought }: { data: PageData; bought?: () => void } = $props();
 
@@ -41,10 +41,10 @@
 </script>
 
 <ShipmentInfo shipment={data.shipment} />
-<TextInput id="Message" label="Message" name="Message" bind:value={message} />
+<TextInput id="Message" label="Message" name="Message" bind:value={message} class="w-full" />
 <PillButton
 	onClick={() => buy(data.shipment)}
 	disabled={buttonText === 'Insufficient funds'}
 	text={buttonText}
-	className="w-1/2 mx-auto"
+	className="w-full mt-10 uppercase"
 />

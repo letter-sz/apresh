@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { fetchBackend } from '$lib/canisters';
+	import { Jumper } from 'svelte-loading-spinners';
 	import { generate_qr } from 'wasm';
 	import PillButton from './common/PillButton.svelte';
 
@@ -47,7 +47,11 @@
 </script>
 
 {#await getQrCode(settleUrl)}
-	<span>Loading...</span>
+	<div class="flex flex-col">
+		<div class="flex h-72 w-72 items-center justify-center">
+			<Jumper size="60" color="#FF3E00" unit="px" duration="1.5s" />
+		</div>
+	</div>
 {:then image}
 	<div class="flex flex-col space-y-6">
 		<div class="h-72 w-72 rounded-3xl bg-gradient-to-r from-blue-500 to-rose-400 p-0.5">

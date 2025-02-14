@@ -10,7 +10,7 @@
 	let { label, id, children }: InputWrapperProps = $props();
 </script>
 
-<div>
-	<label class="ml-1.5" for={id}>{label}</label>
+<div class="w-full">
+	<label class="ml-1.5 text-sm" for={id}>{label}</label>
 	{@render children()}
 </div>

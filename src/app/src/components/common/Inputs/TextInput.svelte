@@ -26,10 +26,10 @@
 </script>
 
 <InputWrapper {label} {id}>
-	<div class="rounded-lg border-2 border-gradient-to-r from-primary to-secondary">
+	<div class="rounded-lg border-2 focus-within:border-orange-400">
 		<input
 			class={clsx(
-				'w-full rounded-3xl bg-transparent px-2 py-2 text-sm text-neutral-600 font-normal placeholder-primary placeholder:italic placeholder:text-slate-400 lg:px-4 lg:py-2 lg:text-base focus:outline-none',
+				'w-full rounded-3xl border-0 bg-transparent px-2 py-2 text-sm font-normal text-neutral-600 placeholder-primary placeholder:italic placeholder:text-slate-400 focus:outline-none focus:ring-0 lg:px-4 lg:py-2 lg:text-base',
 				className
 			)}
 			{name}

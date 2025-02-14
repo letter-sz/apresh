@@ -14,7 +14,7 @@
 
 <div class="absolute bottom-16 right-16 z-50">
 	<div
-		class="mx-auto flex rounded-full bg-gradient-to-tr from-blue-500 via-orange-400 to-rose-400 p-0.5 shadow-lg transition duration-200 ease-in-out hover:-translate-y-0.5 hover:scale-105"
+		class="mx-auto flex rounded-full bg-gradient-to-tr from-violet-500 to-orange-400 p-0.5 shadow-lg transition duration-200 ease-in-out hover:-translate-y-0.5 hover:scale-105"
 	>
 		<button
 			onclick={handleClick}

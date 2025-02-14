@@ -39,12 +39,12 @@
 	});
 </script>
 
-<tr class="cursor-pointer transition-colors hover:bg-rose-50" onclick={() => (selected = shipment)}>
-	<td class="p-3 text-left text-base text-gray-900">{shipment.name}</td>
-	<td class="p-3 text-right text-base font-medium text-gray-900">{shipment.info.price} ICP</td>
-	<td class="p-3 text-right text-base font-medium text-gray-900">{shipment.info.value} ICP</td>
-	<td class="p-3 text-left text-base text-gray-600">{category}</td>
-	<td class="p-3 text-right text-base font-medium text-gray-900">
+<tr class=" text-center transition-colors hover:bg-orange-50" onclick={() => (selected = shipment)}>
+	<td class="cursor-pointer rounded-lg py-7 text-base text-gray-900">{shipment.name}</td>
+	<td class="cursor-pointer py-7 text-base font-medium text-gray-900">{shipment.info.price} ICP</td>
+	<td class="cursor-pointer py-7 text-base font-medium text-gray-900">{shipment.info.value} ICP</td>
+	<td class="cursor-pointer py-7 text-base text-gray-600">{category}</td>
+	<td class="cursor-pointer py-7 text-base font-medium text-gray-900">
 		{shipment.distance / 1000} km
 		{#if relativeDistance !== null}
 			<span class="ml-2 text-sm text-gray-500">({relativeDistance} km from you)</span>
