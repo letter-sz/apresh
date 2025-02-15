@@ -12,7 +12,7 @@ export function flyToLocation(map: maplibregl.Map, shipment: PrintableShipment) 
 	]);
 
 	map.flyTo({
-		center: source,
+		center: destination,
 		zoom: 10,
 		duration: 1500,
 		offset: [0, 0]
