@@ -104,8 +104,8 @@
 	);
 </script>
 
-<form method="POST" class="flex w-full flex-col space-y-5" onsubmit={createShipment}>
-	<h1 class="mb-5 inline-block bg-clip-text text-center text-3xl font-semibold text-orange-500">
+<form method="POST" class="flex w-full flex-col space-y-4" onsubmit={createShipment}>
+	<h1 class="mb-5 inline-block bg-clip-text text-center text-2xl font-semibold text-orange-500">
 		Create shipment
 	</h1>
 
@@ -113,7 +113,7 @@
 	<DecimalInput label="Value" id="value" name="value" bind:value required />
 	<DecimalInput label="Price" id="price" name="price" bind:value={price} required />
 
-	<div class="my-8 flex justify-between space-x-6">
+	<div class="flex justify-between space-x-6">
 		{@render locationButton('Source', sourceLocation, selectLocationWrapper)}
 		{@render locationButton('Destination', destinationLocation, selectLocationWrapper)}
 	</div>
@@ -121,13 +121,13 @@
 	<Tabs.Root
 		value={size_category ?? 'Parcel'}
 		onValueChange={(value) => (size_category = value as 'Parcel' | 'Envelope')}
-		class="w-full py-4"
+		class="w-full py-3"
 	>
-		<Tabs.List class="grid w-full grid-cols-2 text-sm">
+		<Tabs.List class="grid w-full grid-cols-2 text-xs">
 			<Tabs.Trigger value="Parcel">Parcel</Tabs.Trigger>
 			<Tabs.Trigger value="Envelope">Envelope</Tabs.Trigger>
 		</Tabs.List>
-		<Tabs.Content value="Parcel" class="space-y-6 pt-3">
+		<Tabs.Content value="Parcel" class="space-y-4 pt-2">
 			{#if size_category === 'Parcel'}
 				<DecimalInput
 					label="Height"
@@ -154,7 +154,7 @@
 		</Tabs.Content>
 	</Tabs.Root>
 
-	<div class="flex justify-center pt-4">
+	<div class="flex justify-center">
 		<PillButton
 			text={buttonText}
 			className="uppercase font-semibold w-full py-2.5"
@@ -169,7 +169,7 @@
 	selectFn: (type: 'Source' | 'Destination') => void
 )}
 	<div class="flex flex-col space-y-2 text-center">
-		<span class="text-sm">{type}</span>
+		<span class="text-xs">{type}</span>
 		{#if !location}
 			<PillButton text="Select location" onClick={() => selectFn(type)} />
 		{:else}

@@ -42,7 +42,7 @@
 		}}
 		class="mx-auto flex h-full rounded-3xl bg-gradient-to-tr from-violet-500 to-orange-400 p-1"
 	>
-		<div class="flex flex-1 flex-col items-center justify-center rounded-3xl bg-white px-24 py-14">
+		<div class="flex flex-1 flex-col items-center justify-center rounded-3xl bg-white px-14 py-8">
 			{#if header}
 				{@render header()}
 				<hr />

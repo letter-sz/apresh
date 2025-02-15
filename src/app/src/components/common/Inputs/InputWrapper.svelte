@@ -11,6 +11,6 @@
 </script>
 
 <div class="w-full">
-	<label class="ml-1.5 text-sm" for={id}>{label}</label>
+	<label class="ml-1.5 text-xs" for={id}>{label}</label>
 	{@render children()}
 </div>

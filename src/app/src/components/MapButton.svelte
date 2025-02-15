@@ -18,7 +18,7 @@
 	>
 		<button
 			onclick={handleClick}
-			class="flex h-20 w-20 items-center justify-center rounded-full bg-white"
+			class="flex items-center justify-center rounded-full bg-white p-2"
 		>
 			<Plus size={55} class="stroke-orange-400" />
 		</button>

@@ -33,7 +33,7 @@
 </script>
 
 <header class="fixed top-0 z-50 w-full bg-transparent">
-	<div class="flex items-center justify-between px-4 py-4">
+	<div class="flex items-center justify-between px-4 py-2">
 		<div class="flex">
 			<a class="pl-1" href="/">
 				<img class="h-24 w-auto" src="{base}/logo.svg" alt="Logo" />
@@ -44,7 +44,7 @@
 				<div
 					class="flex justify-between space-x-2 rounded-xl bg-gradient-to-tr from-violet-500 to-orange-400 p-0.5 shadow-lg"
 				>
-					<div class="flex space-x-3 rounded-xl bg-white px-5 py-3 text-base">
+					<div class="flex space-x-3 rounded-xl bg-white px-5 py-2 text-sm">
 						<div class="flex items-center border-r-2 border-gray-200 pr-3">
 							{#if balance === 0n}
 								<PillButton
@@ -62,7 +62,7 @@
 							<p class="font-semibold text-orange-600">{content}</p>
 						</span>
 						<span class="flex items-center">
-							<LogOut class="cursor-pointer text-neutral-500" />
+							<LogOut class="cursor-pointer text-neutral-500" size="20" />
 						</span>
 					</div>
 				</div>
