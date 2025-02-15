@@ -33,11 +33,11 @@
 </script>
 
 <header class="fixed top-0 z-50 w-full bg-transparent">
-	<div class="flex items-center justify-between px-4 py-8">
+	<div class="flex items-center justify-between px-4 py-4">
 		<div class="flex">
-			<!-- <a class="pl-1" href="/">
+			<a class="pl-1" href="/">
 				<img class="h-24 w-auto" src="{base}/logo.svg" alt="Logo" />
-			</a> -->
+			</a>
 		</div>
 		<div class="flex items-center space-x-5 px-4">
 			{#if connection.identity !== null}

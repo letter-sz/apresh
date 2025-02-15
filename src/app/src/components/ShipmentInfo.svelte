@@ -6,26 +6,24 @@
 	let parcel = $derived(Object.values(shipment.info.size_category)[0]);
 </script>
 
-<div class="mb-12 flex w-full flex-col items-center">
-	<h1 class="mb-16 inline-block text-center text-3xl font-semibold text-orange-500">
+<div class="mb-5 flex w-full flex-col items-center">
+	<h1 class="mb-2 inline-block text-center text-3xl font-semibold text-orange-500">
 		Shipment info
 	</h1>
+	<p class="mb-5 text-center text-lg font-semibold text-gray-500">
+		{shipment.name}
+	</p>
 
 	<div class="grid w-full grid-cols-3 gap-x-10">
-		<div class="col-span-3 grid grid-cols-3 gap-x-5 border-b border-violet-200 py-6">
-			<div class="flex flex-col space-y-3 px-4 text-center">
-				<span class="text-lg font-semibold text-orange-500">Name</span>
-				<span class="text-base">{shipment.name}</span>
-			</div>
-
-			<div class="flex flex-col space-y-3 px-4 text-center">
+		<div class="col-span-3 grid grid-cols-2 border-b border-violet-200 py-6">
+			<div class="flex flex-col space-y-3 px-12 text-center">
 				<span class="text-lg font-semibold text-orange-500">Price</span>
-				<span class="text-base">{shipment.info.price}</span>
+				<span class="text-base">{shipment.info.price} ICP</span>
 			</div>
 
-			<div class="flex flex-col space-y-3 px-4 text-center">
+			<div class="flex flex-col space-y-3 px-12 text-center">
 				<span class="text-xl font-semibold text-orange-500">Value</span>
-				<span class="text-base">{shipment.info.value}</span>
+				<span class="text-base">{shipment.info.value} ICP</span>
 			</div>
 		</div>
 

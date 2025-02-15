@@ -3,12 +3,18 @@
 	import { page } from '$app/stores';
 	import Marker from '$components/Marker.svelte';
 	import Modal from '$components/modal/Modal.svelte';
+	import RightShipments from '$components/sideMenu/RightShipments.svelte';
+	import { connection } from '$lib/connection.svelte';
 	import BuyPage from '$routes/(header)/shipment/buy/+page.svelte';
 	import CancelPage from '$routes/(header)/shipment/cancel/+page.svelte';
 	import type { PageData } from './$types';
 
 	const { data }: { data: PageData } = $props();
 </script>
+
+{#if data.shipments.length !== 0}
+	<RightShipments shipments={[...data.shipments, ...data.carried]} />
+{/if}
 
 {#if data.carried.length > 0}
 	{#each data.carried as shipment (shipment.id)}
@@ -32,6 +38,9 @@
 			})}
 		location={shipment.info.source}
 		name={shipment.id.toString()}
+		markerType={connection.identity && shipment.shipper === connection.identity.toText()
+			? 'owner'
+			: 'active'}
 	></Marker>
 {/each}
 

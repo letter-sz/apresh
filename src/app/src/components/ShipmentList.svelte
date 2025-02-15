@@ -2,12 +2,12 @@
 	import type { PrintableShipment } from '$declarations/contract/contract.did';
 	import { flyToLocation } from '$lib/map.ts/focus';
 	import { getDistance } from 'geolib';
-	import { ChevronDown, ChevronUp } from 'lucide-svelte';
+	import { ChevronDown, ChevronUp, Settings, SlidersHorizontal } from 'lucide-svelte';
 	import { getContext } from 'svelte';
 	import type { MapContext } from 'svelte-maplibre/dist/context';
 	import ShipmentRecord from './ShipmentRecord.svelte';
 
-	type HeaderLabel = 'name' | 'price' | 'value' | 'category' | 'distance';
+	type HeaderLabel = 'price' | 'value' | 'category' | 'distance';
 
 	let { shipments }: { shipments: PrintableShipment[] } = $props();
 
@@ -20,9 +20,10 @@
 
 	let searchQuery = $state('');
 	let selectedCategory = $state('All');
-	let sortField = $state<'name' | 'price' | 'value' | 'category' | 'distance'>('name');
+	let sortField = $state<'price' | 'value' | 'category' | 'distance'>('distance');
 	let sortDirection = $state<'asc' | 'desc'>('asc');
 	let selected = $state<PrintableShipment | null>(null);
+	let showFilters = $state(false);
 
 	let categories = $derived([
 		'All',
@@ -50,10 +51,6 @@
 			.sort((a, b) => {
 				let aValue, bValue;
 				switch (sortField) {
-					case 'name':
-						aValue = a.name;
-						bValue = b.name;
-						break;
 					case 'price':
 						aValue = Number(a.info.price);
 						bValue = Number(b.info.price);
@@ -87,48 +84,59 @@
 </script>
 
 <div class="flex h-full w-full flex-col px-2">
-	<div class="mb-4 flex justify-center">
-		<h2 class="text-xl font-semibold text-orange-500">Shipments</h2>
+	<div class="mr-5 flex justify-end space-x-3 py-2">
+		<SlidersHorizontal
+			class={`cursor-pointer text-neutral-600 ${showFilters ? 'text-orange-600' : ''}`}
+			size={24}
+			onclick={() => (showFilters = !showFilters)}
+		/>
+		<Settings class="text-neutral-600" size={24} />
 	</div>
 
-	<div class="mb-4 flex gap-2">
-		<div class="relative flex-1">
-			<input
-				type="text"
-				placeholder="Search shipments..."
-				bind:value={searchQuery}
-				class="w-full rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm text-gray-900 placeholder-gray-500 focus:border-orange-600 focus:outline-none focus:ring-0"
-			/>
-			<svg
-				class="absolute right-3 top-2.5 h-4 w-4 text-gray-400"
-				fill="none"
-				stroke="currentColor"
-				viewBox="0 0 24 24"
-			>
-				<path
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					stroke-width="2"
-					d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+	{#if showFilters}
+		<div class="my-4 flex gap-2">
+			<div class="relative flex-1">
+				<input
+					type="text"
+					placeholder="Search shipments..."
+					bind:value={searchQuery}
+					class="w-full rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm text-gray-900 placeholder-gray-500 focus:border-orange-600 focus:outline-none focus:ring-0"
 				/>
-			</svg>
-		</div>
+				<svg
+					class="absolute right-3 top-2.5 h-4 w-4 text-gray-400"
+					fill="none"
+					stroke="currentColor"
+					viewBox="0 0 24 24"
+				>
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="2"
+						d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+					/>
+				</svg>
+			</div>
 
-		<select
-			bind:value={selectedCategory}
-			class="w-40 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm text-gray-900 focus:border-orange-600 focus:outline-none focus:ring-0"
-		>
-			{#each categories as category}
-				<option value={category} class="hover:bg-red-700">{category}</option>
-			{/each}
-		</select>
-	</div>
+			<select
+				bind:value={selectedCategory}
+				class="w-40 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm text-gray-900 focus:border-orange-600 focus:outline-none focus:ring-0"
+			>
+				{#each categories as category}
+					<option value={category}>{category}</option>
+				{/each}
+			</select>
+		</div>
+	{/if}
 
 	<div class="flex-1 overflow-y-auto">
 		<table class="w-full border-collapse rounded-lg bg-white shadow-sm">
 			<thead class="sticky top-0 z-10 w-full bg-white">
 				<tr>
-					{#each ['name', 'price', 'value', 'category', 'distance'] as column}
+					<th
+						class="border-b-2 border-orange-100 p-3 text-center text-base font-semibold text-orange-600"
+						>Status</th
+					>
+					{#each ['category', 'price', 'value', 'distance'] as column}
 						{@render columnHeader(column as HeaderLabel)}
 					{/each}
 				</tr>
@@ -144,7 +152,7 @@
 
 {#snippet columnHeader(label: HeaderLabel)}
 	<th
-		class=" cursor-pointer border-b-2 border-orange-100 p-3 text-center text-base font-semibold text-orange-600"
+		class="cursor-pointer border-b-2 border-orange-100 p-3 text-center text-base font-semibold text-orange-600"
 		onclick={() => toggleSort(label)}
 	>
 		<div class="flex items-center justify-center">
