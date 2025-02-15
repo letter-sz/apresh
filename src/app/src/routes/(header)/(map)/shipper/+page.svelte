@@ -49,9 +49,7 @@
 				})}
 			location={shipment.info.destination}
 			name={shipment.id.toString()}
-			markerType={connection.identity && shipment.shipper === connection.identity.toText()
-				? 'owner'
-				: undefined}
+			markerType={shipment.carrier.length > 0 ? 'bought' : 'owner'}
 		></Marker>
 	{/each}
 {/if}
