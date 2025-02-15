@@ -1,12 +1,12 @@
 [workspace]
 members = [
-    "src/contract", 
-    "src/crates/actor-derive", 
+    "src/contract",
+    "src/crates/actor-derive",
     "src/crates/apresh-crypto",
     "src/crates/apresh-qr",
     "src/crates/apresh-wasm",
-    "src/crates/engine"
-   ]
+    "src/crates/engine",
+]
 resolver = "2"
 
 [workspace.dependencies]
@@ -15,18 +15,20 @@ engine = { path = "src/crates/engine" }
 apresh-qr = { path = "src/crates/apresh-qr" }
 apresh-crypto = { path = "src/crates/apresh-crypto" }
 
+bincode = { version = "1.3.3" }
+web-sys = { version = "0.3.63", features = ["Crypto", "Window"] }
 aes-gcm = "0.10.3"
 candid = "0.10.12"
 derive_deref = "1.1.1"
 ic-cdk = "0.17.1"
-ic-cdk-timers = "0.11.0" 
+ic-cdk-timers = "0.11.0"
 serde = { version = "1.0.217", features = ["derive"] }
 icrc-ledger-types = "0.1.6"
 anyhow = "1.0.95"
 image = { version = "0.24", features = ["png"], default-features = false }
 thiserror = "2.0.11"
 qrcode-generator = "4.1"
-x25519-dalek = { version = "2.0.1", features = ["static_secrets"] }
+x25519-dalek = { version = "2.0.1", features = ["static_secrets", "serde"] }
 colorgrad = "0.6"
 sha2 = "0.10.8"
 hex-literal = "0.4.1"

@@ -1,8 +1,68 @@
-use x25519_dalek::{StaticSecret, PublicKey};
 use aes_gcm::{
-    aead::{Aead, AeadCore, KeyInit, OsRng},
-    Aes256Gcm, Nonce, Key // Or `Aes128Gcm`
+    aead::{Aead, KeyInit},
+    Aes256Gcm, Key, Nonce,
 };
+use serde::{Deserialize, Serialize};
+use thiserror::Error;
+pub use x25519_dalek::{PublicKey, StaticSecret};
+
+#[derive(Error, Debug)]
+pub enum Error {
+    #[error("Invalid public key, expected 32 bytes")]
+    InvalidPublicKey,
+    #[error("Invalid secret key, expected 32 bytes")]
+    InvalidSecretKey,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Message {
+    public_key: PublicKey,
+    nonce: [u8; 12],
+    ciphertext: Vec<u8>,
+}
+
+fn slice_to_array<const N: usize>(slice: &[u8], error: Error) -> Result<[u8; N], Error> {
+    if slice.len() != N {
+        return Err(error);
+    }
+    let mut array = [0; N];
+    array.copy_from_slice(slice);
+    Ok(array)
+}
+
+pub fn encrypt_for(
+    public_key: &[u8],
+    message: &[u8],
+    random_nonce: [u8; 12],
+    randomness: [u8; 32],
+) -> Result<(Vec<u8>, StaticSecret), Error> {
+    let public_key = slice_to_array(public_key, Error::InvalidPublicKey)?;
+    let public_key = PublicKey::from(public_key);
+
+    let (generated_public, generated_secret) = generate(randomness);
+    let shared_secret = combine(public_key, &generated_secret);
+
+    let ciphertext = encrypt(&shared_secret, message, &random_nonce);
+
+    let message = Message {
+        public_key: generated_public,
+        nonce: random_nonce,
+        ciphertext,
+    };
+
+    let message = bincode::serialize(&message).unwrap();
+
+    Ok((message, generated_secret))
+}
+
+pub fn extract(secret_key: &[u8], message: &[u8]) -> Vec<u8> {
+    let secret_key = slice_to_array(secret_key, Error::InvalidSecretKey).unwrap();
+    let secret_key = StaticSecret::from(secret_key);
+
+    let message = bincode::deserialize::<Message>(message).unwrap();
+    let shared_secret = combine(message.public_key, &secret_key);
+    decrypt(&shared_secret, &message.nonce, &message.ciphertext)
+}
 
 pub fn generate(randomness: [u8; 32]) -> (PublicKey, StaticSecret) {
     let alice_secret = StaticSecret::from(randomness);
@@ -11,34 +71,27 @@ pub fn generate(randomness: [u8; 32]) -> (PublicKey, StaticSecret) {
     (alice_public, alice_secret)
 }
 
-pub fn combine(public_key: PublicKey, secret_key: StaticSecret) -> [u8; 32] {
+fn combine(public_key: PublicKey, secret_key: &StaticSecret) -> [u8; 32] {
     secret_key.diffie_hellman(&public_key).to_bytes()
 }
 
-pub fn encrypt(shared_secret: &[u8; 32], message: &[u8], nonce: &[u8; 12]) -> Vec<u8> {
+fn encrypt(shared_secret: &[u8; 32], message: &[u8], nonce: &[u8; 12]) -> Vec<u8> {
     let key: &Key<Aes256Gcm> = shared_secret.into();
 
     let cipher = Aes256Gcm::new(key);
     let nonce = Nonce::from_slice(nonce);
-    let ciphertext = cipher.encrypt(nonce, message).unwrap();
-
-    // Nonce is not secret, so we can send it along with the ciphertext
-    let mut output = Vec::with_capacity(12 + ciphertext.len());
-    output.extend_from_slice(nonce.as_slice());
-    output.extend(ciphertext);
-    output
+    cipher.encrypt(nonce, message).unwrap()
 }
 
-pub fn decrypt(shared_secret: &[u8; 32], ciphertext: &[u8]) -> Vec<u8> {
+fn decrypt(shared_secret: &[u8; 32], nonce: &[u8; 12], ciphertext: &[u8]) -> Vec<u8> {
     let key: &Key<Aes256Gcm> = shared_secret.into();
 
     let cipher = Aes256Gcm::new(key);
-    let nonce = Nonce::from_slice(&ciphertext[..12]);
-    let plaintext = cipher.decrypt(nonce, &ciphertext[12..]).unwrap();
+    let nonce = Nonce::from_slice(nonce);
+    let plaintext = cipher.decrypt(nonce, ciphertext).unwrap();
 
     plaintext.to_vec()
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -49,8 +102,8 @@ mod tests {
         let (alice_public, alice_secret) = generate([0; 32]);
         let (bob_public, bob_secret) = generate([1; 32]);
 
-        let shared_secret_alice = combine(bob_public, alice_secret);
-        let shared_secret_bob = combine(alice_public, bob_secret);
+        let shared_secret_alice = combine(bob_public, &alice_secret);
+        let shared_secret_bob = combine(alice_public, &bob_secret);
 
         assert_eq!(shared_secret_alice, shared_secret_bob);
     }
@@ -59,13 +112,13 @@ mod tests {
     fn encrypt_decrypt() {
         let (_alice_public, alice_secret) = generate([0; 32]);
         let (bob_public, _bob_secret) = generate([1; 32]);
-        let shared_secret_alice = combine(bob_public, alice_secret);
-        
+        let shared_secret_alice = combine(bob_public, &alice_secret);
+
         let message = b"Hello, Bob!";
         let nonce = [42; 12];
 
         let encrypted = encrypt(&shared_secret_alice, message, &nonce);
-        let decrypted = decrypt(&shared_secret_alice, &encrypted);
+        let decrypted = decrypt(&shared_secret_alice, &nonce, &encrypted);
 
         assert_eq!(message.to_vec(), decrypted);
     }
