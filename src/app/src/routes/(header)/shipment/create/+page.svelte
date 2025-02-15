@@ -44,7 +44,12 @@
 			return;
 		}
 
-		const priceBigint = BigInt(!price);
+		if (!price || !value) {
+			console.error('Price or value is not defined');
+			return;
+		}
+
+		const priceBigint = BigInt(price);
 
 		await wallet.approveDoubleFee(priceBigint);
 		const secret = bs58.encode(crypto.getRandomValues(new Uint8Array(32)));
@@ -75,7 +80,7 @@
 				destination: destinationLocation,
 				source: sourceLocation,
 				price: priceBigint,
-				value: BigInt(!value)
+				value: BigInt(value)
 			}
 		);
 
