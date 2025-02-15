@@ -1,0 +1,8 @@
+[package]
+name = "apresh-crypto"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+aes-gcm = { workspace = true }
+x25519-dalek = { workspace = true, features = ["static_secrets"] }
