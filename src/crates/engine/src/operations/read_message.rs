@@ -2,7 +2,7 @@ use candid::Principal;
 
 use super::StateOp;
 use crate::{
-    models::shipment::{Message, ShipmentId},
+    models::shipment::{Channel, Message, ShipmentId},
     state::{CanisterShipments, CanisterState},
     ActorId,
 };
@@ -21,9 +21,9 @@ impl ReadMessageOp {
     }
 }
 
-impl StateOp<Vec<Message>> for ReadMessageOp {
+impl StateOp<Channel> for ReadMessageOp {
     type Error = crate::Error;
-    fn read(&self, state: &CanisterState) -> crate::Result<Vec<Message>> {
+    fn read(&self, state: &CanisterState) -> crate::Result<Channel> {
         let shipment = state
             .shipment(self.shipment_id)
             .ok_or(crate::Error::ShipmentNotFound)?;
@@ -32,6 +32,6 @@ impl StateOp<Vec<Message>> for ReadMessageOp {
             return Err(crate::Error::NotAuthorizedAsShipper);
         }
 
-        Ok(shipment.messages().clone())
+        Ok(shipment.channel().clone())
     }
 }

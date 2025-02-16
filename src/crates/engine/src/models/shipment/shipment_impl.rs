@@ -116,12 +116,18 @@ impl ShipmentStatus {
     }
 }
 
+#[derive(Deserialize, Serialize, Debug, Clone, CandidType)]
+
+pub struct Channel {
+    messages: Vec<Message>,
+}
+
 // Shipment, but without principals, so JSON-able
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Shipment {
-    /// Shipment id
+    /// Unique id for the shipment
     id: ShipmentId,
-    /// Shipment name
+    /// A descriptive name for the shipment
     name: String,
     /// Hashed secret, used to verify the secret in delivery
     hashed_secret: Vec<u8>,
@@ -130,7 +136,7 @@ pub struct Shipment {
     /// Shipment status
     status: ShipmentStatus,
     /// Encrypted message from shipper to carrier, could be used to send contact information
-    messages: Vec<Message>,
+    channel: Channel,
     /// Carrier id
     carrier: Option<ActorId>, // TODO: I think we should use some internal id instead of principal here
     /// Shipper id
@@ -146,7 +152,7 @@ pub struct PrintableShipment {
     hashed_secret: Vec<u8>,
     info: ShipmentInfo,
     status: ShipmentStatus,
-    messages: Vec<Message>,
+    channel: Channel,
     carrier: Option<String>,
     shipper: String,
     created_at: u64,
@@ -160,7 +166,7 @@ impl From<&Shipment> for PrintableShipment {
             hashed_secret: shipment.hashed_secret.clone(),
             info: shipment.info.clone(),
             status: shipment.status,
-            messages: shipment.messages.clone(),
+            channel: shipment.channel.clone(),
             carrier: shipment.carrier.map(|id| id.to_string()),
             shipper: shipment.shipper.to_string(),
             created_at: shipment.created_at,
@@ -181,7 +187,9 @@ impl Shipment {
             id,
             info,
             name: name.to_string(),
-            messages: Vec::new(),
+            channel: Channel {
+                messages: Vec::new(),
+            },
             hashed_secret: hashed_secret.to_vec(),
             status: ShipmentStatus::default(),
             carrier: None,
@@ -191,11 +199,11 @@ impl Shipment {
     }
 
     pub fn attach_message(&mut self, message: Message) {
-        self.messages.push(message);
+        self.channel.messages.push(message);
     }
 
-    pub fn messages(&self) -> &Vec<Message> {
-        &self.messages
+    pub fn channel(&self) -> &Channel {
+        &self.channel
     }
 
     pub fn status(&self) -> &ShipmentStatus {

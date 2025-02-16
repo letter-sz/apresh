@@ -11,7 +11,7 @@ use apresh_qr::{generate, QrCodeOptions};
 use candid::Principal;
 use engine::{
     actors::{carrier::Carrier, shipper::Shipper},
-    models::shipment::{Message, PrintableShipment, ShipmentInfo, ShipmentStatus},
+    models::shipment::{Channel, PrintableShipment, ShipmentInfo, ShipmentStatus},
     operations::{
         AddMessageOp, BuyShipmentOp, CancelShipmentOp, CreateShipmentOp, FinalizeShipmentOp,
         ReadMessageOp, RegisterActorOp, StateOp,
@@ -78,7 +78,7 @@ async fn add_message(message: Vec<u8>, shipment_id: u64) -> Result<(), String> {
 }
 
 #[query]
-async fn read_message(shipment_id: u64) -> Result<Vec<Message>, String> {
+async fn read_channel(shipment_id: u64) -> Result<Channel, String> {
     let caller = ActorId(ic_cdk::caller());
 
     STATE

@@ -32,10 +32,13 @@ impl StateOp<()> for AddMessageOp {
             .shipment_mut(self.shipment_id)
             .ok_or(crate::Error::ShipmentNotFound)?;
 
-        let carrier_id = shipment.carrier_id().ok_or(crate::Error::CarrierNotSet)?;
+        let is_carrier = shipment
+            .carrier_id()
+            .map(|id| id == self.caller)
+            .unwrap_or(false);
 
-        if carrier_id != self.caller {
-            return Err(crate::Error::NotAuthorizedAsCarrier);
+        if shipment.shipper_id() != self.caller && !is_carrier {
+            return Err(crate::Error::NotAuthorizedAsNeitherCarrierNorShipper);
         }
 
         shipment.attach_message(self.message.clone());
