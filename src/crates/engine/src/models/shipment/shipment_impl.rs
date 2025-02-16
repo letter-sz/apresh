@@ -5,6 +5,7 @@ use crate::utils::hash_secret;
 use crate::ActorId;
 
 use super::info::ShipmentInfo;
+use super::{Channel, ChannelKey, Message};
 
 pub enum ShipmentActions<ActorId> {
     Buy(ActorId),
@@ -16,8 +17,6 @@ pub enum ShipmentActions<ActorId> {
         shipper: ActorId,
     },
 }
-
-pub type Message = Vec<u8>;
 
 impl Shipment {
     pub fn action(&mut self, op: ShipmentActions<ActorId>) -> crate::errors::Result<()> {
@@ -116,12 +115,6 @@ impl ShipmentStatus {
     }
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone, CandidType)]
-
-pub struct Channel {
-    messages: Vec<Message>,
-}
-
 // Shipment, but without principals, so JSON-able
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Shipment {
@@ -180,6 +173,7 @@ impl Shipment {
         shipper: ActorId,
         id: ShipmentId,
         hashed_secret: Vec<u8>,
+        channel_key: ChannelKey,
         name: &str,
         info: ShipmentInfo,
     ) -> Self {
@@ -187,9 +181,7 @@ impl Shipment {
             id,
             info,
             name: name.to_string(),
-            channel: Channel {
-                messages: Vec::new(),
-            },
+            channel: Channel::new(channel_key),
             hashed_secret: hashed_secret.to_vec(),
             status: ShipmentStatus::default(),
             carrier: None,
@@ -199,7 +191,11 @@ impl Shipment {
     }
 
     pub fn attach_message(&mut self, message: Message) {
-        self.channel.messages.push(message);
+        self.channel.push(message);
+    }
+
+    pub fn add_guest_to_channel(&mut self, guest_key: ChannelKey) {
+        self.channel.add_guest(guest_key);
     }
 
     pub fn channel(&self) -> &Channel {

@@ -1,5 +1,5 @@
 use crate::{
-    models::shipment::{ShipmentActions, ShipmentId},
+    models::shipment::{ChannelKey, ShipmentActions, ShipmentId},
     ActorId,
 };
 
@@ -12,13 +12,15 @@ pub type Cost = u64;
 pub struct BuyShipmentOp {
     carrier_id: ActorId,
     shipment_id: ShipmentId,
+    channel_key: ChannelKey,
 }
 
 impl BuyShipmentOp {
-    pub fn new(carrier_id: ActorId, shipment_id: ShipmentId) -> Self {
+    pub fn new(carrier_id: ActorId, shipment_id: ShipmentId, channel_key: ChannelKey) -> Self {
         Self {
             carrier_id,
             shipment_id,
+            channel_key,
         }
     }
 }
@@ -39,6 +41,7 @@ impl StateOp<Cost> for BuyShipmentOp {
 
         shipment.action(ShipmentActions::Buy(self.carrier_id))?;
         carrier.add_shipment(self.shipment_id);
+        shipment.add_guest_to_channel(self.channel_key.clone());
 
         Ok(shipment.info().value())
     }

@@ -53,6 +53,7 @@ pub fn mock_shipments() {
                 CreateShipmentOp::new(
                     default_principal.into(),
                     hash_secret(b"secret"),
+                    b"channel_key_123".to_vec(),
                     package_name,
                     ShipmentInfo::new(
                         100u64 + i as u64,

@@ -11,7 +11,7 @@ use apresh_qr::{generate, QrCodeOptions};
 use candid::Principal;
 use engine::{
     actors::{carrier::Carrier, shipper::Shipper},
-    models::shipment::{Channel, PrintableShipment, ShipmentInfo, ShipmentStatus},
+    models::shipment::{Channel, ChannelKey, PrintableShipment, ShipmentInfo, ShipmentStatus},
     operations::{
         AddMessageOp, BuyShipmentOp, CancelShipmentOp, CreateShipmentOp, FinalizeShipmentOp,
         ReadMessageOp, RegisterActorOp, StateOp,
@@ -122,7 +122,11 @@ async fn finalize_shipment(shipment_id: u64, secret_key: Option<String>) -> Resu
 }
 
 #[update(name = "buyShipment")]
-async fn buy_shipment(carrier_name: Option<String>, shipment_id: u64) -> Result<(), String> {
+async fn buy_shipment(
+    carrier_name: Option<String>,
+    shipment_id: u64,
+    channel_key: ChannelKey,
+) -> Result<(), String> {
     assert_whitelisted();
     let caller = ActorId(ic_cdk::caller());
 
@@ -141,7 +145,7 @@ async fn buy_shipment(carrier_name: Option<String>, shipment_id: u64) -> Result<
                 .unwrap();
             }
 
-            BuyShipmentOp::new(caller, shipment_id).apply(state)
+            BuyShipmentOp::new(caller, shipment_id, channel_key).apply(state)
         })
         .unwrap();
 
@@ -177,6 +181,7 @@ async fn create_shipment(
     customer_name: Option<String>,
     shipment_name: String,
     hashed_secret: Vec<u8>,
+    channel_key: ChannelKey,
     qr_options: QrCodeOptions,
     shipment_info: ShipmentInfo,
 ) -> Result<(Vec<u8>, u64), String> {
@@ -203,6 +208,7 @@ async fn create_shipment(
             CreateShipmentOp::new(
                 caller,
                 hashed_secret,
+                channel_key,
                 &shipment_name,
                 shipment_info,
                 created_at,

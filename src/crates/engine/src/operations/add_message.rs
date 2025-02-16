@@ -8,6 +8,8 @@ use super::StateOp;
 use anyhow::anyhow;
 use candid::Principal;
 
+const MAX_MESSAGE_LENGTH: usize = 4096;
+
 pub struct AddMessageOp {
     pub shipment_id: u64,
     pub message: Message,
@@ -28,6 +30,10 @@ impl StateOp<()> for AddMessageOp {
     type Error = crate::Error;
 
     fn apply(&self, state: &mut CanisterState) -> Result<(), Self::Error> {
+        if self.message.len() > MAX_MESSAGE_LENGTH {
+            return Err(crate::Error::MessageTooLong);
+        }
+
         let shipment = state
             .shipment_mut(self.shipment_id)
             .ok_or(crate::Error::ShipmentNotFound)?;

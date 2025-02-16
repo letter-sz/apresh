@@ -1,5 +1,5 @@
 use crate::{
-    models::shipment::{Shipment, ShipmentId, ShipmentInfo},
+    models::shipment::{ChannelKey, Shipment, ShipmentId, ShipmentInfo},
     state::{CanisterActors, CanisterShipments},
     ActorId,
 };
@@ -11,6 +11,7 @@ use crate::actors::Actor;
 pub struct CreateShipmentOp<'a> {
     creator: ActorId,
     hashed_secret: Vec<u8>,
+    channel_key: ChannelKey,
     shipment_name: &'a str,
     info: ShipmentInfo,
     timestamp: u64,
@@ -20,6 +21,7 @@ impl<'a> CreateShipmentOp<'a> {
     pub fn new(
         creator: ActorId,
         hashed_secret: Vec<u8>,
+        channel_key: ChannelKey,
         shipment_name: &'a str,
         info: ShipmentInfo,
         timestamp: u64,
@@ -27,6 +29,7 @@ impl<'a> CreateShipmentOp<'a> {
         Self {
             creator,
             hashed_secret,
+            channel_key,
             shipment_name,
             info,
             timestamp,
@@ -49,6 +52,7 @@ impl<'a> StateOp<ShipmentId> for CreateShipmentOp<'a> {
             shipper.id(),
             new_shipment_id,
             self.hashed_secret.clone(),
+            self.channel_key.clone(),
             self.shipment_name,
             self.info.clone(),
         );
@@ -79,6 +83,7 @@ mod tests {
         let creator_id = Principal::anonymous();
         let creator_name = "John Doe";
         let hashed_secret = hash_secret(b"secret_key_123");
+        let channel_key = b"channel_key_123".to_vec();
         let shipment_name = "Test Shipment";
         let timestamp = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
@@ -103,6 +108,7 @@ mod tests {
         let op = CreateShipmentOp::new(
             creator_id.into(),
             hashed_secret,
+            channel_key,
             shipment_name,
             info.clone(),
             timestamp,
