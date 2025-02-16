@@ -40,7 +40,7 @@
 		onkeydown={(e) => {
 			if (e.key === 'Escape') e.stopPropagation();
 		}}
-		class="mx-auto flex h-full rounded-3xl bg-gradient-to-tr from-violet-500 to-orange-400 p-1"
+		class="mx-auto flex h-full rounded-3xl bg-gradient-to-tr from-violet-500 to-orange-400 p-0.5"
 	>
 		<div class="flex flex-1 flex-col items-center justify-center rounded-3xl bg-white px-14 py-8">
 			{#if header}
