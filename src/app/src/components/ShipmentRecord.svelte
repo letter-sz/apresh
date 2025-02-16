@@ -43,47 +43,49 @@
 </script>
 
 <tr
-	class="group cursor-pointer text-center transition-colors hover:bg-orange-50"
+	class="group cursor-pointer text-center text-sm transition-colors hover:bg-orange-50"
 	onclick={() => (selected = shipment)}
 >
-	<td class="flex justify-center py-7">
+	<td class="flex h-20 flex-col items-center justify-center">
 		{#if shipment.carrier.length > 0 && connection.identity && shipment.carrier[0] === connection.identity.toText()}
 			<Tooltip text="Bought by you">
 				<PackageCheck
 					class="text-green-700 transition-all duration-300 group-hover:scale-125"
-					size={24}
+					size={20}
 				/>
 			</Tooltip>
 		{:else if shipment.carrier.length > 0 && connection.identity && shipment.shipper === connection.identity.toText()}
 			<Tooltip text="Bought from you">
 				<PackageCheck
 					class="text-green-700 transition-all duration-300 group-hover:scale-125"
-					size="24"
+					size={20}
 				/>
 			</Tooltip>
 		{:else if connection.identity && shipment.shipper === connection.identity.toText()}
 			<Tooltip text="Owned by you">
 				<PackageSearch
 					class="text-violet-600 transition-all duration-300 group-hover:scale-125"
-					size={24}
+					size={20}
 				/>
 			</Tooltip>
 		{:else}
 			<Tooltip text="To buy">
 				<PackagePlus
 					class="text-neutral-600 transition-all duration-300 group-hover:scale-125"
-					size={24}
+					size={20}
 				/>
 			</Tooltip>
 		{/if}
 	</td>
-	<td class="py-7 text-base text-gray-600">{category}</td>
-	<td class="py-7 text-base font-medium text-gray-900">{shipment.info.price} ICP</td>
-	<td class="py-7 text-base font-medium text-gray-900">{shipment.info.value} ICP</td>
-	<td class="py-7 text-base font-medium text-gray-900">
-		{shipment.distance / 1000} km
-		{#if relativeDistance !== null}
-			<span class="ml-2 text-sm text-gray-500">({relativeDistance} km from you)</span>
-		{/if}
+	<td class="text-gray-600">{category}</td>
+	<td class="font-medium text-gray-900">{shipment.info.price} ICP</td>
+	<td class="font-medium text-gray-900">{shipment.info.value} ICP</td>
+	<td class="font-medium text-gray-900">
+		<div class="flex flex-col items-center justify-center">
+			<p>{shipment.distance / 1000} km</p>
+			{#if relativeDistance !== null}
+				<span class="text-xs text-gray-500">({relativeDistance} km from you)</span>
+			{/if}
+		</div>
 	</td>
 </tr>

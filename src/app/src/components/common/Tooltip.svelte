@@ -9,7 +9,7 @@
 	const { children, text }: Props = $props();
 </script>
 
-<div class="group/icon relative clear-both">
+<div class="group/icon relative clear-both flex h-full items-center justify-center">
 	{@render children()}
 
 	<div

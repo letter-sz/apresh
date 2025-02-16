@@ -87,10 +87,10 @@
 	<div class="mr-5 flex justify-end space-x-3 py-2">
 		<SlidersHorizontal
 			class={`cursor-pointer text-neutral-600 ${showFilters ? 'text-orange-600' : ''}`}
-			size={24}
+			size={20}
 			onclick={() => (showFilters = !showFilters)}
 		/>
-		<Settings class="text-neutral-600" size={24} />
+		<Settings class="text-neutral-600" size={20} />
 	</div>
 
 	{#if showFilters}
@@ -100,7 +100,7 @@
 					type="text"
 					placeholder="Search shipments..."
 					bind:value={searchQuery}
-					class="w-full rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm text-gray-900 placeholder-gray-500 focus:border-orange-600 focus:outline-none focus:ring-0"
+					class="w-full rounded-lg border border-gray-200 bg-white px-4 py-2 text-xs text-gray-900 placeholder-gray-500 focus:border-orange-600 focus:outline-none focus:ring-0"
 				/>
 				<svg
 					class="absolute right-3 top-2.5 h-4 w-4 text-gray-400"
@@ -119,7 +119,7 @@
 
 			<select
 				bind:value={selectedCategory}
-				class="w-40 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm text-gray-900 focus:border-orange-600 focus:outline-none focus:ring-0"
+				class="w-40 rounded-lg border border-gray-200 bg-white px-4 py-2 text-xs text-gray-900 focus:border-orange-600 focus:outline-none focus:ring-0"
 			>
 				{#each categories as category}
 					<option value={category}>{category}</option>
@@ -133,7 +133,7 @@
 			<thead class="sticky top-0 z-10 w-full bg-white">
 				<tr>
 					<th
-						class="border-b-2 border-orange-100 p-3 text-center text-base font-semibold text-orange-600"
+						class="border-b-2 border-orange-100 px-2 text-center text-sm font-semibold text-orange-600"
 						>Status</th
 					>
 					{#each ['category', 'price', 'value', 'distance'] as column}
@@ -152,7 +152,7 @@
 
 {#snippet columnHeader(label: HeaderLabel)}
 	<th
-		class="cursor-pointer border-b-2 border-orange-100 p-3 text-center text-base font-semibold text-orange-600"
+		class="cursor-pointer border-b-2 border-orange-100 p-2 text-center text-sm font-semibold text-orange-600"
 		onclick={() => toggleSort(label)}
 	>
 		<div class="flex items-center justify-center">

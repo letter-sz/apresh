@@ -46,5 +46,5 @@
 	onClick={() => buy(data.shipment)}
 	disabled={buttonText === 'Insufficient funds'}
 	text={buttonText}
-	className="w-full mt-10 uppercase"
+	className="w-full mt-8 uppercase"
 />
