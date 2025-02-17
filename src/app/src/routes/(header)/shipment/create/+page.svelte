@@ -11,7 +11,7 @@
 	import { wallet } from '$lib/wallet.svelte';
 	import bs58 from 'bs58';
 	import type { PageData } from './$types';
-	import { get_secret_hash, KeyPair } from 'wasm';
+	import { get_secret_hash, static_keypair_generate } from 'wasm';
 
 	const {
 		data,
@@ -53,7 +53,7 @@
 
 		await wallet.approveDoubleFee(priceBigint);
 		const secret = bs58.encode(crypto.getRandomValues(new Uint8Array(32)));
-		const channelKeys = KeyPair.generate();
+		const channelKeys = static_keypair_generate();
 
 		const hashed = get_secret_hash(secret);
 		console.log(hashed);

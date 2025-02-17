@@ -43,4 +43,28 @@ impl KeyPair {
     pub fn decrypt(&self, message: &[u8]) -> Vec<u8> {
         apresh_crypto::extract(&self.secret_key, message)
     }
+
+    pub fn public_key_from_message(&self, message: Vec<u8>) -> Vec<u8> {
+        apresh_crypto::parse_public_key(&self.secret_key, &message)
+            .unwrap()
+            .to_bytes()
+            .to_vec()
+    }
+}
+
+// Apparently there isn't function like this for `Uint8Arrays` in js
+#[wasm_bindgen]
+pub fn equal_vectors(a: Vec<u8>, b: Vec<u8>) -> bool {
+    a == b
+}
+
+// Temporary, as static from is apparently "not a function"
+#[wasm_bindgen]
+pub fn static_keypair_from(bytes: Vec<u8>) -> KeyPair {
+    KeyPair::from(&bytes)
+}
+
+#[wasm_bindgen]
+pub fn static_keypair_generate() -> KeyPair {
+    KeyPair::generate()
 }

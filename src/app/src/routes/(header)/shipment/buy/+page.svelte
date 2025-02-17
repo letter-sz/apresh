@@ -9,14 +9,38 @@
 	import { wallet } from '$lib/wallet.svelte';
 	import type { PageData } from './$types';
 	import SendMessage from '$components/SendMessage.svelte';
+	import { getLocalStorage, setLocalStorage } from '$lib/storage';
+	import { KeyPair, static_keypair_generate } from 'wasm';
 
 	let { data, bought }: { data: PageData; bought?: () => void } = $props();
+
+	function getOrCreateChannelKey(shipment: PrintableShipment): Uint8Array {
+		let publicKey: Uint8Array;
+
+		const readChannelKey = getLocalStorage<Array<number>>(`channel-key-${shipment.id}`);
+		if (readChannelKey) {
+			const secretKey = Uint8Array.from(readChannelKey);
+			console.log(secretKey);
+			const channelKeyPair = KeyPair.from(secretKey);
+			publicKey = channelKeyPair.public_key();
+			channelKeyPair.free();
+		} else {
+			const channelKeyPair = static_keypair_generate();
+			publicKey = channelKeyPair.public_key();
+			setLocalStorage(`channel-key-${shipment.id}`, Array.from(channelKeyPair.secret_key()));
+			channelKeyPair.free();
+		}
+
+		return publicKey;
+	}
 
 	async function buy(shipment: PrintableShipment) {
 		const actor = await connection.getActor();
 
+		const buyerPublicChannelKey = getOrCreateChannelKey(shipment);
+
 		await wallet.approve(shipment.info.price);
-		const res = await actor.buyShipment(['Jacek'], shipment.id);
+		const res = await actor.buyShipment(['Jacek'], shipment.id, buyerPublicChannelKey);
 		unwrap<null>(res);
 
 		// const encryptedMessage = await ibe_encrypt(

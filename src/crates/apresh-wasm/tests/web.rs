@@ -5,7 +5,6 @@
 extern crate wasm_bindgen_test;
 use wasm::KeyPair;
 use wasm_bindgen_test::*;
-
 wasm_bindgen_test_configure!(run_in_browser);
 
 #[wasm_bindgen_test]
@@ -20,5 +19,7 @@ fn pass() {
     let message = b"Hello, world!";
     let encrypted = alice.encrypt_for(&bob.public_key(), message);
     let decrypted = bob.decrypt(&encrypted);
+    let self_decrypted = alice.decrypt(&encrypted);
     assert_eq!(message.to_vec(), decrypted);
+    assert_eq!(message.to_vec(), self_decrypted);
 }

@@ -28,8 +28,11 @@ impl StateOp<Channel> for ReadMessageOp {
             .shipment(self.shipment_id)
             .ok_or(crate::Error::ShipmentNotFound)?;
 
-        if shipment.shipper_id() != self.caller {
-            return Err(crate::Error::NotAuthorizedAsShipper);
+        let is_shipper = shipment.shipper_id() == self.caller;
+        let is_carrier = shipment.carrier_id() == Some(self.caller);
+
+        if !is_shipper && !is_carrier {
+            return Err(crate::Error::NotAuthorizedAsNeitherCarrierNorShipper);
         }
 
         Ok(shipment.channel().clone())

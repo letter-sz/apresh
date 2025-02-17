@@ -12,13 +12,28 @@ pub enum Error {
     InvalidPublicKey,
     #[error("Invalid secret key, expected 32 bytes")]
     InvalidSecretKey,
+    #[error("Neither public key matches")]
+    NeitherPublicKeyMatches,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Message {
-    public_key: PublicKey,
+    from: PublicKey,
+    to: PublicKey,
     nonce: [u8; 12],
     ciphertext: Vec<u8>,
+}
+
+impl Message {
+    pub fn other_public_key(&self, public_key: &PublicKey) -> Result<PublicKey, Error> {
+        if self.from == *public_key {
+            Ok(self.to)
+        } else if self.to == *public_key {
+            Ok(self.from)
+        } else {
+            Err(Error::NeitherPublicKeyMatches)
+        }
+    }
 }
 
 fn slice_to_array<const N: usize>(slice: &[u8], error: Error) -> Result<[u8; N], Error> {
@@ -44,7 +59,8 @@ pub fn encrypt_for(
     let ciphertext = encrypt(&shared_secret, message, &random_nonce);
 
     let message = Message {
-        public_key: PublicKey::from(secret_key),
+        from: PublicKey::from(secret_key),
+        to: public_key,
         nonce: random_nonce,
         ciphertext,
     };
@@ -64,8 +80,15 @@ pub fn parse_keypair(secret_key: &[u8]) -> (PublicKey, StaticSecret) {
 
 pub fn extract(secret_key: &StaticSecret, message: &[u8]) -> Vec<u8> {
     let message = bincode::deserialize::<Message>(message).unwrap();
-    let shared_secret = combine(message.public_key, &secret_key);
+    let public_key = PublicKey::from(secret_key);
+    let other_public_key = message.other_public_key(&public_key).unwrap();
+    let shared_secret = combine(other_public_key, &secret_key);
     decrypt(&shared_secret, &message.nonce, &message.ciphertext)
+}
+
+pub fn parse_public_key(secret_key: &StaticSecret, message: &[u8]) -> Result<PublicKey, Error> {
+    let message = bincode::deserialize::<Message>(message).unwrap();
+    message.other_public_key(&PublicKey::from(secret_key))
 }
 
 pub fn generate(randomness: [u8; 32]) -> (PublicKey, StaticSecret) {

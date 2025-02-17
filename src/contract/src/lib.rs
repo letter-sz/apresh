@@ -88,7 +88,6 @@ async fn read_channel(shipment_id: u64) -> Result<Channel, String> {
 
 #[update(name = "finalizeShipment")]
 async fn finalize_shipment(shipment_id: u64, secret_key: Option<String>) -> Result<(), String> {
-    assert_whitelisted();
     let caller = ActorId(ic_cdk::caller());
 
     let finalize_shipment_result = STATE

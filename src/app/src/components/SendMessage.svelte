@@ -1,15 +1,15 @@
 <script lang="ts">
-	import type { PrintableShipment } from '$declarations/contract/contract.did';
+	import type { Channel, PrintableShipment } from '$declarations/contract/contract.did';
 	import { connection } from '$lib/connection.svelte';
 	import { getLocalStorage, setLocalStorage } from '$lib/storage';
 	import { unwrap } from '$lib/utils';
 	import TextInput from './common/Inputs/TextInput.svelte';
-	import { KeyPair } from 'wasm';
+	import { KeyPair, static_keypair_generate } from 'wasm';
 
 	const {
 		shipment,
 		channelOpen = $bindable(shipment.channel.guest_keys.length > 0)
-	}: { shipment: PrintableShipment; channelOpen: boolean } = $props();
+	}: { shipment: PrintableShipment; channelOpen?: boolean } = $props();
 
 	let message = $state('');
 
@@ -18,9 +18,13 @@
 	// const isCarrier = $derived(shipment.carrier.length > 0 && shipment.carrier[0] === identity);
 
 	const ownKeyRaw = $state(getLocalStorage<Array<number>>(`channel-key-${shipment.id}`));
-	const ownKeypair: KeyPair | null = $derived(ownKeyRaw && KeyPair.from(Uint8Array.from(ownKeyRaw)));
+	const ownKeypair: KeyPair | null = $derived(
+		ownKeyRaw && KeyPair.from(Uint8Array.from(ownKeyRaw))
+	);
 
-	const guestKeys = $derived(shipment.channel.guest_keys.map((k) => k as Uint8Array<ArrayBufferLike>));
+	const guestKeys = $derived(
+		shipment.channel.guest_keys.map((k) => k as Uint8Array<ArrayBufferLike>)
+	);
 	const isHost = $derived(
 		ownKeypair && indexedDB.cmp(shipment.channel.host_key, ownKeypair.public_key()) === 0
 	);
@@ -28,7 +32,7 @@
 		ownKeypair && guestKeys.findIndex((k) => indexedDB.cmp(k, ownKeypair.public_key()) === 0) !== -1
 	);
 	const otherKey = $derived(
-		isHost && guestKeys.length > 0
+		isHost 
 			? (guestKeys[guestKeys.length - 1] as Uint8Array)
 			: (shipment.channel.host_key as Uint8Array)
 	);
@@ -52,7 +56,7 @@
 		if (ownKeypair) {
 			keypair = ownKeypair;
 		} else {
-			keypair = KeyPair.generate();
+			keypair = static_keypair_generate();
 			setLocalStorage(`channel-key-${shipment.id}`, Array.from(keypair.secret_key()));
 		}
 
@@ -66,12 +70,12 @@
 		const res = await actor.add_message(encryptedMessage, shipment.id);
 		console.log(res);
 
-		// const messages = unwrap<Array<Uint8Array>>(await actor.read_channel(shipment.id));
-		// const decodedMessages = messages.map((m) => plainDecrypt(extract_public_key(otherKey, m)));
-		// console.log(
-		// 	'Messages:',
-		// 	messages.map((m) => plainDecrypt(extract_public_key(keyPair.secret_key(), m)))
-		// );
+		const messages = unwrap<Channel>(await actor.read_channel(shipment.id));
+		console.log(messages);
+		const decodedMessages = messages.messages.map((m) =>
+			new TextDecoder().decode(keypair.decrypt(m as Uint8Array<ArrayBufferLike>))
+		);
+		console.log(decodedMessages);
 
 		// const decryptedMessage = ;
 		// const decodedMessage = ;

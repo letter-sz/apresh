@@ -14,6 +14,7 @@ export default defineConfig({
 		chunkSizeWarningLimit: 1024000
 	},
 	optimizeDeps: {
+		exclude: ['wasm'],
 		esbuildOptions: {
 			define: {
 				global: 'globalThis'
