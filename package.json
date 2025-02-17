@@ -13,6 +13,7 @@
     "test": "npm test --workspaces --if-present",
     "storybook": "cd src/app && bun run storybook",
     "wasm": "wasm-pack build --target bundler src/crates/apresh-wasm --out-dir ./pkg",
+    "test:wasm": "wasm-pack test --headless --chrome src/crates/apresh-wasm",
     "contract": "dfx canister stop contract && dfx canister delete contract && dfx deploy contract",
     "initial": "bash scripts/initial_deploy.sh"
   },

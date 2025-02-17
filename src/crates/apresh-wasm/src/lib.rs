@@ -8,6 +8,8 @@ use engine::utils::hash_secret;
 
 use utils::set_panic_hook;
 
+pub use crypto::*;
+
 #[wasm_bindgen]
 pub fn init() {
     set_panic_hook();

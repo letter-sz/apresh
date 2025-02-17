@@ -31,34 +31,38 @@ fn slice_to_array<const N: usize>(slice: &[u8], error: Error) -> Result<[u8; N],
 }
 
 pub fn encrypt_for(
+    secret_key: &StaticSecret,
     public_key: &[u8],
     message: &[u8],
     random_nonce: [u8; 12],
-    randomness: [u8; 32],
-) -> Result<(Vec<u8>, StaticSecret), Error> {
+) -> Result<Vec<u8>, Error> {
     let public_key = slice_to_array(public_key, Error::InvalidPublicKey)?;
     let public_key = PublicKey::from(public_key);
 
-    let (generated_public, generated_secret) = generate(randomness);
-    let shared_secret = combine(public_key, &generated_secret);
+    let shared_secret = combine(public_key, &secret_key);
 
     let ciphertext = encrypt(&shared_secret, message, &random_nonce);
 
     let message = Message {
-        public_key: generated_public,
+        public_key: PublicKey::from(secret_key),
         nonce: random_nonce,
         ciphertext,
     };
 
     let message = bincode::serialize(&message).unwrap();
 
-    Ok((message, generated_secret))
+    Ok(message)
 }
 
-pub fn extract(secret_key: &[u8], message: &[u8]) -> Vec<u8> {
+pub fn parse_keypair(secret_key: &[u8]) -> (PublicKey, StaticSecret) {
     let secret_key = slice_to_array(secret_key, Error::InvalidSecretKey).unwrap();
     let secret_key = StaticSecret::from(secret_key);
+    let public_key = PublicKey::from(&secret_key);
 
+    (public_key, secret_key)
+}
+
+pub fn extract(secret_key: &StaticSecret, message: &[u8]) -> Vec<u8> {
     let message = bincode::deserialize::<Message>(message).unwrap();
     let shared_secret = combine(message.public_key, &secret_key);
     decrypt(&shared_secret, &message.nonce, &message.ciphertext)

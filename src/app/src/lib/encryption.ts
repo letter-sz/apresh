@@ -52,10 +52,10 @@ export async function ibe_encrypt(wallet: IConnection, message: string, principa
 	return hex_encode(new Uint8Array());
 }
 
-export function plainEncrypt(message: string): Uint8Array {
+export function encode(message: string): Uint8Array {
 	return new TextEncoder().encode(message);
 }
 
-export function plainDecrypt(encrypted_message: Uint8Array): string {
+export function decode(encrypted_message: Uint8Array): string {
 	return new TextDecoder().decode(encrypted_message);
 }
