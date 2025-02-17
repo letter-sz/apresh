@@ -2,14 +2,18 @@
 	import type { PrintableShipment } from '$declarations/contract/contract.did';
 	import { flyToLocation } from '$lib/map.ts/focus';
 	import { getDistance } from 'geolib';
-	import { ChevronDown, ChevronUp, Settings, SlidersHorizontal } from 'lucide-svelte';
+	import { ChevronDown, ChevronUp, RefreshCcw, SlidersHorizontal } from 'lucide-svelte';
 	import { getContext } from 'svelte';
 	import type { MapContext } from 'svelte-maplibre/dist/context';
 	import ShipmentRecord from './ShipmentRecord.svelte';
 
+	type Props = {
+		shipments: PrintableShipment[];
+		refreshShipments: () => void;
+	};
 	type HeaderLabel = 'price' | 'value' | 'category' | 'distance';
 
-	let { shipments }: { shipments: PrintableShipment[] } = $props();
+	let { shipments, refreshShipments }: Props = $props();
 
 	let shipmentsWithDistance = $derived(
 		shipments.map((shipment) => ({
@@ -84,13 +88,17 @@
 </script>
 
 <div class="flex h-full w-full flex-col px-2">
-	<div class="mr-5 flex justify-end space-x-3 py-2">
+	<div class="mr-5 flex justify-end space-x-3 py-2.5">
 		<SlidersHorizontal
-			class={`cursor-pointer text-neutral-600 ${showFilters ? 'text-orange-600' : ''}`}
+			class={`cursor-pointer text-neutral-600 hover:text-orange-600 ${showFilters ? 'text-orange-600 hover:text-neutral-600' : ''}`}
 			size={20}
 			onclick={() => (showFilters = !showFilters)}
 		/>
-		<Settings class="text-neutral-600" size={20} />
+		<RefreshCcw
+			class="cursor-pointer text-neutral-600 transition-all duration-200 hover:-rotate-45 hover:text-orange-600"
+			size={20}
+			onclick={refreshShipments}
+		/>
 	</div>
 
 	{#if showFilters}

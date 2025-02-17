@@ -1,14 +1,13 @@
 import type { PrintableShipment } from '$declarations/contract/contract.did';
 import { fetchBackend } from '$lib/canisters';
 import { connection } from '$lib/connection.svelte';
-import { match } from '$lib/utils';
 import type { LoadEvent } from '@sveltejs/kit';
 
 /** @type {import('./$types').PageLoad } */
 export async function load({ depends, fetch }: LoadEvent) {
 	depends('shipments:carrier');
 
-	const actor = await connection.tryGetActor();
+	const actor = connection.tryGetActor();
 	let carried: PrintableShipment[] = [];
 
 	if (actor !== null) {
