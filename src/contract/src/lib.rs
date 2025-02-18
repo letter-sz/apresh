@@ -1,6 +1,5 @@
 mod transfer;
 mod utils;
-mod vetkd;
 
 #[cfg(not(feature = "no-mocks"))]
 mod mock_data;
@@ -23,8 +22,6 @@ use ic_cdk::{init, query, update};
 use icrc_ledger_types::icrc1::transfer::NumTokens;
 use transfer::{transfer_in, transfer_out, TransferInParams, TransferOutParams, TransferParams};
 use utils::{assert_admin, assert_whitelisted, memo};
-
-pub use vetkd::{encrypted_ibe_decryption_key_for_caller, ibe_encryption_key};
 
 thread_local! {
     pub static STATE: RefCell<CanisterState> = RefCell::new(CanisterState::default());

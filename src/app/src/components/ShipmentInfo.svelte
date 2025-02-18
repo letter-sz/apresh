@@ -14,41 +14,28 @@
 		{shipment.name}
 	</p>
 
-	<div class="grid w-full grid-cols-3 gap-x-10">
-		<div class="col-span-3 grid grid-cols-2 border-b border-violet-200 py-4">
-			<div class="flex flex-col space-y-3 px-12 text-center">
-				<span class="text-base font-semibold text-orange-500">Price</span>
-				<span class="text-sm">{shipment.info.price} ICP</span>
-			</div>
-
-			<div class="flex flex-col space-y-3 px-12 text-center">
-				<span class="text-base font-semibold text-orange-500">Value</span>
-				<span class="text-sm">{shipment.info.value} ICP</span>
-			</div>
+	<div class="grid grid-cols-2 gap-x-20 gap-y-7">
+		<div class="col-span-2 flex flex-col space-y-3 text-center">
+			<span class="text-lg font-semibold text-rose-500">Name</span>
+			<span class="text-base">{shipment.name}</span>
 		</div>
 
-		{#if shipment.channel.messages.length > 0}
-			<div class="col-span-2 flex flex-col space-y-3 text-center">
-				<span class="text-lg font-semibold text-rose-500">Message</span>
-				<span class="text-base"
-					>{#await ibe_decrypt(shipment.channel.messages[0]!.toString())}
-						<p>Loading...</p>
-					{:then decrypted}
-						{decrypted}
-					{:catch error}
-						<p></p>
-					{/await}</span
-				>
-			</div>
-		{/if}
+		<div class="flex flex-col space-y-3 text-center">
+			<span class="text-lg font-semibold text-rose-500">Price</span>
+			<span class="text-base">{shipment.info.price}</span>
+		</div>
 
-		<div class="col-span-3 flex justify-between py-4">
-			<div class="flex flex-1 flex-col space-y-3 text-center">
-				<span class="text-base font-semibold text-orange-500">Source</span>
-				<span class="text-sm"
-					>{shipment.info.source.lat.toFixed(2)}, {shipment.info.destination.lng.toFixed(2)}</span
-				>
-			</div>
+		<div class="flex flex-col space-y-3 text-center">
+			<span class="text-xl font-semibold text-rose-500">Value</span>
+			<span class="text-base">{shipment.info.value}</span>
+		</div>
+
+		<div class="flex flex-col space-y-3 text-center">
+			<span class="text-lg font-semibold text-rose-500">Source</span>
+			<span class="text-base"
+				>{shipment.info.source.lat.toFixed(2)}, {shipment.info.destination.lng.toFixed(2)}</span
+			>
+		</div>
 
 			<div class="flex flex-1 flex-col space-y-3 text-center">
 				<span class="text-base font-semibold text-orange-500">Destination</span>

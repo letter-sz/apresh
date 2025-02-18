@@ -6,7 +6,6 @@
 	import { connection } from '$lib/connection.svelte';
 	import { unwrap } from '$lib/utils';
 	import type { PageData } from './$types';
-	import { ibe_encrypt } from '$lib/encryption';
 	import SendMessage from '$components/SendMessage.svelte';
 
 	let { data, bought }: { data: PageData; bought?: () => void } = $props();

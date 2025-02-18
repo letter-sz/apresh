@@ -43,14 +43,6 @@
 		const res = await actor.buyShipment(['Jacek'], shipment.id, buyerPublicChannelKey);
 		unwrap<null>(res);
 
-		// const encryptedMessage = await ibe_encrypt(
-		// 	await connection.getConnection(),
-		// 	message,
-		// 	shipment.customer
-		// );
-		// const errorMessage = await actor.addEncryptedMessage(encryptedMessage!, shipment.id);
-		// console.log(errorMessage);
-
 		invalidate('token:balance');
 		await invalidate('shipments:shipper');
 		invalidate('shipments:carrier');

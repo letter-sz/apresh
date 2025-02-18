@@ -60,11 +60,9 @@ service : () -> {
       QrCodeOptions,
       ShipmentInfo,
     ) -> (Result_1);
-  encrypted_ibe_decryption_key_for_caller : (blob) -> (text);
   finalizeShipment : (nat64, opt text) -> (Result);
   generateQr : (text, nat64) -> (Result_2) query;
   getTransferFee : () -> (nat64) query;
-  ibe_encryption_key : () -> (text);
   is_mainnet : () -> (bool) query;
   listPendingShipments : () -> (vec PrintableShipment) query;
   read_channel : (nat64) -> (Result_3) query;
