@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { invalidate } from '$app/navigation';
 	import type { Channel, PrintableShipment } from '$declarations/contract/contract.did';
 	import { connection } from '$lib/connection.svelte';
 	import { getLocalStorage, setLocalStorage } from '$lib/storage';
@@ -32,9 +33,16 @@
 		ownKeypair && guestKeys.findIndex((k) => indexedDB.cmp(k, ownKeypair.public_key()) === 0) !== -1
 	);
 	const otherKey = $derived(
-		isHost 
+		isHost
 			? (guestKeys[guestKeys.length - 1] as Uint8Array)
 			: (shipment.channel.host_key as Uint8Array)
+	);
+
+	const messages = $derived(
+		ownKeypair &&
+			shipment.channel.messages.map((m) =>
+				new TextDecoder().decode(ownKeypair.decrypt(m as Uint8Array<ArrayBufferLike>))
+			)
 	);
 
 	async function handle() {
@@ -70,16 +78,8 @@
 		const res = await actor.add_message(encryptedMessage, shipment.id);
 		console.log(res);
 
-		const messages = unwrap<Channel>(await actor.read_channel(shipment.id));
-		console.log(messages);
-		const decodedMessages = messages.messages.map((m) =>
-			new TextDecoder().decode(keypair.decrypt(m as Uint8Array<ArrayBufferLike>))
-		);
-		console.log(decodedMessages);
-
-		// const decryptedMessage = ;
-		// const decodedMessage = ;
-		// console.log(decodedMessages);
+		invalidate('shipments:shipper');
+		invalidate('shipments:carrier');
 
 		message = ''; // Clear the input after sending
 	}
@@ -91,6 +91,18 @@
 		}
 	}
 </script>
+
+<div class="mb-4 max-h-[300px] overflow-y-auto rounded border border-gray-200 p-4">
+	<div class="flex flex-col gap-2">
+		{#each messages ?? [] as message}
+			<div class="rounded-lg bg-gray-50 p-2 px-4">
+				<p class="m-0 break-words">
+					{message}
+				</p>
+			</div>
+		{/each}
+	</div>
+</div>
 
 <TextInput
 	id="Message"
