@@ -26,7 +26,8 @@ const config = {
 			$lib: 'src/lib/',
 			$declarations: '../declarations',
 			$components: 'src/components',
-			$routes: 'src/routes'
+			$routes: 'src/routes',
+			$assets: 'src/assets'
 		}
 	}
 };

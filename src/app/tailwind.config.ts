@@ -6,7 +6,17 @@ import { fontFamily } from 'tailwindcss/defaultTheme';
 
 export default {
 	content: ['./src/**/*.{html,js,svelte,ts}'],
-	safelist: ['dark'],
+	safelist: [
+		{ pattern: /bg-(red|blue|green|violet|orange)-50/ },
+		{ pattern: /bg-(red|blue|green|violet|orange)-100/ },
+		{ pattern: /bg-(red|blue|green|violet|orange)-200/ },
+		{ pattern: /bg-(red|blue|green|violet|orange)-400/ },
+		{ pattern: /bg-(red|blue|green|violet|orange)-500/ },
+		{ pattern: /text-(red|blue|green|violet|orange)-500/ },
+		{ pattern: /text-(red|blue|green|violet|orange)-600/ },
+		{ pattern: /ring-(red|blue|green|violet|orange)-400/ },
+		'dark'
+	],
 	theme: {
 		container: {
 			center: true,
@@ -58,6 +68,10 @@ export default {
 			},
 			fontFamily: {
 				sans: [...fontFamily.sans]
+			},
+			transitionDuration: {
+				'1500': '1500ms',
+				'10000': '10000ms'
 			}
 		}
 	},

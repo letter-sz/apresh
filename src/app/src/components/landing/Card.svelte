@@ -1,5 +1,5 @@
 <script lang="ts">
-	import clsx from 'clsx';
+	import { Truck } from 'lucide-svelte';
 	import type { Snippet } from 'svelte';
 
 	const {
@@ -7,14 +7,22 @@
 		color,
 		onClick,
 		onMouseEnter,
-		children
+		children,
+		Icon
 	}: {
 		title: string;
 		color: string;
 		onClick: () => void;
 		onMouseEnter: () => void;
 		children: Snippet;
+		Icon: typeof Truck;
 	} = $props();
+
+	$inspect(color);
+	const textColor = `text-${color}-500`;
+	const titleColor = `text-${color}-600`;
+	const bgColor = `bg-${color}-200`;
+	const hoverColor = `ring-${color}-400`;
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -23,36 +31,18 @@
 	onclick={onClick}
 	onmouseenter={onMouseEnter}
 	class={[
-		'mx-5 my-12 rounded-3xl p-6 shadow-lg ring-0 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:ring-8',
-		{
-			'bg-orange-100 hover:ring-orange-200': color == 'orange',
-			'bg-violet-100 hover:ring-violet-200': color == 'violet',
-			'bg-blue-100 hover:ring-blue-200': color == 'blue'
-		}
+		`flex h-28 cursor-pointer items-center space-x-5 rounded-xl px-4 shadow-lg ring-0 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:ring-2`,
+		bgColor,
+		hoverColor
 	]}
 >
-	<h2
-		class={[
-			'mb-4 text-xl font-bold',
-			{
-				'text-orange-600': color == 'orange',
-				'text-violet-600': color == 'violet',
-				'text-blue-600': color == 'blue'
-			}
-		]}
-	>
-		{title}
-	</h2>
-	<p
-		class={[
-			`text-${color}-500`,
-			{
-				'text-orange-500': color == 'orange',
-				'text-violet-500': color == 'violet',
-				'text-blue-500': color == 'blue'
-			}
-		]}
-	>
-		{@render children()}
-	</p>
+	<Icon size={65} class={titleColor} />
+	<div class="">
+		<h2 class={['mb-2 text-xl font-bold', titleColor]}>
+			{title}
+		</h2>
+		<p class={[textColor, 'text-sm']}>
+			{@render children()}
+		</p>
+	</div>
 </div>
