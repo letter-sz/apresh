@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { defaultLocation } from '$lib/common';
-	import { MapLibre } from 'svelte-maplibre';
 	import type { Snippet } from 'svelte';
+	import { MapLibre } from 'svelte-maplibre';
 
 	const { children } = $props<{
 		children: Snippet;

@@ -10,9 +10,9 @@
 </script>
 
 <div
-	class="mx-auto flex rounded-full bg-gradient-to-tr from-blue-500 via-orange-400 to-rose-400 p-0.5 shadow-lg transition duration-200 ease-in-out hover:-translate-y-0.5 hover:scale-105"
+	class="mx-auto flex rounded-xl bg-gradient-to-tr from-violet-500 to-orange-400 p-0.5 shadow-lg transition duration-200 ease-in-out hover:-translate-y-0.5 hover:scale-105"
 >
-	<button onclick={onClick} class="flex-1 rounded-full bg-white px-7 py-2 text-lg"
+	<button onclick={onClick} class="flex-1 rounded-xl bg-white px-6 py-2.5"
 		>{@render children()}
 	</button>
 </div>

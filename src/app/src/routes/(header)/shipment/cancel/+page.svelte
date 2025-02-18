@@ -1,11 +1,11 @@
 <script lang="ts">
-	import type { PageData } from './$types';
 	import { invalidate } from '$app/navigation';
-	import { unwrap } from '$lib/utils';
-	import { connection } from '$lib/connection.svelte';
 	import PillButton from '$components/common/PillButton.svelte';
-	import type { PrintableShipment } from '$declarations/contract/contract.did';
 	import ShipmentInfo from '$components/ShipmentInfo.svelte';
+	import type { PrintableShipment } from '$declarations/contract/contract.did';
+	import { connection } from '$lib/connection.svelte';
+	import { unwrap } from '$lib/utils';
+	import type { PageData } from './$types';
 
 	let { data, bought }: { data: PageData; bought?: () => void } = $props();
 
@@ -32,4 +32,4 @@
 </script>
 
 <ShipmentInfo shipment={data.shipment} />
-<PillButton onClick={() => handle(data.shipment)} text="Cancel" className="w-1/2 mx-auto" />
+<PillButton onClick={() => handle(data.shipment)} text="Cancel" className="w-full mt-5 uppercase" />

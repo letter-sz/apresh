@@ -1,18 +1,17 @@
 <script lang="ts">
-	import type { ShipmentLocation } from '$declarations/contract/contract.did';
-	import type { PageData } from './$types';
-	import { getLocalStorage, setLocalStorage } from '$lib/storage';
-	import { sha256 } from 'js-sha256';
+	import { invalidate } from '$app/navigation';
 	import DecimalInput from '$components/common/Inputs/DecimalInput.svelte';
 	import TextInput from '$components/common/Inputs/TextInput.svelte';
-	import * as Tabs from '$lib/components/ui/tabs';
 	import PillButton from '$components/common/PillButton.svelte';
-	import { invalidate } from '$app/navigation';
-	import { unwrap } from '$lib/utils';
+	import type { ShipmentLocation } from '$declarations/contract/contract.did';
+	import * as Tabs from '$lib/components/ui/tabs';
 	import { connection } from '$lib/connection.svelte';
+	import { setLocalStorage } from '$lib/storage';
+	import { unwrap } from '$lib/utils';
 	import { wallet } from '$lib/wallet.svelte';
 	import bs58 from 'bs58';
 	import { get_secret_hash } from 'wasm';
+	import type { PageData } from './$types';
 
 	const {
 		data,
@@ -28,12 +27,12 @@
 		created?: () => void;
 	} = $props();
 
-	let value = $state(0);
+	let value: number | undefined = $state(undefined);
 	let size_category: 'Parcel' | 'Envelope' = $state('Parcel');
-	let max_height = $state(0);
-	let max_width = $state(0);
-	let max_depth = $state(0);
-	let price = $state(0);
+	let max_height: number | undefined = $state(undefined);
+	let max_width: number | undefined = $state(undefined);
+	let max_depth: number | undefined = $state(undefined);
+	let price: number | undefined = $state(undefined);
 	let name = $state('');
 
 	const createShipment = async (e: Event) => {
@@ -42,6 +41,11 @@
 
 		if (!sourceLocation || !destinationLocation) {
 			console.error('Source or destination location is not defined');
+			return;
+		}
+
+		if (!price || !value) {
+			console.error('Price or value is not defined');
 			return;
 		}
 
@@ -64,7 +68,7 @@
 			},
 			{
 				size_category:
-					size_category == 'Parcel'
+					size_category == 'Parcel' && max_height && max_width && max_depth
 						? {
 								Parcel: {
 									max_height: BigInt(max_height),
@@ -100,15 +104,13 @@
 		}
 	};
 
-	let buttonText: 'Create Shipment' | 'Insufficient funds' = $derived(
-		(data.balance ?? 0n) >= BigInt(price) ? 'Create Shipment' : 'Insufficient funds'
+	let buttonText: 'Create' | 'Insufficient funds' = $derived(
+		(data.balance ?? 0n) >= BigInt(!price) ? 'Create' : 'Insufficient funds'
 	);
 </script>
 
-<form method="POST" class="flex w-full flex-col space-y-7" onsubmit={createShipment}>
-	<h1
-		class="mb-5 inline-block bg-gradient-to-r from-blue-500 to-rose-400 bg-clip-text text-center text-3xl font-semibold text-transparent"
-	>
+<form method="POST" class="flex w-full flex-col space-y-4" onsubmit={createShipment}>
+	<h1 class="mb-5 inline-block bg-clip-text text-center text-2xl font-semibold text-orange-500">
 		Create shipment
 	</h1>
 
@@ -116,7 +118,7 @@
 	<DecimalInput label="Value" id="value" name="value" bind:value required />
 	<DecimalInput label="Price" id="price" name="price" bind:value={price} required />
 
-	<div class="my-8 flex justify-between px-10">
+	<div class="flex justify-between space-x-6">
 		{@render locationButton('Source', sourceLocation, selectLocationWrapper)}
 		{@render locationButton('Destination', destinationLocation, selectLocationWrapper)}
 	</div>
@@ -124,26 +126,46 @@
 	<Tabs.Root
 		value={size_category ?? 'Parcel'}
 		onValueChange={(value) => (size_category = value as 'Parcel' | 'Envelope')}
-		class="w-full"
+		class="w-full py-3"
 	>
-		<Tabs.List class="grid w-full grid-cols-2">
+		<Tabs.List class="grid w-full grid-cols-2 text-xs">
 			<Tabs.Trigger value="Parcel">Parcel</Tabs.Trigger>
 			<Tabs.Trigger value="Envelope">Envelope</Tabs.Trigger>
 		</Tabs.List>
-		<Tabs.Content value="Parcel">
-			<DecimalInput
-				label="Height"
-				id="max_height"
-				name="max_height"
-				bind:value={max_height}
-				required
-			/>
-			<DecimalInput label="Width" id="max_width" name="max_width" bind:value={max_width} required />
-			<DecimalInput label="Depth" id="max_depth" name="max_depth" bind:value={max_depth} required />
+		<Tabs.Content value="Parcel" class="space-y-4 pt-2">
+			{#if size_category === 'Parcel'}
+				<DecimalInput
+					label="Height"
+					id="max_height"
+					name="max_height"
+					bind:value={max_height}
+					required
+				/>
+				<DecimalInput
+					label="Width"
+					id="max_width"
+					name="max_width"
+					bind:value={max_width}
+					required
+				/>
+				<DecimalInput
+					label="Depth"
+					id="max_depth"
+					name="max_depth"
+					bind:value={max_depth}
+					required
+				/>
+			{/if}
 		</Tabs.Content>
 	</Tabs.Root>
 
-	<PillButton text={buttonText} disabled={buttonText === 'Insufficient funds'} />
+	<div class="flex justify-center">
+		<PillButton
+			text={buttonText}
+			className="uppercase font-semibold w-full py-2.5"
+			disabled={buttonText === 'Insufficient funds'}
+		/>
+	</div>
 </form>
 
 {#snippet locationButton(
@@ -152,17 +174,14 @@
 	selectFn: (type: 'Source' | 'Destination') => void
 )}
 	<div class="flex flex-col space-y-2 text-center">
-		<span>{type}</span>
+		<span class="text-xs">{type}</span>
 		{#if !location}
-			<button
-				type="button"
-				class="mx-auto rounded-full bg-gradient-to-r from-blue-500 to-rose-400 px-4 py-1 text-white transition duration-200 ease-in-out hover:-translate-y-0.5 hover:scale-105"
-				onclick={() => selectFn(type)}>Select location</button
-			>
+			<PillButton text="Select location" onClick={() => selectFn(type)} />
 		{:else}
-			<button type="button" onclick={() => selectFn(type)} class="text-lg"
-				>{location.lat.toFixed(2)}, {location.lng.toFixed(2)}</button
-			>
+			<PillButton
+				text={`${location.lat.toFixed(2)}, ${location.lng.toFixed(2)}`}
+				onClick={() => selectFn(type)}
+			/>
 		{/if}
 	</div>
 {/snippet}

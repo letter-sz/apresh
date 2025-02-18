@@ -1,6 +1,9 @@
 <script lang="ts">
 	import type { PrintableShipment } from '$declarations/contract/contract.did';
+	import { connection } from '$lib/connection.svelte';
 	import { getDistance } from 'geolib';
+	import { PackageCheck, PackagePlus, PackageSearch } from 'lucide-svelte';
+	import Tooltip from './common/Tooltip.svelte';
 
 	let { shipment, selected = $bindable() } = $props<{
 		shipment: PrintableShipment & { distance: number };
@@ -39,15 +42,50 @@
 	});
 </script>
 
-<tr class="cursor-pointer transition-colors hover:bg-rose-50" onclick={() => (selected = shipment)}>
-	<td class="p-3 text-left text-base text-gray-900">{shipment.name}</td>
-	<td class="p-3 text-right text-base font-medium text-gray-900">{shipment.info.price} ICP</td>
-	<td class="p-3 text-right text-base font-medium text-gray-900">{shipment.info.value} ICP</td>
-	<td class="p-3 text-left text-base text-gray-600">{category}</td>
-	<td class="p-3 text-right text-base font-medium text-gray-900">
-		{shipment.distance / 1000} km
-		{#if relativeDistance !== null}
-			<span class="ml-2 text-sm text-gray-500">({relativeDistance} km from you)</span>
+<tr
+	class="group cursor-pointer text-center text-sm transition-colors hover:bg-orange-50"
+	onclick={() => (selected = shipment)}
+>
+	<td class="flex h-20 flex-col items-center justify-center">
+		{#if shipment.carrier.length > 0 && connection.identity && shipment.carrier[0] === connection.identity.toText()}
+			<Tooltip text="Bought by you">
+				<PackageCheck
+					class="text-green-700 transition-all duration-300 group-hover:scale-125"
+					size={20}
+				/>
+			</Tooltip>
+		{:else if shipment.carrier.length > 0 && connection.identity && shipment.shipper === connection.identity.toText()}
+			<Tooltip text="Bought from you">
+				<PackageCheck
+					class="text-green-700 transition-all duration-300 group-hover:scale-125"
+					size={20}
+				/>
+			</Tooltip>
+		{:else if connection.identity && shipment.shipper === connection.identity.toText()}
+			<Tooltip text="Owned by you">
+				<PackageSearch
+					class="text-violet-600 transition-all duration-300 group-hover:scale-125"
+					size={20}
+				/>
+			</Tooltip>
+		{:else}
+			<Tooltip text="To buy">
+				<PackagePlus
+					class="text-neutral-600 transition-all duration-300 group-hover:scale-125"
+					size={20}
+				/>
+			</Tooltip>
 		{/if}
+	</td>
+	<td class="text-gray-600">{category}</td>
+	<td class="font-medium text-gray-900">{shipment.info.price} ICP</td>
+	<td class="font-medium text-gray-900">{shipment.info.value} ICP</td>
+	<td class="font-medium text-gray-900">
+		<div class="flex flex-col items-center justify-center">
+			<p>{shipment.distance / 1000} km</p>
+			{#if relativeDistance !== null}
+				<span class="text-xs text-gray-500">({relativeDistance} km from you)</span>
+			{/if}
+		</div>
 	</td>
 </tr>

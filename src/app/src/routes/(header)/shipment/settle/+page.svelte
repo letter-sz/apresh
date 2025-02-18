@@ -1,13 +1,13 @@
 <script lang="ts">
-	import type { PageData } from './$types';
 	import { invalidate } from '$app/navigation';
-	import { unwrap } from '$lib/utils';
-	import { connection } from '$lib/connection.svelte';
 	import PillButton from '$components/common/PillButton.svelte';
 	import QrCodeDisplay from '$components/QrCodeDisplay.svelte';
-	import { getLocalStorage } from '$lib/storage';
 	import ShipmentInfo from '$components/ShipmentInfo.svelte';
 	import { fetchBackend } from '$lib/canisters';
+	import { connection } from '$lib/connection.svelte';
+	import { getLocalStorage } from '$lib/storage';
+	import { unwrap } from '$lib/utils';
+	import type { PageData } from './$types';
 
 	let { data, settled } = $props<{ data: PageData; settled?: () => void }>();
 
@@ -28,11 +28,11 @@
 	}
 </script>
 
-<div class="mx-5 flex w-full justify-between">
-	<div class="flex flex-col">
+<div class="justyify-center flex w-full space-x-20">
+	<div class="flex w-full flex-col items-center">
 		<ShipmentInfo shipment={data.shipment} />
 
-		<PillButton text="Settle" onClick={settle} />
+		<PillButton text="Settle" className="w-full uppercase" onClick={settle} />
 	</div>
 	<div class="flex items-center text-lg">OR</div>
 	<div class="flex items-center">

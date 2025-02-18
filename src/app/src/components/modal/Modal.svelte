@@ -27,7 +27,7 @@
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <dialog
 	bind:this={dialog}
-	class={clsx('rounded-3xl', cls ?? 'w-[550px]')}
+	class={clsx('rounded-3xl', cls)}
 	onclose={onClose}
 	onclick={() => dialog.close()}
 	onkeydown={(e) => {
@@ -40,9 +40,9 @@
 		onkeydown={(e) => {
 			if (e.key === 'Escape') e.stopPropagation();
 		}}
-		class="mx-auto flex h-full rounded-3xl bg-gradient-to-tr from-blue-500 via-orange-400 to-rose-400 p-1"
+		class="mx-auto flex h-full rounded-3xl bg-gradient-to-tr from-violet-500 to-orange-400 p-0.5"
 	>
-		<div class="flex flex-1 flex-col items-center justify-center rounded-3xl bg-white px-24 py-14">
+		<div class="flex flex-1 flex-col items-center justify-center rounded-3xl bg-white px-14 py-8">
 			{#if header}
 				{@render header()}
 				<hr />
