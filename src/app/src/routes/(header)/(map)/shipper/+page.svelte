@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { pushState } from '$app/navigation';
+	import { invalidate, pushState } from '$app/navigation';
 	import { page } from '$app/stores';
 	import MapButton from '$components/MapButton.svelte';
 	import Marker from '$components/Marker.svelte';
@@ -15,7 +15,6 @@
 
 	const { data }: { data: PageData } = $props();
 
-	// Location selection data
 	let selectMode: 'Source' | 'Destination' | null = $state(null);
 	let sourceLocation: ShipmentLocation | undefined = $state(undefined);
 	let destinationLocation: ShipmentLocation | undefined = $state(undefined);
@@ -32,10 +31,14 @@
 
 		selectMode = null;
 	}
+
+	function refreshShipments() {
+		invalidate('shipments:shipper');
+	}
 </script>
 
 {#if data.created.length !== 0}
-	<RightShipments shipments={data.created} />
+	<RightShipments shipments={data.created} {refreshShipments} />
 {/if}
 
 {#if selectMode !== null}

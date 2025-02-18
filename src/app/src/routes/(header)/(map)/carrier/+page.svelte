@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { pushState } from '$app/navigation';
+	import { invalidate, pushState } from '$app/navigation';
 	import { page } from '$app/stores';
 	import Marker from '$components/Marker.svelte';
 	import Modal from '$components/modal/Modal.svelte';
@@ -10,10 +10,14 @@
 	import type { PageData } from './$types';
 
 	const { data }: { data: PageData } = $props();
+
+	function refreshShipments() {
+		invalidate('shipments:carrier');
+	}
 </script>
 
 {#if data.shipments.length !== 0}
-	<RightShipments shipments={[...data.shipments, ...data.carried]} />
+	<RightShipments shipments={[...data.shipments, ...data.carried]} {refreshShipments} />
 {/if}
 
 {#if data.carried.length > 0}
