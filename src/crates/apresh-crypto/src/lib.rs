@@ -17,7 +17,7 @@ pub enum Error {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Message {
+struct Message {
     from: PublicKey,
     to: PublicKey,
     nonce: [u8; 12],
@@ -54,7 +54,7 @@ pub fn encrypt_for(
     let public_key = slice_to_array(public_key, Error::InvalidPublicKey)?;
     let public_key = PublicKey::from(public_key);
 
-    let shared_secret = combine(public_key, &secret_key);
+    let shared_secret = combine(public_key, secret_key);
 
     let ciphertext = encrypt(&shared_secret, message, &random_nonce);
 
@@ -78,12 +78,16 @@ pub fn parse_keypair(secret_key: &[u8]) -> (PublicKey, StaticSecret) {
     (public_key, secret_key)
 }
 
-pub fn extract(secret_key: &StaticSecret, message: &[u8]) -> Vec<u8> {
+pub fn extract(secret_key: &StaticSecret, message: &[u8]) -> (Vec<u8>, bool) {
     let message = bincode::deserialize::<Message>(message).unwrap();
     let public_key = PublicKey::from(secret_key);
     let other_public_key = message.other_public_key(&public_key).unwrap();
-    let shared_secret = combine(other_public_key, &secret_key);
-    decrypt(&shared_secret, &message.nonce, &message.ciphertext)
+    let shared_secret = combine(other_public_key, secret_key);
+
+    (
+        decrypt(&shared_secret, &message.nonce, &message.ciphertext),
+        message.from == public_key,
+    )
 }
 
 pub fn parse_public_key(secret_key: &StaticSecret, message: &[u8]) -> Result<PublicKey, Error> {

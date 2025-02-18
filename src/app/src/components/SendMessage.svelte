@@ -5,7 +5,7 @@
 	import { getLocalStorage, setLocalStorage } from '$lib/storage';
 	import { unwrap } from '$lib/utils';
 	import TextInput from './common/Inputs/TextInput.svelte';
-	import { KeyPair, static_keypair_generate } from 'wasm';
+	import { KeyPair, Message, static_keypair_generate } from 'wasm';
 
 	const {
 		shipment,
@@ -38,11 +38,9 @@
 			: (shipment.channel.host_key as Uint8Array)
 	);
 
-	const messages = $derived(
+	const messages: Message[] | null = $derived(
 		ownKeypair &&
-			shipment.channel.messages.map((m) =>
-				new TextDecoder().decode(ownKeypair.decrypt(m as Uint8Array<ArrayBufferLike>))
-			)
+			shipment.channel.messages.map((m) => ownKeypair.decrypt(m as Uint8Array<ArrayBufferLike>))
 	);
 
 	async function handle() {
@@ -92,17 +90,28 @@
 	}
 </script>
 
+
+
+{#if (messages)}
 <div class="mb-4 max-h-[300px] overflow-y-auto rounded border border-gray-200 p-4">
 	<div class="flex flex-col gap-2">
-		{#each messages ?? [] as message}
+		{#each messages as message}
 			<div class="rounded-lg bg-gray-50 p-2 px-4">
-				<p class="m-0 break-words">
-					{message}
+				<p
+					class={[
+						'm-0 break-words',
+						{
+							'text-green-500': message.is_author()
+						}
+					]}
+				>
+					{new TextDecoder().decode(message.message())}
 				</p>
 			</div>
 		{/each}
+		</div>
 	</div>
-</div>
+{/if}
 
 <TextInput
 	id="Message"

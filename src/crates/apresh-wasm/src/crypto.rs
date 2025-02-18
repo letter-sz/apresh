@@ -40,8 +40,9 @@ impl KeyPair {
         apresh_crypto::encrypt_for(&self.secret_key, public_key, message, randomness()).unwrap()
     }
 
-    pub fn decrypt(&self, message: &[u8]) -> Vec<u8> {
-        apresh_crypto::extract(&self.secret_key, message)
+    pub fn decrypt(&self, message: &[u8]) -> Message {
+        let (message, is_author) = apresh_crypto::extract(&self.secret_key, message);
+        Message { message, is_author }
     }
 
     pub fn public_key_from_message(&self, message: Vec<u8>) -> Vec<u8> {
@@ -49,6 +50,23 @@ impl KeyPair {
             .unwrap()
             .to_bytes()
             .to_vec()
+    }
+}
+
+#[wasm_bindgen]
+pub struct Message {
+    message: Vec<u8>,
+    is_author: bool,
+}
+
+#[wasm_bindgen]
+impl Message {
+    pub fn message(&self) -> Vec<u8> {
+        self.message.clone()
+    }
+
+    pub fn is_author(&self) -> bool {
+        self.is_author
     }
 }
 

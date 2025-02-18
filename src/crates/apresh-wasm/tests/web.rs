@@ -18,8 +18,12 @@ fn pass() {
 
     let message = b"Hello, world!";
     let encrypted = alice.encrypt_for(&bob.public_key(), message);
+
     let decrypted = bob.decrypt(&encrypted);
+    assert_eq!(message.to_vec(), decrypted.message());
+    assert_eq!(false, decrypted.is_author());
+
     let self_decrypted = alice.decrypt(&encrypted);
-    assert_eq!(message.to_vec(), decrypted);
-    assert_eq!(message.to_vec(), self_decrypted);
+    assert_eq!(message.to_vec(), self_decrypted.message());
+    assert_eq!(true, self_decrypted.is_author());
 }
