@@ -12,6 +12,8 @@ pub enum Error {
     ShipperNotFound,
     #[error("Carrier already set")]
     CarrierAlreadySet,
+    #[error("Shipment already bought")]
+    ShipmentNotReadyToBeCanceled,
     #[error("Shipment not ready to be finalized")]
     ShipmentNotReadyToBeFinalized,
     #[error("Not authorized to finalize shipment")]
@@ -28,4 +30,8 @@ pub enum Error {
     NotAuthorizedAsNeitherCarrierNorShipper,
     #[error("Message too long")]
     MessageTooLong,
+    #[error("Shipment limit reached")]
+    ShipmentLimitReached,
+    #[error("Shipment cannot be bought")]
+    ShipmentCannotBeBought,
 }

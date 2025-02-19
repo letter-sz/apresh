@@ -34,6 +34,10 @@ impl Shipment {
             return Err(crate::errors::Error::NotAuthorizedAsShipper);
         }
 
+        if self.status != ShipmentStatus::Pending || self.carrier.is_some() {
+            return Err(crate::errors::Error::ShipmentNotReadyToBeCanceled);
+        }
+
         self.status = ShipmentStatus::Cancelled;
 
         Ok(())
@@ -72,7 +76,11 @@ impl Shipment {
     }
 
     fn buy(&mut self, carrier_id: ActorId) -> crate::errors::Result<()> {
-        if self.status != ShipmentStatus::Pending || self.carrier.is_some() {
+        if self.status != ShipmentStatus::Pending {
+            return Err(crate::errors::Error::ShipmentCannotBeBought);
+        }
+
+        if self.carrier.is_some() {
             return Err(crate::errors::Error::CarrierAlreadySet);
         }
 
@@ -175,11 +183,11 @@ impl Shipment {
         hashed_secret: Vec<u8>,
         channel_key: ChannelKey,
         name: &str,
-        info: ShipmentInfo,
+        info: &ShipmentInfo,
     ) -> Self {
         Self {
             id,
-            info,
+            info: info.clone(),
             name: name.to_string(),
             channel: Channel::new(channel_key),
             hashed_secret: hashed_secret.to_vec(),
@@ -214,7 +222,7 @@ impl Shipment {
         self.carrier
     }
 
-    pub fn _id(&self) -> ShipmentId {
+    pub fn id(&self) -> ShipmentId {
         self.id
     }
 

@@ -13,7 +13,7 @@ pub struct CreateShipmentOp<'a> {
     hashed_secret: Vec<u8>,
     channel_key: ChannelKey,
     shipment_name: &'a str,
-    info: ShipmentInfo,
+    info: &'a ShipmentInfo,
     timestamp: u64,
 }
 
@@ -23,7 +23,7 @@ impl<'a> CreateShipmentOp<'a> {
         hashed_secret: Vec<u8>,
         channel_key: ChannelKey,
         shipment_name: &'a str,
-        info: ShipmentInfo,
+        info: &'a ShipmentInfo,
         timestamp: u64,
     ) -> Self {
         Self {
@@ -43,8 +43,12 @@ impl<'a> StateOp<ShipmentId> for CreateShipmentOp<'a> {
     fn apply(&self, state: &mut CanisterState) -> crate::Result<ShipmentId> {
         let new_shipment_id = state.shipment_counter();
 
+        if new_shipment_id == u64::MAX {
+            return Err(crate::Error::ShipmentLimitReached);
+        }
+
         let mut shipper = state
-            .shipper_mut(self.creator)
+            .shipper_mut(&self.creator)
             .ok_or(crate::Error::ShipperNotFound)?;
 
         let shipment = Shipment::new(
@@ -54,11 +58,11 @@ impl<'a> StateOp<ShipmentId> for CreateShipmentOp<'a> {
             self.hashed_secret.clone(),
             self.channel_key.clone(),
             self.shipment_name,
-            self.info.clone(),
+            self.info,
         );
 
         shipper.add_shipment(new_shipment_id);
-        state.create_shipment(shipment);
+        state.create_shipment(shipment)?;
 
         Ok(new_shipment_id)
     }
@@ -67,68 +71,153 @@ impl<'a> StateOp<ShipmentId> for CreateShipmentOp<'a> {
 #[cfg(test)]
 mod tests {
     use crate::{
-        models::shipment::{ShipmentLocation, SizeCategory},
+        models::shipment::{ShipmentLocation, ShipmentStatus, SizeCategory},
         operations::RegisterActorOp,
         utils::hash_secret,
-        ActorId,
+        ActorId, Error,
     };
 
     use super::*;
     use candid::Principal;
 
-    #[test]
-    fn test_create_shipment_success() {
-        let mut state = CanisterState::default();
+    pub const REGISTERED_SHIPPER_NAME: &str = "Ben Dover";
+    pub const REGISTERED_SHIPPER_ACTOR_ID: ActorId = ActorId(Principal::from_slice(&[1, 3, 3, 7]));
+    pub const UNREGISTERED_SHIPPER_ACTOR_ID: ActorId =
+        ActorId(Principal::from_slice(&[2, 1, 3, 7]));
+    pub const CHANNEL_KEY: &[u8] = b"channel_key_123";
 
-        let creator_id = Principal::anonymous();
-        let creator_name = "John Doe";
-        let hashed_secret = hash_secret(b"secret_key_123");
-        let channel_key = b"channel_key_123".to_vec();
-        let shipment_name = "Test Shipment";
-        let timestamp = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_secs();
-
-        let info = ShipmentInfo::new(
+    fn default_shipper_info() -> ShipmentInfo {
+        ShipmentInfo::new(
             100,
             10,
             ShipmentLocation::new("Warsaw".to_string(), 52.23, 21.01),
             ShipmentLocation::new("Krakow".to_string(), 54.44, 18.23),
             SizeCategory::Envelope,
-        );
+        )
+    }
+
+    fn setup_test_state() -> CanisterState {
+        let mut state = CanisterState::default();
 
         let register_op = RegisterActorOp::AddShipper {
-            id: creator_id.into(),
-            name: creator_name.to_string(),
+            id: REGISTERED_SHIPPER_ACTOR_ID,
+            name: REGISTERED_SHIPPER_NAME.to_string(),
         };
 
         register_op.apply(&mut state);
 
-        let op = CreateShipmentOp::new(
-            creator_id.into(),
+        state
+    }
+
+    #[test]
+    fn test_create_shipment_with_max_counter() {
+        let mut state = setup_test_state();
+        let hashed_secret = hash_secret(b"secret_key");
+        let info = default_shipper_info();
+
+        state.set_shipment_counter(u64::MAX - 1);
+
+        let op1 = CreateShipmentOp::new(
+            REGISTERED_SHIPPER_ACTOR_ID,
+            hashed_secret.clone(),
+            CHANNEL_KEY.to_vec(),
+            "Last Valid Shipment",
+            &info,
+            1234567890,
+        );
+
+        assert!(op1.apply(&mut state).is_ok());
+
+        let op2 = CreateShipmentOp::new(
+            REGISTERED_SHIPPER_ACTOR_ID,
             hashed_secret,
-            channel_key,
-            shipment_name,
-            info.clone(),
-            timestamp,
+            CHANNEL_KEY.to_vec(),
+            "Should Fail",
+            &info,
+            1234567890,
+        );
+
+        assert!(matches!(
+            op2.apply(&mut state),
+            Err(Error::ShipmentLimitReached)
+        ));
+    }
+
+    #[test]
+    fn test_create_shipment_unregistered_shipper() {
+        let mut state = setup_test_state();
+        let hashed_secret = hash_secret(b"secret_key_123");
+        let info = default_shipper_info();
+
+        let op = CreateShipmentOp::new(
+            UNREGISTERED_SHIPPER_ACTOR_ID,
+            hashed_secret,
+            CHANNEL_KEY.to_vec(),
+            "Test Shipment",
+            &info,
+            1234567890,
         );
 
         let result = op.apply(&mut state);
+        assert!(matches!(result, Err(Error::ShipperNotFound)));
+    }
 
+    #[test]
+    fn test_create_shipment_state_consistency() {
+        let mut state = setup_test_state();
+        let hashed_secret = hash_secret(b"secret_key_123");
+        let info = default_shipper_info();
+        let timestamp = 1234567890;
+        let shipment_name = "Test Shipment";
+        let expected_shipment_id = 0;
+
+        let initial_counter = state.shipment_counter();
+        let initial_shipments = state
+            .shipper(&REGISTERED_SHIPPER_ACTOR_ID)
+            .unwrap()
+            .get_active_shipments()
+            .len();
+
+        let op = CreateShipmentOp::new(
+            REGISTERED_SHIPPER_ACTOR_ID,
+            hashed_secret.clone(),
+            CHANNEL_KEY.to_vec(),
+            shipment_name,
+            &info,
+            timestamp,
+        );
+
+        let expected_shipment = Shipment::new(
+            timestamp,
+            REGISTERED_SHIPPER_ACTOR_ID,
+            expected_shipment_id,
+            hashed_secret,
+            CHANNEL_KEY.to_vec(),
+            shipment_name,
+            &info,
+        );
+
+        let result = op.apply(&mut state);
         assert!(result.is_ok());
+
         let shipment_id = result.unwrap();
-        assert_eq!(shipment_id, 0);
-        assert_eq!(state.shipment_counter(), 1);
+        let shipper = state.shipper(&REGISTERED_SHIPPER_ACTOR_ID).unwrap();
+        let state_shipment_id = state.shipment_counter();
+        let state_shipment = state.shipment(expected_shipment_id);
+        let shipper_shipments = shipper.get_active_shipments();
 
-        let shipment = state.shipments.get(&shipment_id).unwrap();
-        assert_eq!(shipment.shipper_id(), ActorId(creator_id));
-        assert_eq!(shipment._id(), shipment_id);
+        assert_eq!(shipment_id, expected_shipment_id);
+        assert!(shipper_shipments.contains(&expected_shipment_id));
+        assert!(state_shipment.is_some());
+        assert_eq!(shipper_shipments.len(), initial_shipments + 1);
+        assert_eq!(state.shipment_counter(), initial_counter + 1);
+        assert!(state.shipment(state_shipment_id).is_none());
+
+        let shipment = state_shipment.unwrap();
+        assert_eq!(shipment.shipper_id(), REGISTERED_SHIPPER_ACTOR_ID);
         assert_eq!(shipment._name(), shipment_name);
-
-        let shipper = state.shippers.get(&creator_id).unwrap();
-        assert_eq!(shipper.id(), ActorId(creator_id));
-        assert!(shipper.get_active_shipments().contains(&shipment_id));
-        assert_eq!(shipper.name(), creator_name);
+        assert_eq!(shipment.info(), &info);
+        assert_eq!(shipment.status(), &ShipmentStatus::Pending);
+        assert_eq!(shipment.id(), expected_shipment_id);
     }
 }

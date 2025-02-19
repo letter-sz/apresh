@@ -11,17 +11,24 @@ use shipments::Shipments;
 
 #[derive(Default)]
 pub struct CanisterState {
-    pub shippers: ActorCollection<Shipper>,
-    pub carriers: ActorCollection<Carrier>,
-    pub shipments: Shipments,
+    shippers: ActorCollection<Shipper>,
+    carriers: ActorCollection<Carrier>,
+    shipments: Shipments,
     shipment_counter: u64,
 }
 
+#[cfg(test)]
+impl CanisterState {
+    pub fn set_shipment_counter(&mut self, counter: u64) {
+        self.shipment_counter = counter;
+    }
+}
+
 pub trait CanisterActors {
-    fn shipper(&self, id: ActorId) -> Option<&Shipper>;
-    fn carrier(&self, id: ActorId) -> Option<&Carrier>;
-    fn shipper_mut(&mut self, id: ActorId) -> Option<&mut Shipper>;
-    fn carrier_mut(&mut self, id: ActorId) -> Option<&mut Carrier>;
+    fn shipper(&self, id: &ActorId) -> Option<&Shipper>;
+    fn carrier(&self, id: &ActorId) -> Option<&Carrier>;
+    fn shipper_mut(&mut self, id: &ActorId) -> Option<&mut Shipper>;
+    fn carrier_mut(&mut self, id: &ActorId) -> Option<&mut Carrier>;
     fn create_shipper(&mut self, shipper: Shipper) -> &mut Shipper;
     fn create_carrier(&mut self, carrier: Carrier) -> &mut Carrier;
 }
@@ -29,7 +36,7 @@ pub trait CanisterActors {
 pub trait CanisterShipments {
     fn shipment(&self, id: ShipmentId) -> Option<&Shipment>;
     fn shipment_mut(&mut self, id: ShipmentId) -> Option<&mut Shipment>;
-    fn create_shipment(&mut self, shipment: Shipment) -> &mut Shipment;
+    fn create_shipment(&mut self, shipment: Shipment) -> Result<(), crate::errors::Error>;
     fn shipments(&self) -> Vec<&Shipment>;
     fn shipment_counter(&self) -> u64;
     fn shipper_and_shipment(
@@ -45,32 +52,28 @@ pub trait CanisterShipments {
 }
 
 impl CanisterActors for CanisterState {
-    fn shipper(&self, id: ActorId) -> Option<&Shipper> {
-        self.shippers.get(&id)
+    fn shipper(&self, id: &ActorId) -> Option<&Shipper> {
+        self.shippers.get(id)
     }
 
-    fn carrier(&self, id: ActorId) -> Option<&Carrier> {
-        self.carriers.get(&id)
+    fn carrier(&self, id: &ActorId) -> Option<&Carrier> {
+        self.carriers.get(id)
     }
 
-    fn shipper_mut(&mut self, id: ActorId) -> Option<&mut Shipper> {
-        self.shippers.get_mut(&id)
+    fn shipper_mut(&mut self, id: &ActorId) -> Option<&mut Shipper> {
+        self.shippers.get_mut(id)
     }
 
-    fn carrier_mut(&mut self, id: ActorId) -> Option<&mut Carrier> {
-        self.carriers.get_mut(&id)
+    fn carrier_mut(&mut self, id: &ActorId) -> Option<&mut Carrier> {
+        self.carriers.get_mut(id)
     }
 
     fn create_shipper(&mut self, shipper: Shipper) -> &mut Shipper {
-        let shipper_id = shipper.id();
-        self.shippers.create(shipper);
-        self.shippers.get_mut(&shipper_id).unwrap()
+        self.shippers.create(shipper)
     }
 
     fn create_carrier(&mut self, carrier: Carrier) -> &mut Carrier {
-        let carrier_id = carrier.id();
-        self.carriers.create(carrier);
-        self.carriers.get_mut(&carrier_id).unwrap()
+        self.carriers.create(carrier)
     }
 }
 
@@ -83,11 +86,14 @@ impl CanisterShipments for CanisterState {
         self.shipments.get_mut(&id)
     }
 
-    fn create_shipment(&mut self, shipment: Shipment) -> &mut Shipment {
-        self.shipments.insert(self.shipment_counter, shipment);
-        let inserted_shipment = self.shipments.get_mut(&self.shipment_counter).unwrap();
-        self.shipment_counter += 1;
-        inserted_shipment
+    fn create_shipment(&mut self, shipment: Shipment) -> Result<(), crate::errors::Error> {
+        self.shipments.insert(shipment.id(), shipment);
+        self.shipment_counter = self
+            .shipment_counter
+            .checked_add(1)
+            .ok_or(crate::errors::Error::ShipmentLimitReached)?;
+
+        Ok(())
     }
 
     fn shipments(&self) -> Vec<&Shipment> {

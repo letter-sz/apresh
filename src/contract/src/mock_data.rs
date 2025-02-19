@@ -55,7 +55,7 @@ pub fn mock_shipments() {
                     hash_secret(b"secret"),
                     b"channel_key_123".to_vec(),
                     package_name,
-                    ShipmentInfo::new(
+                    &ShipmentInfo::new(
                         100u64 + i as u64,
                         10u64 + i as u64,
                         ShipmentLocation::new(origin_label.to_string(), *origin_lat, *origin_lng),
