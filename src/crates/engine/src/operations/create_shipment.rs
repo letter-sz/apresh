@@ -58,7 +58,7 @@ impl<'a> StateOp<ShipmentId> for CreateShipmentOp<'a> {
             self.hashed_secret.clone(),
             self.channel_key.clone(),
             self.shipment_name,
-            &self.info,
+            self.info,
         );
 
         shipper.add_shipment(new_shipment_id);
@@ -100,7 +100,7 @@ mod tests {
         let mut state = CanisterState::default();
 
         let register_op = RegisterActorOp::AddShipper {
-            id: REGISTERED_SHIPPER_ACTOR_ID.into(),
+            id: REGISTERED_SHIPPER_ACTOR_ID,
             name: REGISTERED_SHIPPER_NAME.to_string(),
         };
 

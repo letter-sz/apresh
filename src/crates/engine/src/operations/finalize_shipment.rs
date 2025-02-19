@@ -102,13 +102,13 @@ mod tests {
         let mut state = CanisterState::default();
 
         let register_shipper = RegisterActorOp::AddShipper {
-            id: REGISTERED_SHIPPER_ID.into(),
+            id: REGISTERED_SHIPPER_ID,
             name: "Test Shipper".to_string(),
         };
         register_shipper.apply(&mut state);
 
         let register_carrier = RegisterActorOp::AddCarrier {
-            id: REGISTERED_CARRIER_ID.into(),
+            id: REGISTERED_CARRIER_ID,
             name: "Test Carrier".to_string(),
         };
         register_carrier.apply(&mut state);

@@ -17,8 +17,9 @@ pub struct CanisterState {
     shipment_counter: u64,
 }
 
+#[cfg(test)]
 impl CanisterState {
-    pub unsafe fn set_shipment_counter(&mut self, counter: u64) {
+    pub fn set_shipment_counter(&mut self, counter: u64) {
         self.shipment_counter = counter;
     }
 }
