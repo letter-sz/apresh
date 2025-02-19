@@ -115,7 +115,7 @@ mod tests {
         let hashed_secret = hash_secret(b"secret_key");
         let info = default_shipper_info();
 
-        unsafe { state.set_shipment_counter(u64::MAX - 1) };
+        state.set_shipment_counter(u64::MAX - 1);
 
         let op1 = CreateShipmentOp::new(
             REGISTERED_SHIPPER_ACTOR_ID,
