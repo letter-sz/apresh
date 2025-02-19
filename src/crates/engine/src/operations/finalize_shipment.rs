@@ -97,7 +97,7 @@ mod tests {
     const UNREGISTERED_ACTOR_ID: ActorId = ActorId(Principal::from_slice(&[9, 10, 11, 12]));
     const ANONYMOUS_ACTOR_ID: ActorId = ActorId(Principal::anonymous());
     const SECRET_KEY: &str = "test_secret";
-
+    const CHANNEL_KEY: &[u8] = b"channel_key_123";
     fn setup_test_state() -> CanisterState {
         let mut state = CanisterState::default();
 
@@ -125,7 +125,8 @@ mod tests {
             1234567890,
             REGISTERED_SHIPPER_ID,
             0,
-            &hash_secret(SECRET_KEY.as_bytes()),
+            hash_secret(SECRET_KEY.as_bytes()),
+            CHANNEL_KEY.to_vec(),
             "Test Shipment",
             &info,
         );
@@ -136,7 +137,7 @@ mod tests {
 
     fn setup_bought_shipment_state() -> CanisterState {
         let mut state = setup_test_state();
-        let buy_op = BuyShipmentOp::new(REGISTERED_CARRIER_ID, 0);
+        let buy_op = BuyShipmentOp::new(REGISTERED_CARRIER_ID, 0, CHANNEL_KEY.to_vec());
         buy_op.apply(&mut state).unwrap();
         state
     }

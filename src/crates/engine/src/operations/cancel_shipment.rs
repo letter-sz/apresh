@@ -61,7 +61,7 @@ mod tests {
     const REGISTERED_SHIPPER_ID: ActorId = ActorId(Principal::from_slice(&[1, 2, 3, 4]));
     const UNREGISTERED_SHIPPER_ID: ActorId = ActorId(Principal::from_slice(&[5, 6, 7, 8]));
     const REGISTERED_CARRIER_ID: ActorId = ActorId(Principal::from_slice(&[9, 10, 11, 12]));
-
+    const CHANNEL_KEY: &[u8] = b"channel_key_123";
     fn setup_test_state() -> CanisterState {
         let mut state = CanisterState::default();
 
@@ -89,7 +89,8 @@ mod tests {
             1234567890,
             REGISTERED_SHIPPER_ID,
             0,
-            &hash_secret(b"test_secret"),
+            hash_secret(b"test_secret"),
+            CHANNEL_KEY.to_vec(),
             "Test Shipment",
             &info,
         );
@@ -136,7 +137,7 @@ mod tests {
     fn test_cancel_shipment_already_bought() {
         let mut state = setup_test_state();
 
-        let buy_op = BuyShipmentOp::new(REGISTERED_CARRIER_ID, 0);
+        let buy_op = BuyShipmentOp::new(REGISTERED_CARRIER_ID, 0, CHANNEL_KEY.to_vec());
         buy_op.apply(&mut state).unwrap();
 
         let cancel_op = CancelShipmentOp::new(REGISTERED_SHIPPER_ID, 0);
@@ -171,9 +172,9 @@ mod tests {
             id: REGISTERED_CARRIER_ID.into(),
             name: "Test Carrier".to_string(),
         };
-        register_carrier.apply(&mut state); 
+        register_carrier.apply(&mut state);
 
-        let buy_op = BuyShipmentOp::new(REGISTERED_CARRIER_ID, shipment_id);
+        let buy_op = BuyShipmentOp::new(REGISTERED_CARRIER_ID, shipment_id, CHANNEL_KEY.to_vec());
         buy_op.apply(&mut state);
 
         let op = CancelShipmentOp::new(REGISTERED_CARRIER_ID, shipment_id);

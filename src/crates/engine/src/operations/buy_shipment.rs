@@ -54,16 +54,22 @@ impl StateOp<Cost> for BuyShipmentOp {
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        actors::Actor, models::shipment::{Shipment, ShipmentInfo, ShipmentLocation, ShipmentStatus, SizeCategory}, operations::{RegisterActorOp, CancelShipmentOp}, utils::hash_secret, ActorId, Error
-    };
     use super::*;
+    use crate::{
+        actors::Actor,
+        models::shipment::{
+            Shipment, ShipmentInfo, ShipmentLocation, ShipmentStatus, SizeCategory,
+        },
+        operations::{CancelShipmentOp, RegisterActorOp},
+        utils::hash_secret,
+        ActorId, Error,
+    };
     use candid::Principal;
 
     const REGISTERED_CARRIER_ID: ActorId = ActorId(Principal::from_slice(&[1, 2, 3, 4]));
     const UNREGISTERED_CARRIER_ID: ActorId = ActorId(Principal::from_slice(&[5, 6, 7, 8]));
     const REGISTERED_SHIPPER_ID: ActorId = ActorId(Principal::from_slice(&[9, 10, 11, 12]));
-
+    const CHANNEL_KEY: &[u8] = b"channel_key_123";
     fn setup_test_state() -> CanisterState {
         let mut state = CanisterState::default();
 
@@ -91,7 +97,8 @@ mod tests {
             1234567890,
             REGISTERED_SHIPPER_ID,
             0,
-            &hash_secret(b"test_secret"),
+            hash_secret(b"test_secret"),
+            CHANNEL_KEY.to_vec(),
             "Test Shipment",
             &info,
         );
@@ -103,7 +110,7 @@ mod tests {
     #[test]
     fn test_buy_shipment_unregistered_carrier() {
         let mut state = setup_test_state();
-        let op = BuyShipmentOp::new(UNREGISTERED_CARRIER_ID, 0);
+        let op = BuyShipmentOp::new(UNREGISTERED_CARRIER_ID, 0, CHANNEL_KEY.to_vec());
 
         let result = op.apply(&mut state);
         assert!(matches!(result, Err(Error::CarrierNotFound)));
@@ -112,7 +119,7 @@ mod tests {
     #[test]
     fn test_buy_shipment_nonexistent_shipment() {
         let mut state = setup_test_state();
-        let op = BuyShipmentOp::new(REGISTERED_CARRIER_ID, 999);
+        let op = BuyShipmentOp::new(REGISTERED_CARRIER_ID, 999, CHANNEL_KEY.to_vec());
 
         let result = op.apply(&mut state);
         assert!(matches!(result, Err(Error::ShipmentNotFound)));
@@ -121,7 +128,7 @@ mod tests {
     #[test]
     fn test_buy_shipment_already_bought() {
         let mut state = setup_test_state();
-        let op = BuyShipmentOp::new(REGISTERED_CARRIER_ID, 0);
+        let op = BuyShipmentOp::new(REGISTERED_CARRIER_ID, 0, CHANNEL_KEY.to_vec());
 
         let result = op.apply(&mut state);
         assert!(result.is_ok());
@@ -133,14 +140,16 @@ mod tests {
     fn test_buy_shipment_success_and_return_value() {
         let mut state = setup_test_state();
         let shipment_id = 0;
-        let op = BuyShipmentOp::new(REGISTERED_CARRIER_ID, shipment_id);
+        let op = BuyShipmentOp::new(REGISTERED_CARRIER_ID, shipment_id, CHANNEL_KEY.to_vec());
 
         let initial_carrier = state.carrier(&REGISTERED_CARRIER_ID).unwrap();
-        assert!(!initial_carrier.get_active_shipments().contains(&shipment_id));
+        assert!(!initial_carrier
+            .get_active_shipments()
+            .contains(&shipment_id));
 
         let result = op.apply(&mut state);
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), 100); 
+        assert_eq!(result.unwrap(), 100);
 
         let carrier = state.carrier(&REGISTERED_CARRIER_ID).unwrap();
         let shipment = state.shipment(shipment_id).unwrap();
@@ -165,7 +174,8 @@ mod tests {
             1234567890,
             REGISTERED_SHIPPER_ID,
             1,
-            &hash_secret(b"test_secret"),
+            hash_secret(b"test_secret"),
+            CHANNEL_KEY.to_vec(),
             "Test Shipment",
             &info,
         );
@@ -176,7 +186,7 @@ mod tests {
         let op = CancelShipmentOp::new(REGISTERED_SHIPPER_ID, shipment_id);
         op.apply(&mut state).unwrap();
 
-        let buy_op = BuyShipmentOp::new(REGISTERED_CARRIER_ID, shipment_id);
+        let buy_op = BuyShipmentOp::new(REGISTERED_CARRIER_ID, shipment_id, CHANNEL_KEY.to_vec());
         let result = buy_op.apply(&mut state);
         assert!(matches!(result, Err(Error::ShipmentCannotBeBought)));
     }
