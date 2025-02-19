@@ -143,7 +143,7 @@ async fn finalize_shipment(shipment_id: u64, secret_key: Option<String>) -> Resu
     let fee = get_transfer_fee();
     let amount = finalize_shipment_result.value() + finalize_shipment_result.price();
 
-    // If the amount is greater than the fee, transfer the amount out
+    // If the amount is smaller than the fee, skip the transfer and add the amount to the dead tokens
     if amount <= fee {
         DEAD_TOKENS.with_borrow_mut(|dead_tokens| *dead_tokens += amount);
 
@@ -163,14 +163,17 @@ async fn finalize_shipment(shipment_id: u64, secret_key: Option<String>) -> Resu
         to: (finalize_shipment_result.carrier_id().0).into(),
     };
 
+    // If transfer fails, return the error
     if let Err(e) = transfer_out(transfer_args, get_transfer_fee()).await {
         return Err(e.to_string());
     }
 
+    // Modify the state
     let res = STATE
         .with_borrow_mut(|state| op.validate_and_apply(state))
         .map_err(|e| e.to_string());
 
+    // At this stage there should be way to return error, but refund there is one
     if let Err(e) = res {
         let refund_res = transfer_out(
             TransferOutParams {
@@ -219,6 +222,7 @@ async fn buy_shipment(carrier_name: Option<String>, shipment_id: u64) -> Result<
                 .unwrap();
             }
 
+            // Validate the operation
             op.validate(state)
         })
         .unwrap();
@@ -231,12 +235,15 @@ async fn buy_shipment(carrier_name: Option<String>, shipment_id: u64) -> Result<
         from: caller.0.into(),
     };
 
+    // If transfer fails, return the error
     if let Err(e) = transfer_in(transfer_args).await {
         return Err(e.to_string());
     }
 
+    // Modify the state
     let res = STATE.with_borrow_mut(|state| op.validate_and_apply(state));
 
+    // If the operation fails, refund the shipment value
     if let Err(e) = res {
         let refund_res = transfer_out(
             TransferOutParams {
@@ -320,12 +327,15 @@ async fn create_shipment(
         from: caller.0.into(),
     };
 
+    // If transfer fails, return the error
     if let Err(e) = transfer_in(transfer_args).await {
         return Err(e.to_string());
     }
 
+    // Modify the state
     let shipment_id = STATE.with_borrow_mut(|state| create_op.validate_and_apply(state));
 
+    // If the operation fails, refund the shipment value
     let shipment_id = match shipment_id {
         Ok(id) => id,
         Err(e) => {
