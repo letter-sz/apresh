@@ -8,3 +8,13 @@ pub fn set_panic_hook() {
     #[cfg(feature = "console_error_panic_hook")]
     console_error_panic_hook::set_once();
 }
+
+pub fn randomness<const N: usize>() -> [u8; N] {
+    let mut randomness = [0; N];
+    let window = web_sys::window().unwrap();
+    let crypto = window.crypto().unwrap();
+    crypto
+        .get_random_values_with_u8_array(&mut randomness)
+        .unwrap();
+    randomness
+}

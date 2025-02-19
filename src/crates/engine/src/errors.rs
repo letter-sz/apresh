@@ -24,4 +24,8 @@ pub enum Error {
     NotAuthorizedAsCarrier,
     #[error("Not authorized as shipper")]
     NotAuthorizedAsShipper,
+    #[error("Not authorized as neither carrier nor shipper")]
+    NotAuthorizedAsNeitherCarrierNorShipper,
+    #[error("Message too long")]
+    MessageTooLong,
 }

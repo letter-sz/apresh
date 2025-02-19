@@ -1,4 +1,5 @@
 use crate::{
+    models::shipment::Message,
     state::{CanisterShipments, CanisterState},
     ActorId,
 };
@@ -7,14 +8,16 @@ use super::StateOp;
 use anyhow::anyhow;
 use candid::Principal;
 
-pub struct AddMessageOp<'a> {
+const MAX_MESSAGE_LENGTH: usize = 4096;
+
+pub struct AddMessageOp {
     pub shipment_id: u64,
-    pub message: &'a str,
+    pub message: Message,
     pub caller: ActorId,
 }
 
-impl<'a> AddMessageOp<'a> {
-    pub fn new(shipment_id: u64, message: &'a str, caller: ActorId) -> Self {
+impl AddMessageOp {
+    pub fn new(shipment_id: u64, message: Message, caller: ActorId) -> Self {
         Self {
             shipment_id,
             message,
@@ -23,21 +26,28 @@ impl<'a> AddMessageOp<'a> {
     }
 }
 
-impl<'a> StateOp<()> for AddMessageOp<'a> {
+impl StateOp<()> for AddMessageOp {
     type Error = crate::Error;
 
     fn apply(&self, state: &mut CanisterState) -> Result<(), Self::Error> {
+        if self.message.len() > MAX_MESSAGE_LENGTH {
+            return Err(crate::Error::MessageTooLong);
+        }
+
         let shipment = state
             .shipment_mut(self.shipment_id)
             .ok_or(crate::Error::ShipmentNotFound)?;
 
-        let carrier_id = shipment.carrier_id().ok_or(crate::Error::CarrierNotSet)?;
+        let is_carrier = shipment
+            .carrier_id()
+            .map(|id| id == self.caller)
+            .unwrap_or(false);
 
-        if carrier_id != self.caller {
-            return Err(crate::Error::NotAuthorizedAsCarrier);
+        if shipment.shipper_id() != self.caller && !is_carrier {
+            return Err(crate::Error::NotAuthorizedAsNeitherCarrierNorShipper);
         }
 
-        shipment.attach_message(self.message.to_string());
+        shipment.attach_message(self.message.clone());
 
         Ok(())
     }

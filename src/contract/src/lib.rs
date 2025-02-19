@@ -1,109 +1,60 @@
 mod transfer;
 mod utils;
-mod vetkd;
+
+#[cfg(not(feature = "no-mocks"))]
+mod mock_data;
 
 use std::cell::RefCell;
 
 use apresh_qr::{generate, QrCodeOptions};
+use candid::Principal;
 use engine::{
     actors::{carrier::Carrier, shipper::Shipper},
-    models::shipment::{
-        PrintableShipment, ShipmentInfo, ShipmentLocation, ShipmentStatus, SizeCategory,
-    },
+    models::shipment::{Channel, ChannelKey, PrintableShipment, ShipmentInfo, ShipmentStatus},
     operations::{
         AddMessageOp, BuyShipmentOp, CancelShipmentOp, CreateShipmentOp, FinalizeShipmentOp,
         ReadMessageOp, RegisterActorOp, StateOp,
     },
     state::CanisterState,
-    utils::hash_secret,
     ActorId,
 };
-
-use candid::Principal;
 use ic_cdk::{init, query, update};
 use icrc_ledger_types::icrc1::transfer::NumTokens;
 use transfer::{transfer_in, transfer_out, TransferInParams, TransferOutParams, TransferParams};
-use utils::{block_anonymous, memo};
-
-pub use vetkd::{encrypted_ibe_decryption_key_for_caller, ibe_encryption_key};
+use utils::{assert_admin, assert_whitelisted, memo};
 
 thread_local! {
     pub static STATE: RefCell<CanisterState> = RefCell::new(CanisterState::default());
     pub static TRANSFER_FEE: RefCell<u64> = const { RefCell::new(10_000) };
     pub static DEAD_TOKENS: RefCell<u64> = RefCell::default(); // Tokens, where transfer amount is less than the fee needed to transfer it.
+    pub static ADMIN: RefCell<Principal> = const{ RefCell::new(Principal::anonymous()) };
+    pub static WHITELIST: RefCell<Vec<Principal>> = RefCell::default();
 }
 
 #[init]
 fn init() {
-    ic_cdk::print("Initializing the shipment service");
+    ADMIN.with_borrow_mut(|caller| *caller = ic_cdk::caller());
 
-    // Define a set of realistic coordinates for shipment locations
-    let locations = [
-        ("A", 40.7128, -74.0060),  // New York, USA
-        ("B", 34.0522, -118.2437), // Los Angeles, USA
-        ("C", 51.5074, -0.1278),   // London, UK
-        ("D", 48.8566, 2.3522),    // Paris, France
-        ("E", 35.6895, 139.6917),  // Tokyo, Japan
-        ("F", -33.8688, 151.2093), // Sydney, Australia
-    ];
+    #[cfg(not(feature = "no-mocks"))]
+    mock_data::mock_shipments();
+}
 
-    let default_principal =
-        Principal::from_text("ryssj-xcbz7-gbw4s-p7fio-lolnx-5nr7a-yxufe-cvpfg-6iujw-2ypsz-rqe")
-            .expect("Failed to create principal");
+#[query]
+fn is_mainnet() -> bool {
+    cfg!(feature = "mainnet")
+}
 
-    let names = [
-        ("Package 1", "John Doe"),
-        ("Package 2", "Jane Doe"),
-        ("Package 3", "Alice Smith"),
-        ("Package 4", "Bob Smith"),
-        ("Package 5", "Charlie Brown"),
-        ("Package 6", "Daisy Brown"),
-        ("Package 7", "Eve Green"),
-        ("Package 8", "Frank Green"),
-        ("Package 9", "Grace Black"),
-        ("Package 10", "Harry Black"),
-    ];
+#[update(name = "addWhitelisted")]
+fn add_whitelisted(principal: Principal) {
+    assert_admin();
 
-    for (i, (package_name, name)) in names.iter().enumerate() {
-        let (origin_label, origin_lat, origin_lng) = &locations[i % locations.len()];
-        let (dest_label, dest_lat, dest_lng) = &locations[(i + 1) % locations.len()];
-
-        let shipment_id = STATE
-            .with_borrow_mut(|state| {
-                RegisterActorOp::AddShipper {
-                    id: default_principal.into(),
-                    name: name.to_string(),
-                }
-                .apply(state)
-                .unwrap();
-
-                CreateShipmentOp::new(
-                    default_principal.into(),
-                    hash_secret(b"secret"),
-                    package_name,
-                    ShipmentInfo::new(
-                        100u64 + i as u64,
-                        10u64 + i as u64,
-                        ShipmentLocation::new(origin_label.to_string(), *origin_lat, *origin_lng),
-                        ShipmentLocation::new(dest_label.to_string(), *dest_lat, *dest_lng),
-                        SizeCategory::Envelope,
-                    ),
-                    ic_cdk::api::time(),
-                )
-                .apply(state)
-            })
-            .map_err(|e| e.to_string())
-            .expect("Failed to create shipment");
-
-        ic_cdk::print(format!(
-            "Shipment created: {:?}, shipment_id: {}",
-            shipment_id, shipment_id
-        ));
-    }
+    WHITELIST.with_borrow_mut(|whitelist| whitelist.push(principal));
 }
 
 #[update(name = "setTransferFee")]
 fn set_transfer_fee(fee: u64) {
+    assert_admin();
+
     TRANSFER_FEE.set(fee);
 }
 
@@ -112,17 +63,19 @@ fn get_transfer_fee() -> u64 {
     TRANSFER_FEE.with_borrow(|fee| *fee)
 }
 
-#[update(name = "addEncryptedMessage")]
-async fn add_encrypted_message(message: String, shipment_id: u64) -> Result<(), String> {
+#[update]
+async fn add_message(message: Vec<u8>, shipment_id: u64) -> Result<(), String> {
+    assert_whitelisted();
+
     let caller = ActorId(ic_cdk::caller());
 
     STATE
-        .with_borrow_mut(|state| AddMessageOp::new(shipment_id, &message, caller).apply(state))
+        .with_borrow_mut(|state| AddMessageOp::new(shipment_id, message, caller).apply(state))
         .map_err(|e| e.to_string())
 }
 
-#[query(name = "readEncryptedMessage")]
-async fn read_encrypted_message(shipment_id: u64) -> Result<Option<String>, String> {
+#[query]
+async fn read_channel(shipment_id: u64) -> Result<Channel, String> {
     let caller = ActorId(ic_cdk::caller());
 
     STATE
@@ -165,9 +118,12 @@ async fn finalize_shipment(shipment_id: u64, secret_key: Option<String>) -> Resu
 }
 
 #[update(name = "buyShipment")]
-async fn buy_shipment(carrier_name: Option<String>, shipment_id: u64) -> Result<(), String> {
-    block_anonymous()?;
-
+async fn buy_shipment(
+    carrier_name: Option<String>,
+    shipment_id: u64,
+    channel_key: ChannelKey,
+) -> Result<(), String> {
+    assert_whitelisted();
     let caller = ActorId(ic_cdk::caller());
 
     let shipment_value = STATE
@@ -185,7 +141,7 @@ async fn buy_shipment(carrier_name: Option<String>, shipment_id: u64) -> Result<
                 .unwrap();
             }
 
-            BuyShipmentOp::new(caller, shipment_id).apply(state)
+            BuyShipmentOp::new(caller, shipment_id, channel_key).apply(state)
         })
         .unwrap();
 
@@ -221,12 +177,14 @@ async fn create_shipment(
     customer_name: Option<String>,
     shipment_name: String,
     hashed_secret: Vec<u8>,
+    channel_key: ChannelKey,
     qr_options: QrCodeOptions,
     shipment_info: ShipmentInfo,
 ) -> Result<(Vec<u8>, u64), String> {
+    assert_whitelisted();
     let caller = ActorId(ic_cdk::caller());
-    let price = shipment_info.price();
 
+    let price = shipment_info.price();
     let created_at = ic_cdk::api::time();
 
     let shipment_id = STATE
@@ -246,6 +204,7 @@ async fn create_shipment(
             CreateShipmentOp::new(
                 caller,
                 hashed_secret,
+                channel_key,
                 &shipment_name,
                 shipment_info,
                 created_at,
@@ -274,6 +233,7 @@ async fn create_shipment(
 
 #[update]
 fn cancel_shipment(shipment_id: u64) -> Result<(), String> {
+    assert_whitelisted();
     let caller = ActorId(ic_cdk::caller());
 
     STATE

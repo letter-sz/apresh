@@ -10,8 +10,8 @@
 	import { unwrap } from '$lib/utils';
 	import { wallet } from '$lib/wallet.svelte';
 	import bs58 from 'bs58';
-	import { get_secret_hash } from 'wasm';
 	import type { PageData } from './$types';
+	import { get_secret_hash, static_keypair_generate } from 'wasm';
 
 	const {
 		data,
@@ -53,6 +53,8 @@
 
 		await wallet.approveDoubleFee(priceBigint);
 		const secret = bs58.encode(crypto.getRandomValues(new Uint8Array(32)));
+		const channelKeys = static_keypair_generate();
+
 		const hashed = get_secret_hash(secret);
 		console.log(hashed);
 
@@ -60,6 +62,7 @@
 			['Janek'],
 			name,
 			hashed,
+			channelKeys.public_key(),
 			{
 				link: '',
 				size: BigInt(100),
@@ -90,6 +93,9 @@
 
 		const id: bigint = unwrap<[number[], bigint]>(res)[1];
 		setLocalStorage(id.toString(), secret);
+		setLocalStorage(`channel-key-${id}`, Array.from(channelKeys.secret_key()));
+		channelKeys.free();
+
 		console.log('Secret:', secret);
 
 		created?.();
@@ -105,7 +111,7 @@
 	};
 
 	let buttonText: 'Create' | 'Insufficient funds' = $derived(
-		(data.balance ?? 0n) >= BigInt(!price) ? 'Create' : 'Insufficient funds'
+		(data.balance ?? 0n) >= BigInt(price ?? 0) ? 'Create' : 'Insufficient funds'
 	);
 </script>
 

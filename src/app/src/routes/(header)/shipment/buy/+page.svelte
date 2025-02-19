@@ -8,23 +8,40 @@
 	import { unwrap } from '$lib/utils';
 	import { wallet } from '$lib/wallet.svelte';
 	import type { PageData } from './$types';
+	import SendMessage from '$components/SendMessage.svelte';
+	import { getLocalStorage, setLocalStorage } from '$lib/storage';
+	import { KeyPair, static_keypair_generate } from 'wasm';
 
 	let { data, bought }: { data: PageData; bought?: () => void } = $props();
+
+	function getOrCreateChannelKey(shipment: PrintableShipment): Uint8Array {
+		let publicKey: Uint8Array;
+
+		const readChannelKey = getLocalStorage<Array<number>>(`channel-key-${shipment.id}`);
+		if (readChannelKey) {
+			const secretKey = Uint8Array.from(readChannelKey);
+			console.log(secretKey);
+			const channelKeyPair = KeyPair.from(secretKey);
+			publicKey = channelKeyPair.public_key();
+			channelKeyPair.free();
+		} else {
+			const channelKeyPair = static_keypair_generate();
+			publicKey = channelKeyPair.public_key();
+			setLocalStorage(`channel-key-${shipment.id}`, Array.from(channelKeyPair.secret_key()));
+			channelKeyPair.free();
+		}
+
+		return publicKey;
+	}
 
 	async function buy(shipment: PrintableShipment) {
 		const actor = await connection.getActor();
 
-		await wallet.approve(shipment.info.price);
-		const res = await actor.buyShipment(['Jacek'], shipment.id);
-		unwrap<null>(res);
+		const buyerPublicChannelKey = getOrCreateChannelKey(shipment);
 
-		// const encryptedMessage = await ibe_encrypt(
-		// 	await connection.getConnection(),
-		// 	message,
-		// 	shipment.customer
-		// );
-		// const errorMessage = await actor.addEncryptedMessage(encryptedMessage!, shipment.id);
-		// console.log(errorMessage);
+		await wallet.approve(shipment.info.price);
+		const res = await actor.buyShipment(['Jacek'], shipment.id, buyerPublicChannelKey);
+		unwrap<null>(res);
 
 		invalidate('token:balance');
 		await invalidate('shipments:shipper');
@@ -41,7 +58,7 @@
 </script>
 
 <ShipmentInfo shipment={data.shipment} />
-<TextInput id="Message" label="Message" name="Message" bind:value={message} class="w-full" />
+<SendMessage shipment={data.shipment} />
 <PillButton
 	onClick={() => buy(data.shipment)}
 	disabled={buttonText === 'Insufficient funds'}

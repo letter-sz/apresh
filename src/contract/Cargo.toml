@@ -8,6 +8,12 @@ edition = "2021"
 [lib]
 crate-type = ["cdylib"]
 
+[features]
+mainnet = ["admin", "whitelist", "no-mocks"]
+no-mocks = []
+admin = []
+whitelist = []
+
 [dependencies]
 candid = { workspace = true }
 ic-cdk = { workspace = true }

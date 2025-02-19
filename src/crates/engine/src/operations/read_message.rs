@@ -2,7 +2,7 @@ use candid::Principal;
 
 use super::StateOp;
 use crate::{
-    models::shipment::ShipmentId,
+    models::shipment::{Channel, Message, ShipmentId},
     state::{CanisterShipments, CanisterState},
     ActorId,
 };
@@ -21,15 +21,20 @@ impl ReadMessageOp {
     }
 }
 
-impl StateOp<Option<String>> for ReadMessageOp {
+impl StateOp<Channel> for ReadMessageOp {
     type Error = crate::Error;
+    fn read(&self, state: &CanisterState) -> crate::Result<Channel> {
+        let shipment = state
+            .shipment(self.shipment_id)
+            .ok_or(crate::Error::ShipmentNotFound)?;
 
-    fn read(&self, state: &CanisterState) -> crate::Result<Option<String>> {
-        Ok(state
-            .shipments
-            .get(&self.shipment_id)
-            .filter(|&v| v.shipper_id() == self.caller)
-            .and_then(|v| v.message())
-            .map(|v| v.to_string()))
+        let is_shipper = shipment.shipper_id() == self.caller;
+        let is_carrier = shipment.carrier_id() == Some(self.caller);
+
+        if !is_shipper && !is_carrier {
+            return Err(crate::Error::NotAuthorizedAsNeitherCarrierNorShipper);
+        }
+
+        Ok(shipment.channel().clone())
     }
 }

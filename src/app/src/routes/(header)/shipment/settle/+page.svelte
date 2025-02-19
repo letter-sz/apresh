@@ -8,6 +8,7 @@
 	import { getLocalStorage } from '$lib/storage';
 	import { unwrap } from '$lib/utils';
 	import type { PageData } from './$types';
+	import SendMessage from '$components/SendMessage.svelte';
 
 	let { data, settled } = $props<{ data: PageData; settled?: () => void }>();
 
@@ -31,7 +32,7 @@
 <div class="justyify-center flex w-full space-x-20">
 	<div class="flex w-full flex-col items-center">
 		<ShipmentInfo shipment={data.shipment} />
-
+		<SendMessage shipment={data.shipment} />
 		<PillButton text="Settle" className="w-full uppercase" onClick={settle} />
 	</div>
 	<div class="flex items-center text-lg">OR</div>

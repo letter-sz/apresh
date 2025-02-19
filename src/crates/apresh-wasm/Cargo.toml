@@ -11,8 +11,10 @@ crate-type = ["cdylib", "rlib"]
 default = ["console_error_panic_hook"]
 
 [dependencies]
-engine = { workspace = true }
 apresh-qr = { workspace = true }
+apresh-crypto = { workspace = true }
+engine = { workspace = true }
+web-sys = { workspace = true }
 
 wasm-bindgen = { workspace = true }
 # The `console_error_panic_hook` crate provides better debugging of panics by
