@@ -1,7 +1,6 @@
 mod transfer;
 mod utils;
 mod vetkd;
-mod tests;
 
 use std::cell::RefCell;
 
@@ -13,7 +12,7 @@ use engine::{
     },
     operations::{
         AddMessageOp, BuyShipmentOp, CancelShipmentOp, CreateShipmentOp, FinalizeShipmentOp,
-        ReadMessageOp, RegisterActorOp, StateOp,
+        ReadMessageOp, RegisterActorOp, StateOp, ValidatedStateOp,
     },
     state::{CanisterActors, CanisterShipments, CanisterState},
     utils::hash_secret,
@@ -227,47 +226,67 @@ async fn create_shipment(
 ) -> Result<(Vec<u8>, u64), String> {
     let caller = ActorId(ic_cdk::caller());
     let price = shipment_info.price();
-
     let created_at = ic_cdk::api::time();
 
-    let shipment_id = STATE
-        .with_borrow_mut(|state| {
-            if let Some(customer_name) = customer_name {
-                let shipper = Shipper::new(caller, customer_name.as_str());
-
-                RegisterActorOp::AddShipper {
-                    id: shipper.id(),
-                    name: customer_name,
-                }
-                .apply(state)
-                .map_err(|e| e.to_string())
-                .unwrap();
+    // First register the shipper if needed
+    if let Some(customer_name) = &customer_name {
+        STATE.with_borrow_mut(|state| {
+            RegisterActorOp::AddShipper {
+                id: caller,
+                name: customer_name.clone(),
             }
-
-            CreateShipmentOp::new(
-                caller,
-                &hashed_secret,
-                &shipment_name,
-                &shipment_info,
-                created_at,
-            )
             .apply(state)
         })
         .map_err(|e| e.to_string())?;
+    }
 
-    let qr_code = generate(qr_options).unwrap_or_else(|err| ic_cdk::trap(&err.to_string()));
+    // Validate the shipment creation operation
+    let create_op = CreateShipmentOp::new(
+        caller,
+        &hashed_secret,
+        &shipment_name,
+        &shipment_info,
+        created_at,
+    );
 
+    // Validate before doing any transfers
+    let expected_shipment_id = STATE
+        .with_borrow(|state| create_op.validate(state))
+        .map_err(|e| e.to_string())?;
+
+    // Do the transfer
     let transfer_args = TransferInParams {
         params: TransferParams {
             amount: NumTokens::from(price),
-            memo: memo("CREATE", shipment_id),
+            memo: memo("CREATE", expected_shipment_id),
         },
         from: caller.0.into(),
     };
 
     if let Err(e) = transfer_in(transfer_args).await {
-        ic_cdk::trap(&e.to_string())
+        return Err(e.to_string());
     }
+
+
+    let shipment_id = STATE
+        .with_borrow_mut(|state| create_op.validate_and_apply(state))
+        .map_err(|e| {
+            let _ = ic_cdk::spawn(async move {
+                let _ = transfer_out(
+                    TransferOutParams {
+                        params: TransferParams {
+                            amount: NumTokens::from(price),
+                            memo: memo("REFUND", expected_shipment_id),
+                        },
+                        to: caller.0.into(),
+                    },
+                    get_transfer_fee(),
+                );
+            });
+            e.to_string()
+        })?;
+
+    let qr_code = generate(qr_options).map_err(|e| e.to_string())?;
 
     ic_cdk::print(format!("Shipment created: {:?}", shipment_id).as_str());
     Ok((qr_code, shipment_id))

@@ -1,12 +1,5 @@
 {
   "canisters": {
-    "system_api": {
-      "wasm": "vetkd/vetkd_system_api.wasm",
-      "candid": "vetkd/vetkd_system_api.did",
-      "frontend": {},
-      "type": "custom",
-      "specified_id": "s55qq-oqaaa-aaaaa-aaakq-cai"
-    },
     "icrc1_ledger_canister": {
       "candid": "https://raw.githubusercontent.com/dfinity/ic/35bfcadd0f2a474057e42393917b8b3ac269627a/rs/rosetta-api/icrc1/ledger/ledger.did",
       "frontend": {},
@@ -31,7 +24,6 @@
       "declarations": {
         "node_compatibility": true
       },
-      "dependencies": ["system_api"],
       "package": "contract",
       "type": "custom",
       "build": "./build.sh contract",

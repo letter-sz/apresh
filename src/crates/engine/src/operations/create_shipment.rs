@@ -4,7 +4,7 @@ use crate::{
     ActorId,
 };
 
-use super::{CanisterState, StateOp};
+use super::{CanisterState, StateOp, ValidatedStateOp};
 use crate::actors::Actor;
 
 #[derive(Debug)]
@@ -31,6 +31,22 @@ impl<'a> CreateShipmentOp<'a> {
             info,
             timestamp,
         }
+    }
+}
+
+impl<'a> ValidatedStateOp<ShipmentId> for CreateShipmentOp<'a> {
+    type ValidationResult = u64;
+
+    fn validate(&self, state: &CanisterState) -> Result<u64, Self::Error> {
+        if state.shipment_counter() == u64::MAX {
+            return Err(crate::Error::ShipmentLimitReached);
+        }
+
+        if state.shipper(&self.creator).is_none() {
+            return Err(crate::Error::ShipperNotFound);
+        }
+
+        Ok(state.shipment_counter())
     }
 }
 
@@ -63,8 +79,6 @@ impl<'a> StateOp<ShipmentId> for CreateShipmentOp<'a> {
         Ok(new_shipment_id)
     }
 }
-
-
 
 #[cfg(test)]
 mod tests {
