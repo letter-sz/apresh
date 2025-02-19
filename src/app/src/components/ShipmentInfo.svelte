@@ -1,6 +1,5 @@
 <script lang="ts">
 	import type { PrintableShipment } from '$declarations/contract/contract.did';
-	import { ibe_decrypt } from '$lib/encryption';
 
 	let { shipment }: { shipment: PrintableShipment } = $props();
 	let parcel = $derived(Object.values(shipment.info.size_category)[0]);
@@ -15,7 +14,7 @@
 	</p>
 
 	<div class="grid grid-cols-2 gap-x-20 gap-y-7">
-		<div class="col-span-2 flex flex-col space-y-3 text-center">
+		 <div class="col-span-2 flex flex-col space-y-3 text-center">
 			<span class="text-lg font-semibold text-rose-500">Name</span>
 			<span class="text-base">{shipment.name}</span>
 		</div>
@@ -36,15 +35,14 @@
 				>{shipment.info.source.lat.toFixed(2)}, {shipment.info.destination.lng.toFixed(2)}</span
 			>
 		</div>
-
-			<div class="flex flex-1 flex-col space-y-3 text-center">
-				<span class="text-base font-semibold text-orange-500">Destination</span>
-				<span class="text-sm"
-					>{shipment.info.destination.lat.toFixed(2)}, {shipment.info.destination.lng.toFixed(
-						2
-					)}</span
-				>
-			</div>
+		
+		<div class="flex flex-1 flex-col space-y-3 text-center">
+			<span class="text-base font-semibold text-orange-500">Destination</span>
+			<span class="text-sm"
+				>{shipment.info.destination.lat.toFixed(2)}, {shipment.info.destination.lng.toFixed(
+					2
+				)}</span
+			>
 		</div>
 
 		<div class="col-span-3 flex flex-col border-t border-violet-200 py-4 text-center">

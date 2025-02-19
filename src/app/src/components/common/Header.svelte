@@ -62,7 +62,9 @@
 							<p class="font-semibold text-orange-600">{content}</p>
 						</span>
 						<span class="flex items-center">
-							<LogOut class="cursor-pointer text-neutral-500" size="20" />
+							<button onclick={onClick} class="flex-1 rounded-xl bg-white">
+								<LogOut class="cursor-pointer text-neutral-500" size="20" />
+							</button>
 						</span>
 					</div>
 				</div>

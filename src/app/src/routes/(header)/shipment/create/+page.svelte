@@ -111,7 +111,7 @@
 	};
 
 	let buttonText: 'Create' | 'Insufficient funds' = $derived(
-		(data.balance ?? 0n) >= BigInt(!price) ? 'Create' : 'Insufficient funds'
+		(data.balance ?? 0n) >= BigInt(price ?? 0) ? 'Create' : 'Insufficient funds'
 	);
 </script>
 
