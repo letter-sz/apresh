@@ -88,30 +88,62 @@ async fn read_channel(shipment_id: u64) -> Result<Channel, String> {
 async fn finalize_shipment(shipment_id: u64, secret_key: Option<String>) -> Result<(), String> {
     let caller = ActorId(ic_cdk::caller());
 
+    let op = FinalizeShipmentOp::new(shipment_id, secret_key, caller);
+
     let finalize_shipment_result = STATE
-        .with_borrow_mut(|state| {
-            FinalizeShipmentOp::new(shipment_id, secret_key, caller).apply(state)
-        })
+        .with_borrow_mut(|state| op.validate(state))
         .map_err(|e: anyhow::Error| e.to_string())?;
 
     let fee = get_transfer_fee();
     let amount = finalize_shipment_result.value() + finalize_shipment_result.price();
 
     // If the amount is greater than the fee, transfer the amount out
-    if amount > fee {
-        let transfer_args = TransferOutParams {
-            params: TransferParams {
-                amount: NumTokens::from(amount),
-                memo: memo("SETTLE", shipment_id),
-            },
-            to: (finalize_shipment_result.carrier_id().0).into(),
-        };
-
-        if let Err(e) = transfer_out(transfer_args, get_transfer_fee()).await {
-            ic_cdk::trap(&e.to_string())
-        }
-    } else {
+    if amount <= fee {
         DEAD_TOKENS.with_borrow_mut(|dead_tokens| *dead_tokens += amount);
+
+        STATE
+            .with_borrow_mut(|state| op.validate_and_apply(state))
+            .map_err(|e| e.to_string())?;
+
+        ic_cdk::print(format!("Shipment finalized, without transfers: {:?}", shipment_id).as_str());
+        return Ok(());
+    }
+
+    let transfer_args = TransferOutParams {
+        params: TransferParams {
+            amount: NumTokens::from(amount),
+            memo: memo("SETTLE", shipment_id),
+        },
+        to: (finalize_shipment_result.carrier_id().0).into(),
+    };
+
+    if let Err(e) = transfer_out(transfer_args, get_transfer_fee()).await {
+        return Err(e.to_string());
+    }
+
+    let res = STATE
+        .with_borrow_mut(|state| op.validate_and_apply(state))
+        .map_err(|e| e.to_string());
+
+    if let Err(e) = res {
+        let refund_res = transfer_out(
+            TransferOutParams {
+                params: TransferParams {
+                    amount: NumTokens::from(amount),
+                    memo: memo("REFUND", shipment_id),
+                },
+                to: caller.0.into(),
+            },
+            get_transfer_fee(),
+        )
+        .await;
+
+        if let Err(refund_error) = refund_res {
+            // TODO: Add to refund log
+            ic_cdk::print(format!("Error refunding: {:?}", refund_error).as_str());
+        }
+
+        return Err(e.to_string());
     }
 
     ic_cdk::print(format!("Shipment finalized: {:?}", shipment_id).as_str());
@@ -160,24 +192,28 @@ async fn buy_shipment(
         return Err(e.to_string());
     }
 
-    STATE
-        .with_borrow_mut(|state| op.validate_and_apply(state))
-        .map_err(|e| {
-            let _ = ic_cdk::spawn(async move {
-                let _ = transfer_out(
-                    TransferOutParams {
-                        params: TransferParams {
-                            amount: NumTokens::from(shipment_value),
-                            memo: memo("REFUND", shipment_id),
-                        },
-                        to: caller.0.into(),
-                    },
-                    get_transfer_fee(),
-                );
-            });
-            e.to_string()
-        })
-        .unwrap();
+    let res = STATE.with_borrow_mut(|state| op.validate_and_apply(state));
+
+    if let Err(e) = res {
+        let refund_res = transfer_out(
+            TransferOutParams {
+                params: TransferParams {
+                    amount: NumTokens::from(shipment_value),
+                    memo: memo("REFUND", shipment_id),
+                },
+                to: caller.0.into(),
+            },
+            get_transfer_fee(),
+        )
+        .await;
+
+        if let Err(refund_error) = refund_res {
+            // TODO: Add to refund log
+            ic_cdk::print(format!("Error refunding: {:?}", refund_error).as_str());
+        }
+
+        return Err(e.to_string());
+    }
 
     ic_cdk::print(format!("Shipment bought: {:?}", shipment_id).as_str());
     Ok(())
@@ -200,7 +236,6 @@ async fn create_shipment(
     shipment_name: String,
     hashed_secret: Vec<u8>,
     channel_key: ChannelKey,
-    qr_options: QrCodeOptions,
     shipment_info: ShipmentInfo,
 ) -> Result<(Vec<u8>, u64), String> {
     assert_whitelisted();
@@ -249,28 +284,33 @@ async fn create_shipment(
         return Err(e.to_string());
     }
 
-    let shipment_id = STATE
-        .with_borrow_mut(|state| create_op.validate_and_apply(state))
-        .map_err(|e| {
-            let _ = ic_cdk::spawn(async move {
-                let _ = transfer_out(
-                    TransferOutParams {
-                        params: TransferParams {
-                            amount: NumTokens::from(price),
-                            memo: memo("REFUND", expected_shipment_id),
-                        },
-                        to: caller.0.into(),
+    let shipment_id = STATE.with_borrow_mut(|state| create_op.validate_and_apply(state));
+
+    let shipment_id = match shipment_id {
+        Ok(id) => id,
+        Err(e) => {
+            let refund_res = transfer_out(
+                TransferOutParams {
+                    params: TransferParams {
+                        amount: NumTokens::from(price),
+                        memo: memo("REFUND", expected_shipment_id),
                     },
-                    get_transfer_fee(),
-                );
-            });
-            e.to_string()
-        })?;
+                    to: caller.0.into(),
+                },
+                get_transfer_fee(),
+            )
+            .await;
 
-    let qr_code = generate(qr_options).map_err(|e| e.to_string())?;
+            if let Err(refund_error) = refund_res {
+                // TODO: Add to refund log
+                ic_cdk::print(format!("Error refunding: {:?}", refund_error).as_str());
+            }
 
-    ic_cdk::print(format!("Shipment created: {:?}", shipment_id).as_str());
-    Ok((qr_code, shipment_id))
+            return Err(e.to_string());
+        }
+    };
+
+    Ok(shipment_id)
 }
 
 #[update]
