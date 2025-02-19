@@ -127,6 +127,8 @@ async fn buy_shipment(
     assert_whitelisted();
     let caller = ActorId(ic_cdk::caller());
 
+    let op = BuyShipmentOp::new(caller, shipment_id, channel_key);
+
     let shipment_value = STATE
         .with_borrow_mut(|state| {
             // Register carrier if carrier name is provided
@@ -142,7 +144,7 @@ async fn buy_shipment(
                 .unwrap();
             }
 
-            BuyShipmentOp::new(caller, shipment_id, channel_key).apply(state)
+            op.validate(state)
         })
         .unwrap();
 
@@ -155,8 +157,27 @@ async fn buy_shipment(
     };
 
     if let Err(e) = transfer_in(transfer_args).await {
-        ic_cdk::trap(&e.to_string())
+        return Err(e.to_string());
     }
+
+    STATE
+        .with_borrow_mut(|state| op.validate_and_apply(state))
+        .map_err(|e| {
+            let _ = ic_cdk::spawn(async move {
+                let _ = transfer_out(
+                    TransferOutParams {
+                        params: TransferParams {
+                            amount: NumTokens::from(shipment_value),
+                            memo: memo("REFUND", shipment_id),
+                        },
+                        to: caller.0.into(),
+                    },
+                    get_transfer_fee(),
+                );
+            });
+            e.to_string()
+        })
+        .unwrap();
 
     ic_cdk::print(format!("Shipment bought: {:?}", shipment_id).as_str());
     Ok(())

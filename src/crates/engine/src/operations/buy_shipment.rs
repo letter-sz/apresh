@@ -4,7 +4,7 @@ use crate::{
     ActorId,
 };
 
-use super::StateOp;
+use super::{StateOp, ValidatedStateOp};
 use crate::{actors::carrier::Carrier, state::CanisterState};
 use anyhow::anyhow;
 
@@ -23,6 +23,23 @@ impl BuyShipmentOp {
             shipment_id,
             channel_key,
         }
+    }
+}
+
+impl ValidatedStateOp<Cost> for BuyShipmentOp {
+    type ValidationResult = u64;
+
+    fn validate(&self, state: &CanisterState) -> Result<u64, Self::Error> {
+        if state.carrier(&self.carrier_id).is_none() {
+            return Err(crate::Error::CarrierNotFound);
+        }
+
+        let shipment = state
+            .shipment(self.shipment_id)
+            .ok_or(crate::Error::ShipmentNotFound)?;
+
+        let value = shipment.info().value();
+        Ok(value)
     }
 }
 
