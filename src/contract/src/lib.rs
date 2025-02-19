@@ -6,7 +6,7 @@ use std::cell::RefCell;
 
 use apresh_qr::{generate, QrCodeOptions};
 use engine::{
-    actors::{carrier::Carrier, shipper::Shipper},
+    actors::carrier::Carrier,
     models::shipment::{
         PrintableShipment, ShipmentInfo, ShipmentLocation, ShipmentStatus, SizeCategory,
     },
@@ -170,6 +170,8 @@ async fn buy_shipment(carrier_name: Option<String>, shipment_id: u64) -> Result<
 
     let caller = ActorId(ic_cdk::caller());
 
+    let op = BuyShipmentOp::new(caller, shipment_id);
+
     let shipment_value = STATE
         .with_borrow_mut(|state| {
             // Register carrier if carrier name is provided
@@ -185,7 +187,7 @@ async fn buy_shipment(carrier_name: Option<String>, shipment_id: u64) -> Result<
                 .unwrap();
             }
 
-            BuyShipmentOp::new(caller, shipment_id).apply(state)
+            op.validate(state)
         })
         .unwrap();
 
@@ -198,8 +200,27 @@ async fn buy_shipment(carrier_name: Option<String>, shipment_id: u64) -> Result<
     };
 
     if let Err(e) = transfer_in(transfer_args).await {
-        ic_cdk::trap(&e.to_string())
+        return Err(e.to_string());
     }
+
+    STATE
+        .with_borrow_mut(|state| op.validate_and_apply(state))
+        .map_err(|e| {
+            let _ = ic_cdk::spawn(async move {
+                let _ = transfer_out(
+                    TransferOutParams {
+                        params: TransferParams {
+                            amount: NumTokens::from(shipment_value),
+                            memo: memo("REFUND", shipment_id),
+                        },
+                        to: caller.0.into(),
+                    },
+                    get_transfer_fee(),
+                );
+            });
+            e.to_string()
+        })
+        .unwrap();
 
     ic_cdk::print(format!("Shipment bought: {:?}", shipment_id).as_str());
     Ok(())
@@ -230,14 +251,15 @@ async fn create_shipment(
 
     // First register the shipper if needed
     if let Some(customer_name) = &customer_name {
-        STATE.with_borrow_mut(|state| {
-            RegisterActorOp::AddShipper {
-                id: caller,
-                name: customer_name.clone(),
-            }
-            .apply(state)
-        })
-        .map_err(|e| e.to_string())?;
+        STATE
+            .with_borrow_mut(|state| {
+                RegisterActorOp::AddShipper {
+                    id: caller,
+                    name: customer_name.clone(),
+                }
+                .apply(state)
+            })
+            .map_err(|e| e.to_string())?;
     }
 
     // Validate the shipment creation operation
@@ -266,7 +288,6 @@ async fn create_shipment(
     if let Err(e) = transfer_in(transfer_args).await {
         return Err(e.to_string());
     }
-
 
     let shipment_id = STATE
         .with_borrow_mut(|state| create_op.validate_and_apply(state))
@@ -368,11 +389,7 @@ fn shipments() -> Vec<PrintableShipment> {
 
 #[query]
 fn shipment(shipment_id: u64) -> Option<PrintableShipment> {
-    STATE.with_borrow(|state| {
-        state
-            .shipment(shipment_id)
-            .map(PrintableShipment::from)
-    })
+    STATE.with_borrow(|state| state.shipment(shipment_id).map(PrintableShipment::from))
 }
 
 ic_cdk::export_candid!();

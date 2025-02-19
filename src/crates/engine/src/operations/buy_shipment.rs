@@ -1,8 +1,10 @@
 use crate::{
-    models::shipment::{ShipmentActions, ShipmentId}, state::{CanisterActors, CanisterShipments}, ActorId
+    models::shipment::{ShipmentActions, ShipmentId},
+    state::{CanisterActors, CanisterShipments},
+    ActorId,
 };
 
-use super::StateOp;
+use super::{StateOp, ValidatedStateOp};
 use crate::{actors::carrier::Carrier, state::CanisterState};
 use anyhow::anyhow;
 
@@ -22,6 +24,23 @@ impl BuyShipmentOp {
     }
 }
 
+impl ValidatedStateOp<Cost> for BuyShipmentOp {
+    type ValidationResult = u64;
+
+    fn validate(&self, state: &CanisterState) -> Result<u64, Self::Error> {
+        if state.carrier(&self.carrier_id).is_none() {
+            return Err(crate::Error::CarrierNotFound);
+        }
+
+        let shipment = state
+            .shipment(self.shipment_id)
+            .ok_or(crate::Error::ShipmentNotFound)?;
+
+        let value = shipment.info().value();
+        Ok(value)
+    }
+}
+
 impl StateOp<Cost> for BuyShipmentOp {
     type Error = crate::Error;
 
@@ -29,7 +48,7 @@ impl StateOp<Cost> for BuyShipmentOp {
         if state.carrier(&self.carrier_id).is_none() {
             return Err(crate::Error::CarrierNotFound);
         }
-        
+
         let shipment = state
             .shipment_mut(self.shipment_id)
             .ok_or(crate::Error::ShipmentNotFound)?;
@@ -46,10 +65,16 @@ impl StateOp<Cost> for BuyShipmentOp {
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        actors::Actor, models::shipment::{Shipment, ShipmentInfo, ShipmentLocation, ShipmentStatus, SizeCategory}, operations::{RegisterActorOp, CancelShipmentOp}, utils::hash_secret, ActorId, Error
-    };
     use super::*;
+    use crate::{
+        actors::Actor,
+        models::shipment::{
+            Shipment, ShipmentInfo, ShipmentLocation, ShipmentStatus, SizeCategory,
+        },
+        operations::{CancelShipmentOp, RegisterActorOp},
+        utils::hash_secret,
+        ActorId, Error,
+    };
     use candid::Principal;
 
     const REGISTERED_CARRIER_ID: ActorId = ActorId(Principal::from_slice(&[1, 2, 3, 4]));
@@ -128,11 +153,13 @@ mod tests {
         let op = BuyShipmentOp::new(REGISTERED_CARRIER_ID, shipment_id);
 
         let initial_carrier = state.carrier(&REGISTERED_CARRIER_ID).unwrap();
-        assert!(!initial_carrier.get_active_shipments().contains(&shipment_id));
+        assert!(!initial_carrier
+            .get_active_shipments()
+            .contains(&shipment_id));
 
         let result = op.apply(&mut state);
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), 100); 
+        assert_eq!(result.unwrap(), 100);
 
         let carrier = state.carrier(&REGISTERED_CARRIER_ID).unwrap();
         let shipment = state.shipment(shipment_id).unwrap();
