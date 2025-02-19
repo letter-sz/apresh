@@ -30,3 +30,4 @@ apresh-qr = { workspace = true }
 
 [dev-dependencies]
 pocket-ic = "6.0.0"
+rstest = "0.24.0"
