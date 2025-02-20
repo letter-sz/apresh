@@ -1,7 +1,7 @@
 mod transfer;
+mod refund_log;
 mod utils;
 mod vetkd;
-
 use std::cell::RefCell;
 
 use apresh_qr::{generate, QrCodeOptions};
@@ -23,6 +23,7 @@ use candid::Principal;
 use ic_cdk::{init, query, update};
 use icrc_ledger_types::icrc1::transfer::NumTokens;
 use transfer::{transfer_in, transfer_out, TransferInParams, TransferOutParams, TransferParams};
+use refund_log::RefundLog;
 use utils::{block_anonymous, memo};
 
 pub use vetkd::{encrypted_ibe_decryption_key_for_caller, ibe_encryption_key};
@@ -31,6 +32,7 @@ thread_local! {
     pub static STATE: RefCell<CanisterState> = RefCell::new(CanisterState::default());
     pub static TRANSFER_FEE: RefCell<u64> = const { RefCell::new(10_000) };
     pub static DEAD_TOKENS: RefCell<u64> = RefCell::default(); // Tokens, where transfer amount is less than the fee needed to transfer it.
+    pub static REFUND_LOG: RefCell<RefundLog> = RefCell::new(RefundLog::default());
 }
 
 #[init]
@@ -352,8 +354,27 @@ async fn create_shipment(
             .await;
 
             if let Err(refund_error) = refund_res {
-                // TODO: Add to refund log
                 ic_cdk::print(format!("Error refunding: {:?}", refund_error).as_str());
+
+                // TODO: handle error, there shouldn't be any error here, if it happens we're screwed
+                REFUND_LOG.with_borrow_mut(|log| {
+                    log.append(
+                        price,
+                        caller.0.into(),
+                        format!(
+                            "ERROR REFUND for shipment: {}, error: {}",
+                            expected_shipment_id, refund_error
+                        ),
+                    )
+                })?;
+            } else {
+                REFUND_LOG.with_borrow_mut(|log| {
+                    log.append(
+                        price,
+                        caller.0.into(),
+                        format!("REFUND for shipment: {} DONE", expected_shipment_id),
+                    )
+                })?;
             }
 
             return Err(e.to_string());
