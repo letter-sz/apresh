@@ -146,11 +146,23 @@ async fn finalize_shipment(shipment_id: u64, secret_key: Option<String>) -> Resu
         .await;
 
         if let Err(refund_error) = refund_res {
-            // TODO: Add to refund log
             ic_cdk::print(format!("Error refunding: {:?}", refund_error).as_str());
+            REFUND_LOG.with_borrow_mut(|log| {
+                log.append(
+                    amount,
+                    caller.0.into(),
+                    format!("ERROR FINALIZE SHIPMENT: {}, REFUND ERROR: {}", shipment_id, refund_error),
+                )
+            })?;
+        } else {
+            REFUND_LOG.with_borrow_mut(|log| {
+                log.append(
+                    amount,
+                    caller.0.into(),
+                    format!("FINALIZE SHIPMENT REFUNDED: {} DONE", shipment_id),
+                )
+            })?;
         }
-
-        return Err(e.to_string());
     }
 
     ic_cdk::print(format!("Shipment finalized: {:?}", shipment_id).as_str());
@@ -219,10 +231,23 @@ async fn buy_shipment(
         .await;
 
         if let Err(refund_error) = refund_res {
-            // TODO: Add to refund log
             ic_cdk::print(format!("Error refunding: {:?}", refund_error).as_str());
+            REFUND_LOG.with_borrow_mut(|log| {
+                log.append(
+                    shipment_value,
+                    caller.0.into(),
+                    format!("ERROR BUY SHIPMENT: {}, REFUND ERROR: {}", shipment_id, refund_error),
+                )
+            })?;
+        } else {
+            REFUND_LOG.with_borrow_mut(|log| {
+                log.append(
+                    shipment_value,
+                    caller.0.into(),
+                    format!("BUY SHIPMENT REFUNDED: {} DONE", shipment_id),
+                )
+            })?;
         }
-
         return Err(e.to_string());
     }
 
@@ -324,7 +349,7 @@ async fn create_shipment(
                         price,
                         caller.0.into(),
                         format!(
-                            "ERROR REFUND for shipment: {}, error: {}",
+                            "ERROR CREATE SHIPMENT: {}, REFUND ERROR: {}",
                             expected_shipment_id, refund_error
                         ),
                     )
@@ -334,7 +359,7 @@ async fn create_shipment(
                     log.append(
                         price,
                         caller.0.into(),
-                        format!("REFUND for shipment: {} DONE", expected_shipment_id),
+                        format!("CREATE SHIPMENT REFUNDED: {} DONE", expected_shipment_id),
                     )
                 })?;
             }
