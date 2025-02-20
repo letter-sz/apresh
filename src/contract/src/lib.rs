@@ -1,3 +1,4 @@
+mod refund_log;
 mod transfer;
 mod utils;
 
@@ -21,8 +22,10 @@ use engine::{
 };
 use ic_cdk::{init, query, update};
 use icrc_ledger_types::icrc1::transfer::NumTokens;
+use refund_log::RefundLog;
 use transfer::{transfer_in, transfer_out, TransferInParams, TransferOutParams, TransferParams};
 use utils::{assert_admin, assert_whitelisted, memo};
+use utils::{block_anonymous, memo};
 
 thread_local! {
     pub static STATE: RefCell<CanisterState> = RefCell::new(CanisterState::default());
@@ -30,6 +33,7 @@ thread_local! {
     pub static DEAD_TOKENS: RefCell<u64> = RefCell::default(); // Tokens, where transfer amount is less than the fee needed to transfer it.
     pub static ADMIN: RefCell<Principal> = const{ RefCell::new(Principal::anonymous()) };
     pub static WHITELIST: RefCell<Vec<Principal>> = RefCell::default();
+    pub static REFUND_LOG: RefCell<RefundLog> = RefCell::new(RefundLog::default());
 }
 
 #[init]
@@ -312,8 +316,27 @@ async fn create_shipment(
             .await;
 
             if let Err(refund_error) = refund_res {
-                // TODO: Add to refund log
                 ic_cdk::print(format!("Error refunding: {:?}", refund_error).as_str());
+
+                // TODO: handle error, there shouldn't be any error here, if it happens we're screwed
+                REFUND_LOG.with_borrow_mut(|log| {
+                    log.append(
+                        price,
+                        caller.0.into(),
+                        format!(
+                            "ERROR REFUND for shipment: {}, error: {}",
+                            expected_shipment_id, refund_error
+                        ),
+                    )
+                })?;
+            } else {
+                REFUND_LOG.with_borrow_mut(|log| {
+                    log.append(
+                        price,
+                        caller.0.into(),
+                        format!("REFUND for shipment: {} DONE", expected_shipment_id),
+                    )
+                })?;
             }
 
             return Err(e.to_string());

@@ -117,7 +117,7 @@ fn get_ledger_init_args() -> Vec<u8> {
     encode_one(init).unwrap()
 }
 
-async fn mint_tokens(
+fn mint_tokens(
     pic: &PocketIc,
     ledger_id: Principal,
     to: Principal,
@@ -404,3 +404,4 @@ fn test_get_transfer_fee(test_env: TestEnvironment) {
     let fee = decode_one::<u64>(&get_reply_bytes(result)).unwrap();
     assert_eq!(fee, 10_000);
 }
+

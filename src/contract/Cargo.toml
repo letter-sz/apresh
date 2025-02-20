@@ -33,6 +33,7 @@ hex = { workspace = true }
 actor-derive = { workspace = true }
 engine = { workspace = true }
 apresh-qr = { workspace = true }
+ic-stable-structures = "0.6.7"
 
 [dev-dependencies]
 pocket-ic = "6.0.0"
