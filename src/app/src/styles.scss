@@ -77,6 +77,24 @@
 	}
 }
 
+::-webkit-scrollbar {
+	width: 4px;
+}
+
+::-webkit-scrollbar-track {
+	background: #f2f2f2;
+	border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+	border-radius: 10px;
+	background: #bdbdbd;
+}
+
+::-webkit-scrollbar-thumb:hover {
+	background: #6e6e6e;
+}
+
 .pin {
 	width: 30px;
 	height: 30px;
