@@ -1,8 +1,8 @@
-import type { PrintableShipment } from '$declarations/contract/contract.did';
-import type { PageData as CreateShipmentPageData } from './routes/(header)/shipment/create/$types';
 import type { PageData as BuyShipmentPageData } from './routes/(header)/shipment/buy/$types';
-import type { PageData as SettleShipmentPageData } from './routes/(header)/shipment/settle/$types';
 import type { PageData as CancelShipmentPageData } from './routes/(header)/shipment/cancel/$types';
+import type { PageData as CreateShipmentPageData } from './routes/(header)/shipment/create/$types';
+import type { PageData as InfoShipmentPageData } from './routes/(header)/shipment/info/$types';
+import type { PageData as SettleShipmentPageData } from './routes/(header)/shipment/settle/$types';
 /// <reference types="@sveltejs/kit" />
 // See https://kit.svelte.dev/docs/types#app
 // for information about these interfaces
@@ -12,7 +12,13 @@ declare global {
 		// interface Locals {}
 		// interface PageData {}
 		interface PageState {
-			page: { mode: 'map' } | CreatePageState | BuyPageState | SettlePageState | CancelPageState;
+			page:
+				| { mode: 'map' }
+				| CreatePageState
+				| BuyPageState
+				| SettlePageState
+				| CancelPageState
+				| InfoPageState;
 		}
 		// interface Platform {}
 	}
@@ -66,6 +72,10 @@ interface SettlePageState extends SettleShipmentPageData {
 
 interface CancelPageState extends CancelShipmentPageData {
 	mode: 'cancel';
+}
+
+interface InfoPageState extends InfoShipmentPageData {
+	mode: 'info';
 }
 
 export {};

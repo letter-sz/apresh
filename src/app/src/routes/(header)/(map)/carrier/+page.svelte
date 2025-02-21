@@ -6,7 +6,7 @@
 	import RightShipments from '$components/sideMenu/RightShipments.svelte';
 	import { connection } from '$lib/connection.svelte';
 	import BuyPage from '$routes/(header)/shipment/buy/+page.svelte';
-	import CancelPage from '$routes/(header)/shipment/cancel/+page.svelte';
+	import InfoPage from '$routes/(header)/shipment/info/+page.svelte';
 	import type { PageData } from './$types';
 
 	const { data }: { data: PageData } = $props();
@@ -24,8 +24,8 @@
 	{#each data.carried as shipment (shipment.id)}
 		<Marker
 			callback={() =>
-				pushState(`/shipment/cancel?id=${shipment.id}`, {
-					page: { mode: 'cancel', id: shipment.id, shipment: shipment, balance: data.balance }
+				pushState(`/shipment/info?id=${shipment.id}`, {
+					page: { mode: 'info', id: shipment.id, shipment: shipment, balance: data.balance }
 				})}
 			location={shipment.info.destination}
 			name={shipment.id.toString()}
@@ -40,7 +40,7 @@
 			pushState(`/shipment/buy?id=${shipment.id}`, {
 				page: { mode: 'buy', id: shipment.id, shipment: shipment, balance: data.balance }
 			})}
-		location={shipment.info.source}
+		location={shipment.info.destination}
 		name={shipment.id.toString()}
 		markerType={connection.identity && shipment.shipper === connection.identity.toText()
 			? 'owner'
@@ -57,8 +57,8 @@
 	>
 		{#if $page.state.page.mode === 'buy'}
 			<BuyPage data={$page.state.page} />
-		{:else if $page.state.page.mode === 'cancel'}
-			<CancelPage data={$page.state.page} />
+		{:else if $page.state.page.mode === 'info'}
+			<InfoPage data={$page.state.page} />
 		{/if}
 	</Modal>
 {/if}

@@ -5,13 +5,14 @@
 	import Marker from '$components/Marker.svelte';
 	import Modal from '$components/modal/Modal.svelte';
 	import RightShipments from '$components/sideMenu/RightShipments.svelte';
-	import type { ShipmentLocation } from '$declarations/contract/contract.did';
+	import type { PrintableShipment, ShipmentLocation } from '$declarations/contract/contract.did';
 	import { connection } from '$lib/connection.svelte';
-	import BuyPage from '$routes/(header)/shipment/buy/+page.svelte';
-	import CreatePage from '$routes/(header)/shipment/create/+page.svelte';
-	import SettlePage from '$routes/(header)/shipment/settle/+page.svelte';
 	import { MapEvents } from 'svelte-maplibre';
 	import type { PageData } from './$types';
+
+	import CancelPage from '$routes/(header)/shipment/cancel/+page.svelte';
+	import CreatePage from '$routes/(header)/shipment/create/+page.svelte';
+	import SettlePage from '$routes/(header)/shipment/settle/+page.svelte';
 
 	const { data }: { data: PageData } = $props();
 
@@ -35,6 +36,18 @@
 	function refreshShipments() {
 		invalidate('shipments:shipper');
 	}
+
+	function handleCallback(shipment: PrintableShipment) {
+		if (shipment.carrier.length > 0) {
+			pushState(`/shipment/settle?id=${shipment.id}`, {
+				page: { mode: 'settle', id: shipment.id, shipment: shipment, balance: data.balance }
+			});
+		} else {
+			pushState(`/shipment/cancel?id=${shipment.id}`, {
+				page: { mode: 'cancel', id: shipment.id, shipment: shipment, balance: data.balance }
+			});
+		}
+	}
 </script>
 
 {#if data.created.length !== 0}
@@ -46,10 +59,7 @@
 {:else}
 	{#each data.created as shipment (shipment.id)}
 		<Marker
-			callback={() =>
-				pushState(`/shipment/settle?id=${shipment.id}`, {
-					page: { mode: 'settle', id: shipment.id, shipment: shipment, balance: data.balance }
-				})}
+			callback={() => handleCallback(shipment)}
 			location={shipment.info.destination}
 			name={shipment.id.toString()}
 			markerType={shipment.carrier.length > 0 ? 'bought' : 'owner'}
@@ -77,8 +87,8 @@
 	>
 		{#if $page.state.page.mode === 'settle'}
 			<SettlePage data={$page.state.page} />
-		{:else if $page.state.page.mode === 'buy'}
-			<BuyPage data={$page.state.page} />
+		{:else if $page.state.page.mode === 'cancel'}
+			<CancelPage data={$page.state.page} />
 		{:else if $page.state.page.mode === 'create'}
 			<CreatePage
 				{data}

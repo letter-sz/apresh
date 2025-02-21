@@ -10,8 +10,8 @@
 	import { unwrap } from '$lib/utils';
 	import { wallet } from '$lib/wallet.svelte';
 	import bs58 from 'bs58';
-	import type { PageData } from './$types';
 	import { get_secret_hash, static_keypair_generate } from 'wasm';
+	import type { PageData } from './$types';
 
 	const {
 		data,
@@ -115,7 +115,7 @@
 	);
 </script>
 
-<form method="POST" class="flex w-full flex-col space-y-4" onsubmit={createShipment}>
+<form method="POST" class="flex w-full flex-col space-y-4 px-5" onsubmit={createShipment}>
 	<h1 class="mb-5 inline-block bg-clip-text text-center text-2xl font-semibold text-orange-500">
 		Create shipment
 	</h1>
