@@ -1,13 +1,17 @@
 <script lang="ts">
 	import { invalidate, pushState } from '$app/navigation';
 	import { page } from '$app/stores';
+	import FullShipmentMapView from '$components/FullShipmentMapView.svelte';
 	import MapButton from '$components/MapButton.svelte';
 	import Marker from '$components/Marker.svelte';
 	import Modal from '$components/modal/Modal.svelte';
 	import RightShipments from '$components/sideMenu/RightShipments.svelte';
 	import type { PrintableShipment, ShipmentLocation } from '$declarations/contract/contract.did';
 	import { connection } from '$lib/connection.svelte';
+	import { flyToLocation } from '$lib/map.ts/focus';
+	import { getContext } from 'svelte';
 	import { MapEvents } from 'svelte-maplibre';
+	import type { MapContext } from 'svelte-maplibre/dist/context';
 	import type { PageData } from './$types';
 
 	import CancelPage from '$routes/(header)/shipment/cancel/+page.svelte';
@@ -19,6 +23,10 @@
 	let selectMode: 'Source' | 'Destination' | null = $state(null);
 	let sourceLocation: ShipmentLocation | undefined = $state(undefined);
 	let destinationLocation: ShipmentLocation | undefined = $state(undefined);
+
+	let mapStore = getContext<MapContext>(Symbol.for('svelte-maplibre'))?.map;
+	let map: maplibregl.Map | null = $derived($mapStore);
+	let selectedShipment: PrintableShipment | null = $state(null);
 
 	function getLocation(ev: CustomEvent<maplibregl.MapMouseEvent>) {
 		const { lng, lat } = ev.detail.lngLat;
@@ -38,6 +46,7 @@
 	}
 
 	function handleCallback(shipment: PrintableShipment) {
+		setAndFlyToLocation(shipment);
 		if (shipment.carrier.length > 0) {
 			pushState(`/shipment/settle?id=${shipment.id}`, {
 				page: { mode: 'settle', id: shipment.id, shipment: shipment, balance: data.balance }
@@ -48,10 +57,24 @@
 			});
 		}
 	}
+
+	function onShipmentSelect(shipment: PrintableShipment) {
+		setAndFlyToLocation(shipment);
+	}
+
+	function setAndFlyToLocation(shipment: PrintableShipment) {
+		if (!map) return;
+		selectedShipment = shipment;
+		flyToLocation(map, shipment);
+	}
 </script>
 
 {#if data.created.length !== 0}
-	<RightShipments shipments={data.created} {refreshShipments} />
+	<RightShipments
+		shipments={data.created}
+		{refreshShipments}
+		onselect={(shipment) => onShipmentSelect(shipment)}
+	/>
 {/if}
 
 {#if selectMode !== null}
@@ -64,6 +87,13 @@
 			name={shipment.id.toString()}
 			markerType={shipment.carrier.length > 0 ? 'bought' : 'owner'}
 		></Marker>
+
+		{#if selectedShipment && selectedShipment.id === shipment.id}
+			<FullShipmentMapView
+				shipment={selectedShipment}
+				onclick={() => setAndFlyToLocation(shipment)}
+			/>
+		{/if}
 	{/each}
 {/if}
 
