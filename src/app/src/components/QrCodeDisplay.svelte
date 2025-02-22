@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Jumper } from 'svelte-loading-spinners';
 	import { generate_qr } from 'wasm';
-	import PillButton from './common/PillButton.svelte';
+	import PillButton from './common/Buttons/PillButton.svelte';
 
 	let { settleId, settleSecret } = $props<{
 		settleId: bigint;

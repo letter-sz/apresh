@@ -2,7 +2,7 @@
 	import { invalidate } from '$app/navigation';
 	import Chat from '$components/Chat.svelte';
 	import ChatButton from '$components/common/Buttons/ChatButton.svelte';
-	import PillButton from '$components/common/PillButton.svelte';
+	import PillButton from '$components/common/Buttons/PillButton.svelte';
 	import QrCodeDisplay from '$components/QrCodeDisplay.svelte';
 	import ShipmentInfo from '$components/ShipmentInfo.svelte';
 	import { fetchBackend } from '$lib/canisters';

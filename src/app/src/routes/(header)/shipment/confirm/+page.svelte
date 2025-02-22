@@ -1,11 +1,11 @@
 <script lang="ts">
-	import type { PageData } from './$types';
 	import { invalidate } from '$app/navigation';
-	import { unwrap } from '$lib/utils';
-	import PillButton from '$components/common/PillButton.svelte';
-	import type { PrintableShipment } from '$declarations/contract/contract.did';
+	import PillButton from '$components/common/Buttons/PillButton.svelte';
 	import ShipmentInfo from '$components/ShipmentInfo.svelte';
+	import type { PrintableShipment } from '$declarations/contract/contract.did';
 	import { fetchBackend } from '$lib/canisters';
+	import { unwrap } from '$lib/utils';
+	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
 
