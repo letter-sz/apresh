@@ -1,16 +1,23 @@
 <script lang="ts">
 	import { invalidate } from '$app/navigation';
-	import type { Channel, PrintableShipment } from '$declarations/contract/contract.did';
+	import type { PrintableShipment } from '$declarations/contract/contract.did';
 	import { connection } from '$lib/connection.svelte';
 	import { getLocalStorage, setLocalStorage } from '$lib/storage';
-	import { unwrap } from '$lib/utils';
-	import TextInput from './common/Inputs/TextInput.svelte';
+	import clsx from 'clsx';
+	import { ArrowLeft, SendHorizontal } from 'lucide-svelte';
 	import { KeyPair, Message, static_keypair_generate } from 'wasm';
+
+	type Props = {
+		shipment: PrintableShipment;
+		channelOpen?: boolean;
+		onClose?: () => void;
+	};
 
 	const {
 		shipment,
-		channelOpen = $bindable(shipment.channel.guest_keys.length > 0)
-	}: { shipment: PrintableShipment; channelOpen?: boolean } = $props();
+		channelOpen = $bindable(shipment.channel.guest_keys.length > 0),
+		onClose
+	}: Props = $props();
 
 	let message = $state('');
 
@@ -44,6 +51,8 @@
 	);
 
 	async function handle() {
+		if (!message) return;
+
 		console.log('host_key', Uint8Array.from(shipment.channel.host_key));
 		console.log('ownKey', ownKeypair?.secret_key());
 		console.log('ownPublicKey', ownKeypair?.public_key());
@@ -90,33 +99,57 @@
 	}
 </script>
 
+<ArrowLeft
+	class="absolute left-6 top-8 cursor-pointer text-neutral-600 hover:text-orange-400"
+	size={25}
+	onclick={onClose}
+/>
 
+<div class="flex w-full items-center justify-center pb-3">
+	<h2 class="text-lg font-semibold text-neutral-800">Chat</h2>
+</div>
 
-{#if (messages)}
-<div class="mb-4 max-h-[300px] overflow-y-auto rounded border border-gray-200 p-4">
-	<div class="flex flex-col gap-2">
-		{#each messages as message}
-			<div class="rounded-lg bg-gray-50 p-2 px-4">
-				<p
+<div class="mb-4 h-[500px] max-h-[500px] w-96 overflow-y-auto rounded px-2 py-4">
+	{#if messages}
+		<div class="flex flex-col gap-2">
+			{#each messages as message}
+				<div
 					class={[
-						'm-0 break-words',
+						'max-w-64 rounded-lg bg-gray-50 p-2 px-4 text-sm font-medium text-neutral-700',
 						{
-							'text-green-500': message.is_author()
+							'ml-auto': message.is_author(),
+							'mr-auto': !message.is_author(),
+							'bg-orange-100': message.is_author()
 						}
 					]}
 				>
-					{new TextDecoder().decode(message.message())}
-				</p>
-			</div>
-		{/each}
+					<p class={['m-0 break-words']}>
+						{new TextDecoder().decode(message.message())}
+					</p>
+				</div>
+			{/each}
 		</div>
-	</div>
-{/if}
+	{:else}
+		<p class="text-center text-sm text-neutral-500">No messages yet</p>
+	{/if}
+</div>
 
-<TextInput
-	id="Message"
-	label="Message"
-	name="Message"
-	bind:value={message}
-	on:keydown={handleKeydown}
-/>
+<div class="flex w-full items-center rounded-lg border-2 px-2 focus-within:border-orange-400">
+	<input
+		class={clsx(
+			'w-full border-0 bg-transparent px-2 text-sm font-normal text-neutral-600 placeholder-primary placeholder:italic placeholder:text-slate-400 focus:outline-none focus:ring-0'
+		)}
+		autocomplete="off"
+		type="text"
+		bind:value={message}
+	/>
+
+	<SendHorizontal
+		class={clsx('text-neutral-600', {
+			'opacity-50': !message,
+			'cursor-pointer': message
+		})}
+		onclick={handle}
+		onkeydown={handleKeydown}
+	/>
+</div>

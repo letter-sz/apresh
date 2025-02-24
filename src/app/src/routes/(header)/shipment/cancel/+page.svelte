@@ -6,7 +6,6 @@
 	import { connection } from '$lib/connection.svelte';
 	import { unwrap } from '$lib/utils';
 	import type { PageData } from './$types';
-	import SendMessage from '$components/SendMessage.svelte';
 
 	let { data, bought }: { data: PageData; bought?: () => void } = $props();
 
@@ -24,6 +23,11 @@
 	}
 </script>
 
-<ShipmentInfo shipment={data.shipment} />
-<SendMessage shipment={data.shipment} />
-<PillButton onClick={() => handle(data.shipment)} text="Cancel" className="w-full mt-5 uppercase" />
+<div class="flex w-full flex-col items-center space-y-6 px-5">
+	<ShipmentInfo shipment={data.shipment} />
+	<PillButton
+		onClick={() => handle(data.shipment)}
+		text="Cancel"
+		className="w-full mt-5 uppercase"
+	/>
+</div>

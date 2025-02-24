@@ -1,16 +1,14 @@
 <script lang="ts">
 	import { invalidate } from '$app/navigation';
-	import TextInput from '$components/common/Inputs/TextInput.svelte';
 	import PillButton from '$components/common/PillButton.svelte';
 	import ShipmentInfo from '$components/ShipmentInfo.svelte';
 	import type { PrintableShipment } from '$declarations/contract/contract.did';
 	import { connection } from '$lib/connection.svelte';
+	import { getLocalStorage, setLocalStorage } from '$lib/storage';
 	import { unwrap } from '$lib/utils';
 	import { wallet } from '$lib/wallet.svelte';
-	import type { PageData } from './$types';
-	import SendMessage from '$components/SendMessage.svelte';
-	import { getLocalStorage, setLocalStorage } from '$lib/storage';
 	import { KeyPair, static_keypair_generate } from 'wasm';
+	import type { PageData } from './$types';
 
 	let { data, bought }: { data: PageData; bought?: () => void } = $props();
 
@@ -57,11 +55,12 @@
 	);
 </script>
 
-<ShipmentInfo shipment={data.shipment} />
-<SendMessage shipment={data.shipment} />
-<PillButton
-	onClick={() => buy(data.shipment)}
-	disabled={buttonText === 'Insufficient funds'}
-	text={buttonText}
-	className="w-full mt-8 uppercase"
-/>
+<div class="flex w-full flex-col items-center space-y-6 px-5">
+	<ShipmentInfo shipment={data.shipment} />
+	<PillButton
+		onClick={() => buy(data.shipment)}
+		disabled={buttonText === 'Insufficient funds'}
+		text={buttonText}
+		className="w-full mt-8 uppercase"
+	/>
+</div>

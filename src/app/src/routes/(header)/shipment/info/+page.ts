@@ -8,19 +8,17 @@ export async function load({ fetch, url }: LoadEvent): Promise<{
 	shipment: PrintableShipment;
 }> {
 	const idParam = url.searchParams.get('id');
-	if (idParam === null) {
+	if (idParam === null)
 		error(400, {
 			message: 'Missing shipment ID'
 		});
-	}
 
 	const id = BigInt(idParam);
 	const shipment = await fetchBackend(fetch).shipment(id);
-	if (shipment.length === 0) {
+	if (shipment.length === 0)
 		error(404, {
 			message: 'Shipment not found'
 		});
-	}
 
 	// TODO: We should be able to only get the shipment we need
 	return {

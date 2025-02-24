@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { invalidate } from '$app/navigation';
+	import Chat from '$components/Chat.svelte';
+	import ChatButton from '$components/common/Buttons/ChatButton.svelte';
 	import PillButton from '$components/common/PillButton.svelte';
 	import QrCodeDisplay from '$components/QrCodeDisplay.svelte';
 	import ShipmentInfo from '$components/ShipmentInfo.svelte';
@@ -8,9 +10,9 @@
 	import { getLocalStorage } from '$lib/storage';
 	import { unwrap } from '$lib/utils';
 	import type { PageData } from './$types';
-	import SendMessage from '$components/SendMessage.svelte';
 
 	let { data, settled } = $props<{ data: PageData; settled?: () => void }>();
+	let showChat = $state(false);
 
 	async function settle() {
 		const actor = await connection.getActor();
@@ -29,17 +31,21 @@
 	}
 </script>
 
-<div class="justyify-center flex w-full space-x-20">
-	<div class="flex w-full flex-col items-center">
-		<ShipmentInfo shipment={data.shipment} />
-		<SendMessage shipment={data.shipment} />
-		<PillButton text="Settle" className="w-full uppercase" onClick={settle} />
+{#if showChat}
+	<Chat shipment={data.shipment} onClose={() => (showChat = false)} />
+{:else}
+	<div class="justyify-center flex w-full space-x-20 px-10">
+		<div class="flex w-full flex-col items-center space-y-6">
+			<ShipmentInfo shipment={data.shipment} />
+			<ChatButton onclick={() => (showChat = true)} />
+			<PillButton text="Settle" className="w-full uppercase" onClick={settle} />
+		</div>
+		<div class="flex items-center text-lg">OR</div>
+		<div class="flex items-center">
+			<QrCodeDisplay
+				settleId={data.shipment.id}
+				settleSecret={getLocalStorage(data.shipment.id.toString())}
+			/>
+		</div>
 	</div>
-	<div class="flex items-center text-lg">OR</div>
-	<div class="flex items-center">
-		<QrCodeDisplay
-			settleId={data.shipment.id}
-			settleSecret={getLocalStorage(data.shipment.id.toString())}
-		/>
-	</div>
-</div>
+{/if}

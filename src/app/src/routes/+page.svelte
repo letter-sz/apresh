@@ -125,7 +125,6 @@
 					<Card
 						onMouseEnter={() => {
 							selectedCard = role;
-							console.log(selectedCard);
 						}}
 						{title}
 						color={roleToColor(role)}

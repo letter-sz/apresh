@@ -9,20 +9,14 @@
 	}>();
 
 	const baseUrl = 'http://localhost:3000';
-	// const settleUrl = $derived(`${baseUrl}/?settleId=${settleId}&settleSecret=${settleSecret ?? ''}`);
 	const settleUrl = $derived(
 		`${baseUrl}/shipment/confirm?id=${settleId}&secret=${settleSecret ?? ''}`
 	);
+	let copied = $state(false);
 
 	async function getQrCode(url: string) {
-		// const data = await fetchBackend(fetch).generateQr(url, BigInt(320));
-		// if (Object.keys(data)[0] == 'Ok') {
-		// 	const blob = new Blob([Object.values(data)[0]], { type: 'image/png' });
-		// 	const url = await convertToDataUrl(blob);
-		// 	return url as string;
-		// }
 		try {
-			const data = await generate_qr(url, 320);
+			const data = generate_qr(url, 320);
 			if (data) {
 				const blob = new Blob([data], { type: 'image/png' });
 				const url = await convertToDataUrl(blob);
@@ -44,6 +38,15 @@
 			};
 		});
 	}
+
+	function copyLink() {
+		navigator.clipboard.writeText(settleUrl);
+		copied = true;
+
+		setTimeout(() => {
+			copied = false;
+		}, 1000);
+	}
 </script>
 
 {#await getQrCode(settleUrl)}
@@ -59,8 +62,8 @@
 		</div>
 
 		<PillButton
-			onClick={() => navigator.clipboard.writeText(settleUrl)}
-			text="Copy link"
+			onClick={copyLink}
+			text={copied ? 'Copied!' : 'Copy link'}
 			className="w-1/2 mx-auto"
 		/>
 	</div>
