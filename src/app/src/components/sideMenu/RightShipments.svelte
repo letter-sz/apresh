@@ -6,13 +6,14 @@
 	type Props = {
 		shipments: PrintableShipment[];
 		refreshShipments: () => void;
+		onselect?: (shipment: PrintableShipment) => void;
 	};
 
-	const { shipments, refreshShipments }: Props = $props();
+	const { shipments, refreshShipments, onselect }: Props = $props();
 </script>
 
 <Right isMobileOpen={false}>
 	<div class="flex h-full w-full flex-col">
-		<ShipmentList {shipments} {refreshShipments} />
+		<ShipmentList {shipments} {refreshShipments} {onselect} />
 	</div>
 </Right>

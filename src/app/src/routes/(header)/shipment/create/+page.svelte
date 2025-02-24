@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { invalidate } from '$app/navigation';
+	import PillButton from '$components/common/Buttons/PillButton.svelte';
 	import DecimalInput from '$components/common/Inputs/DecimalInput.svelte';
 	import TextInput from '$components/common/Inputs/TextInput.svelte';
-	import PillButton from '$components/common/PillButton.svelte';
 	import type { ShipmentLocation } from '$declarations/contract/contract.did';
 	import * as Tabs from '$lib/components/ui/tabs';
 	import { connection } from '$lib/connection.svelte';

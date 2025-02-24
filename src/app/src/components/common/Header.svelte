@@ -4,7 +4,7 @@
 	import { wallet } from '$lib/wallet.svelte';
 	import { LogOut } from 'lucide-svelte';
 	import Button from './Buttons/Button.svelte';
-	import PillButton from './PillButton.svelte';
+	import PillButton from './Buttons/PillButton.svelte';
 
 	let { balance }: { balance: bigint } = $props();
 

@@ -2,10 +2,11 @@
 	import { MessagesSquare } from 'lucide-svelte';
 
 	type Props = {
+		text: string;
 		onclick: () => void;
 	};
 
-	let { onclick }: Props = $props();
+	let { onclick, text }: Props = $props();
 </script>
 
 <button
@@ -18,5 +19,5 @@
 		class="cursor-pointer text-neutral-600 transition-all duration-300 hover:scale-110"
 	/>
 
-	<div class="text-xs text-neutral-600">Chat with the shipper</div>
+	<div class="text-xs text-neutral-600">{text}</div>
 </button>

@@ -2,7 +2,7 @@
 	import { invalidate } from '$app/navigation';
 	import Chat from '$components/Chat.svelte';
 	import ChatButton from '$components/common/Buttons/ChatButton.svelte';
-	import PillButton from '$components/common/PillButton.svelte';
+	import PillButton from '$components/common/Buttons/PillButton.svelte';
 	import QrCodeDisplay from '$components/QrCodeDisplay.svelte';
 	import ShipmentInfo from '$components/ShipmentInfo.svelte';
 	import { fetchBackend } from '$lib/canisters';
@@ -37,7 +37,7 @@
 	<div class="justyify-center flex w-full space-x-20 px-10">
 		<div class="flex w-full flex-col items-center space-y-6">
 			<ShipmentInfo shipment={data.shipment} />
-			<ChatButton onclick={() => (showChat = true)} />
+			<ChatButton onclick={() => (showChat = true)} text="Chat with the carrier" />
 			<PillButton text="Settle" className="w-full uppercase" onClick={settle} />
 		</div>
 		<div class="flex items-center text-lg">OR</div>

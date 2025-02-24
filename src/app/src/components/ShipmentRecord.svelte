@@ -2,7 +2,7 @@
 	import type { PrintableShipment } from '$declarations/contract/contract.did';
 	import { connection } from '$lib/connection.svelte';
 	import { getDistance } from 'geolib';
-	import { PackageCheck, PackagePlus, PackageSearch } from 'lucide-svelte';
+	import { Flame, PackageCheck, PackagePlus, PackageSearch } from 'lucide-svelte';
 	import Tooltip from './common/Tooltip.svelte';
 
 	let { shipment, selected = $bindable() } = $props<{
@@ -49,10 +49,7 @@
 	<td class="flex h-20 flex-col items-center justify-center">
 		{#if shipment.carrier.length > 0 && connection.identity && shipment.carrier[0] === connection.identity.toText()}
 			<Tooltip text="Bought by you">
-				<PackageCheck
-					class="text-green-700 transition-all duration-300 group-hover:scale-125"
-					size={20}
-				/>
+				<Flame class="text-red-800 transition-all duration-300 group-hover:scale-125" size={20} />
 			</Tooltip>
 		{:else if shipment.carrier.length > 0 && connection.identity && shipment.shipper === connection.identity.toText()}
 			<Tooltip text="Bought from you">

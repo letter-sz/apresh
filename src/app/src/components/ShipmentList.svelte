@@ -1,19 +1,17 @@
 <script lang="ts">
 	import type { PrintableShipment } from '$declarations/contract/contract.did';
-	import { flyToLocation } from '$lib/map.ts/focus';
 	import { getDistance } from 'geolib';
 	import { ChevronDown, ChevronUp, RefreshCcw, SlidersHorizontal } from 'lucide-svelte';
-	import { getContext } from 'svelte';
-	import type { MapContext } from 'svelte-maplibre/dist/context';
 	import ShipmentRecord from './ShipmentRecord.svelte';
 
 	type Props = {
 		shipments: PrintableShipment[];
 		refreshShipments: () => void;
+		onselect?: (shipment: PrintableShipment) => void;
 	};
 	type HeaderLabel = 'price' | 'value' | 'category' | 'distance';
 
-	let { shipments, refreshShipments }: Props = $props();
+	let { shipments, refreshShipments, onselect }: Props = $props();
 
 	let shipmentsWithDistance = $derived(
 		shipments.map((shipment) => ({
@@ -77,13 +75,8 @@
 			})
 	);
 
-	let mapStore = getContext<MapContext>(Symbol.for('svelte-maplibre'))?.map;
-	let map: maplibregl.Map | null = $derived($mapStore);
-
 	$effect(() => {
-		if (selected !== null && map !== null) {
-			flyToLocation(map, selected);
-		}
+		if (selected !== null) onselect?.(selected);
 	});
 </script>
 

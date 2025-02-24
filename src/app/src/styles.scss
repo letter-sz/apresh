@@ -108,7 +108,6 @@
 
 	&.active {
 		background: rgb(99, 99, 99);
-		// background: linear-gradient(90deg, rgb(247, 147, 66) 0%, #8b5cf6 100%);
 	}
 
 	&.inactive {
@@ -116,11 +115,15 @@
 	}
 
 	&.destination {
-		background: #f00;
+		background: rgb(0, 138, 115);
 	}
 
 	&.bought {
 		background: rgb(12, 165, 12);
+	}
+
+	&.bought-by-you {
+		background: #aa4203;
 	}
 
 	&.owner {
@@ -129,9 +132,10 @@
 
 	// &:after {
 	// 	content: '';
-	// 	width: 14px;
-	// 	height: 14px;
-	// 	margin: 8px 0 0 8px;
+	// 	z-index: -1;
+	// 	width: 22px;
+	// 	height: 22px;
+	// 	margin: auto;
 	// 	background: #e6e6e6;
 	// 	position: absolute;
 	// 	border-radius: 50%;

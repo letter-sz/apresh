@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { invalidate } from '$app/navigation';
-	import PillButton from '$components/common/PillButton.svelte';
+	import PillButton from '$components/common/Buttons/PillButton.svelte';
 	import ShipmentInfo from '$components/ShipmentInfo.svelte';
 	import type { PrintableShipment } from '$declarations/contract/contract.did';
 	import { connection } from '$lib/connection.svelte';
