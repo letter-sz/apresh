@@ -17,6 +17,6 @@
 {:else}
 	<div class="flex w-full flex-col items-center space-y-6 px-5">
 		<ShipmentInfo shipment={data.shipment} />
-		<ChatButton onclick={() => (showChat = true)} />
+		<ChatButton onclick={() => (showChat = true)} text="Chat with the shipper" />
 	</div>
 {/if}

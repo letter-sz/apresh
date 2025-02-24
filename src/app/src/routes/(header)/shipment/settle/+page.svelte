@@ -37,7 +37,7 @@
 	<div class="justyify-center flex w-full space-x-20 px-10">
 		<div class="flex w-full flex-col items-center space-y-6">
 			<ShipmentInfo shipment={data.shipment} />
-			<ChatButton onclick={() => (showChat = true)} />
+			<ChatButton onclick={() => (showChat = true)} text="Chat with the carrier" />
 			<PillButton text="Settle" className="w-full uppercase" onClick={settle} />
 		</div>
 		<div class="flex items-center text-lg">OR</div>
