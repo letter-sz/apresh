@@ -58,7 +58,7 @@
 		const hashed = get_secret_hash(secret);
 		console.log(hashed);
 
-		const res = await actor.createShipment(['Janek'], name, hashed, {
+		const res = await actor.createShipment(['Janek'], name, hashed, channelKeys.public_key(), {
 			size_category:
 				size_category == 'Parcel'
 					? {

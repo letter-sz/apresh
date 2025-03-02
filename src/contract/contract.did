@@ -46,14 +46,7 @@ service : () -> {
   buyShipment : (opt text, nat64, blob) -> (Result);
   cancel_shipment : (nat64) -> (Result);
   carrier_shipments : () -> (vec PrintableShipment) query;
-  createShipment : (
-      opt text,
-      text,
-      blob,
-      blob,
-      QrCodeOptions,
-      ShipmentInfo,
-    ) -> (Result_1);
+  createShipment : (opt text, text, blob, blob, ShipmentInfo) -> (Result_1);
   finalizeShipment : (nat64, opt text) -> (Result);
   generateQr : (text, nat64) -> (Result_2) query;
   getTransferFee : () -> (nat64) query;
