@@ -6,7 +6,12 @@
       "specified_id": "mxzaz-hqaaa-aaaar-qaada-cai",
       "type": "custom",
       "wasm": "https://download.dfinity.systems/ic/35bfcadd0f2a474057e42393917b8b3ac269627a/canisters/ic-icrc1-ledger.wasm.gz",
-      "init_arg_file": "token_init.candid"
+      "init_arg_file": "token_init.candid",
+      "remote": {
+        "id": {
+          "ic": "ryjl3-tyaaa-aaaaa-aaaba-cai"
+        }
+      }
     },
     "internet_identity": {
       "candid": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity.did",
@@ -27,11 +32,20 @@
       "package": "contract",
       "type": "custom",
       "build": "./build.sh contract",
-      "wasm": "target/wasm32-unknown-unknown/release/contract.wasm"
+      "wasm": "target/wasm32-unknown-unknown/release/contract.wasm",
+      "remote": {
+        "id": {
+          "ic": "vujqm-syaaa-aaaag-at46q-cai"
+        }
+      }
     },
     "app": {
-      "dependencies": ["contract"],
-      "source": ["src/app/dist"],
+      "dependencies": [
+        "contract"
+      ],
+      "source": [
+        "src/app/dist"
+      ],
       "type": "assets",
       "workspace": "app"
     }

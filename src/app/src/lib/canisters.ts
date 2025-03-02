@@ -11,7 +11,8 @@ import type { _SERVICE as _ICRC1_SERVICE } from '$declarations/icrc1_ledger_cani
 import { connectPlug } from './connector/plug';
 import type { Principal } from '@dfinity/principal';
 
-export const host = `http://localhost:4943`;
+// export const host = `http://localhost:4943`;
+export const host = `https://icp0.io`;
 
 export function fetchBackend(fetchFunction: typeof fetch) {
 	return createActor(canisterId, { agentOptions: { host, fetch: fetchFunction } });
@@ -53,7 +54,8 @@ export const connect = async (allowReconnect: boolean = true): Promise<IConnecti
 		// Login manually (opens a new tab)
 		await new Promise((resolve) => {
 			authClient.login({
-				identityProvider: `http://${identityCanisterId}.localhost:4943/`, // 'https://identity.ic0.app'
+				// identityProvider: `http://${identityCanisterId}.localhost:4943/`, // 'https://identity.ic0.app'
+				identityProvider: 'https://identity.ic0.app',
 				onSuccess: () => resolve(undefined)
 			});
 		});
