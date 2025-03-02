@@ -4,7 +4,7 @@ use crate::{
     ActorId,
 };
 
-use super::StateOp;
+use super::{buy_shipment::Cost, StateOp, ValidatedStateOp};
 use crate::{actors::Actor, state::CanisterState};
 use anyhow::anyhow;
 
@@ -43,6 +43,33 @@ impl FinalizeShipmentOp {
             secret_key,
             caller,
         }
+    }
+}
+
+impl ValidatedStateOp<FinalizeShipmentResult> for FinalizeShipmentOp {
+    type ValidationResult = FinalizeShipmentResult;
+
+    fn validate(&self, state: &CanisterState) -> Result<FinalizeShipmentResult, anyhow::Error> {
+        let shipment = state
+            .shipment(self.shipment_id)
+            .ok_or(crate::errors::Error::ShipmentNotFound)?;
+
+        let carrier_id = shipment
+            .carrier_id()
+            .ok_or(crate::errors::Error::CarrierNotSet)?;
+
+        let value = shipment.info().value();
+        let price = shipment.info().price();
+
+        let carrier = state
+            .carrier(&carrier_id)
+            .ok_or(crate::errors::Error::CarrierNotFound)?;
+
+        Ok(FinalizeShipmentResult {
+            carrier_id: carrier.id(),
+            value,
+            price,
+        })
     }
 }
 
