@@ -10,3 +10,5 @@ gzip -d pocket-ic.gz
 chmod +x pocket-ic
 
 export POCKET_IC_BIN=$(pwd)/pocket-ic
+
+echo "move to 'apresh/src/contract'"
