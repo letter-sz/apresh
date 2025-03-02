@@ -10,14 +10,13 @@ use std::cell::RefCell;
 use apresh_qr::{generate, QrCodeOptions};
 use candid::Principal;
 use engine::{
-    actors::{carrier::Carrier, shipper::Shipper},
+    actors::carrier::Carrier,
     models::shipment::{Channel, ChannelKey, PrintableShipment, ShipmentInfo, ShipmentStatus},
     operations::{
         AddMessageOp, BuyShipmentOp, CancelShipmentOp, CreateShipmentOp, FinalizeShipmentOp,
         ReadMessageOp, RegisterActorOp, StateOp, ValidatedStateOp,
     },
     state::{CanisterActors, CanisterShipments, CanisterState},
-    utils::hash_secret,
     ActorId,
 };
 use ic_cdk::{init, query, update};
@@ -25,7 +24,6 @@ use icrc_ledger_types::icrc1::transfer::NumTokens;
 use refund_log::RefundLog;
 use transfer::{transfer_in, transfer_out, TransferInParams, TransferOutParams, TransferParams};
 use utils::{assert_admin, assert_whitelisted, memo};
-use utils::{block_anonymous, memo};
 
 thread_local! {
     pub static STATE: RefCell<CanisterState> = RefCell::new(CanisterState::default());
@@ -132,7 +130,7 @@ async fn finalize_shipment(shipment_id: u64, secret_key: Option<String>) -> Resu
         .map_err(|e| e.to_string());
 
     // At this stage there should be way to return error, but refund there is one
-    if let Err(e) = res {
+    if let Err(_e) = res {
         let refund_res = transfer_out(
             TransferOutParams {
                 params: TransferParams {
@@ -150,15 +148,18 @@ async fn finalize_shipment(shipment_id: u64, secret_key: Option<String>) -> Resu
             REFUND_LOG.with_borrow_mut(|log| {
                 log.append(
                     amount,
-                    caller.0.into(),
-                    format!("ERROR FINALIZE SHIPMENT: {}, REFUND ERROR: {}", shipment_id, refund_error),
+                    caller.0,
+                    format!(
+                        "ERROR FINALIZE SHIPMENT: {}, REFUND ERROR: {}",
+                        shipment_id, refund_error
+                    ),
                 )
             })?;
         } else {
             REFUND_LOG.with_borrow_mut(|log| {
                 log.append(
                     amount,
-                    caller.0.into(),
+                    caller.0,
                     format!("FINALIZE SHIPMENT REFUNDED: {} DONE", shipment_id),
                 )
             })?;
@@ -235,15 +236,18 @@ async fn buy_shipment(
             REFUND_LOG.with_borrow_mut(|log| {
                 log.append(
                     shipment_value,
-                    caller.0.into(),
-                    format!("ERROR BUY SHIPMENT: {}, REFUND ERROR: {}", shipment_id, refund_error),
+                    caller.0,
+                    format!(
+                        "ERROR BUY SHIPMENT: {}, REFUND ERROR: {}",
+                        shipment_id, refund_error
+                    ),
                 )
             })?;
         } else {
             REFUND_LOG.with_borrow_mut(|log| {
                 log.append(
                     shipment_value,
-                    caller.0.into(),
+                    caller.0,
                     format!("BUY SHIPMENT REFUNDED: {} DONE", shipment_id),
                 )
             })?;
@@ -273,7 +277,7 @@ async fn create_shipment(
     hashed_secret: Vec<u8>,
     channel_key: ChannelKey,
     shipment_info: ShipmentInfo,
-) -> Result<(Vec<u8>, u64), String> {
+) -> Result<u64, String> {
     assert_whitelisted();
     let caller = ActorId(ic_cdk::caller());
     let price = shipment_info.price();
@@ -295,7 +299,7 @@ async fn create_shipment(
     // Validate the shipment creation operation
     let create_op = CreateShipmentOp::new(
         caller,
-        &hashed_secret,
+        hashed_secret,
         channel_key,
         &shipment_name,
         &shipment_info,
@@ -347,7 +351,7 @@ async fn create_shipment(
                 REFUND_LOG.with_borrow_mut(|log| {
                     log.append(
                         price,
-                        caller.0.into(),
+                        caller.0,
                         format!(
                             "ERROR CREATE SHIPMENT: {}, REFUND ERROR: {}",
                             expected_shipment_id, refund_error
@@ -358,7 +362,7 @@ async fn create_shipment(
                 REFUND_LOG.with_borrow_mut(|log| {
                     log.append(
                         price,
-                        caller.0.into(),
+                        caller.0,
                         format!("CREATE SHIPMENT REFUNDED: {} DONE", expected_shipment_id),
                     )
                 })?;

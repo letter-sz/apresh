@@ -117,35 +117,35 @@ fn get_ledger_init_args() -> Vec<u8> {
     encode_one(init).unwrap()
 }
 
-fn mint_tokens(
-    pic: &PocketIc,
-    ledger_id: Principal,
-    to: Principal,
-    amount: u128,
-) -> Result<(), String> {
-    let mint_args = Encode!(
-        &Account {
-            owner: to,
-            subaccount: None,
-        },
-        &amount
-    )
-    .unwrap();
+// fn mint_tokens(
+//     pic: &PocketIc,
+//     ledger_id: Principal,
+//     to: Principal,
+//     amount: u128,
+// ) -> Result<(), String> {
+//     let mint_args = Encode!(
+//         &Account {
+//             owner: to,
+//             subaccount: None,
+//         },
+//         &amount
+//     )
+//     .unwrap();
 
-    let result = pic
-        .update_call(
-            ledger_id,
-            MINTER_PRINCIPAL, // minting account
-            "icrc1_transfer",
-            mint_args,
-        )
-        .map_err(|e| e.to_string())?;
+//     let result = pic
+//         .update_call(
+//             ledger_id,
+//             MINTER_PRINCIPAL, // minting account
+//             "icrc1_transfer",
+//             mint_args,
+//         )
+//         .map_err(|e| e.to_string())?;
 
-    match result {
-        WasmResult::Reply(_) => Ok(()),
-        _ => Err("Failed to mint tokens".to_string()),
-    }
-}
+//     match result {
+//         WasmResult::Reply(_) => Ok(()),
+//         _ => Err("Failed to mint tokens".to_string()),
+//     }
+// }
 
 struct TestEnvironment {
     pic: PocketIc,
@@ -404,4 +404,3 @@ fn test_get_transfer_fee(test_env: TestEnvironment) {
     let fee = decode_one::<u64>(&get_reply_bytes(result)).unwrap();
     assert_eq!(fee, 10_000);
 }
-
