@@ -2,7 +2,6 @@ mod consts;
 mod transfer_in;
 mod transfer_out;
 mod utils;
-mod refund;
 
 use icrc_ledger_types::icrc1::{
     account::Account,
@@ -11,7 +10,6 @@ use icrc_ledger_types::icrc1::{
 
 pub use transfer_in::transfer_in;
 pub use transfer_out::transfer_out;
-pub use refund::Refund;
 
 pub struct TransferInParams {
     pub from: Account,

@@ -147,15 +147,15 @@ pub struct Shipment {
 
 #[derive(Deserialize, Serialize, Debug, Clone, CandidType)]
 pub struct PrintableShipment {
-    pub id: ShipmentId,
-    pub name: String,
-    pub hashed_secret: Vec<u8>,
-    pub info: ShipmentInfo,
-    pub status: ShipmentStatus,
-    pub message: Option<String>,
-    pub carrier: Option<String>,
-    pub shipper: String,
-    pub created_at: u64,
+    id: ShipmentId,
+    name: String,
+    hashed_secret: Vec<u8>,
+    info: ShipmentInfo,
+    status: ShipmentStatus,
+    message: Option<String>,
+    carrier: Option<String>,
+    shipper: String,
+    created_at: u64,
 }
 
 impl From<&Shipment> for PrintableShipment {
