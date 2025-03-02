@@ -242,6 +242,7 @@ fn test_shipment(
     let shipment_name = name;
     let secret = b"test_secret";
     let hashed_secret = hash_secret(secret);
+    let channel_key = vec![0u8; 32];
 
     let shipment_info = ShipmentInfo::new(
         100, // price
@@ -259,6 +260,7 @@ fn test_shipment(
             &customer_name,
             &shipment_name,
             &hashed_secret,
+            &channel_key,
             &shipment_info
         )
         .unwrap(),
@@ -320,6 +322,7 @@ fn test_create_shipment_with_zero_funds(
     let secret = b"test_secret";
     let hashed_secret = hash_secret(secret);
     let expected_shipment_id = 10_u64;
+    let channel_key = vec![0u8; 32];
 
     let shipment_info = ShipmentInfo::new(
         value,
@@ -337,6 +340,7 @@ fn test_create_shipment_with_zero_funds(
             &customer_name,
             &shipment_name,
             &hashed_secret,
+            &channel_key,
             &shipment_info
         )
         .unwrap(),

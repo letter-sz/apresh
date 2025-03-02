@@ -1,7 +1,7 @@
 #! /bin/bash
 
 # Download the Pocket IC binary
-curl -L https://github.com/dfinity/pocketic/releases/download/6.0.0/pocket-ic-x86_64-darwin.gz -o pocket-ic.gz
+curl -L https://github.com/dfinity/pocketic/releases/download/7.0.0/pocket-ic-x86_64-linux.gz -o pocket-ic.gz
 
 # Unzip the binary
 gzip -d pocket-ic.gz
