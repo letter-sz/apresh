@@ -37,6 +37,7 @@ struct Account {
 }
 
 #[derive(CandidType)]
+#[allow(dead_code)]
 enum MetadataValue {
     Nat(u128),
     Int(i128),
