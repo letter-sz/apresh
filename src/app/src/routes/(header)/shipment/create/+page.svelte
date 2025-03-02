@@ -58,40 +58,28 @@
 		const hashed = get_secret_hash(secret);
 		console.log(hashed);
 
-		const res = await actor.createShipment(
-			['Janek'],
-			name,
-			hashed,
-			channelKeys.public_key(),
-			{
-				link: '',
-				size: BigInt(100),
-				gradient: true,
-				transparent: false
-			},
-			{
-				size_category:
-					size_category == 'Parcel' && max_height && max_width && max_depth
-						? {
-								Parcel: {
-									max_height: BigInt(max_height),
-									max_width: BigInt(max_width),
-									max_depth: BigInt(max_depth)
-								}
+		const res = await actor.createShipment(['Janek'], name, hashed, channelKeys.public_key(), {
+			size_category:
+				size_category == 'Parcel'
+					? {
+							Parcel: {
+								max_height: BigInt(max_height),
+								max_width: BigInt(max_width),
+								max_depth: BigInt(max_depth)
 							}
-						: { Envelope: null },
-				destination: destinationLocation,
-				source: sourceLocation,
-				price: priceBigint,
-				value: BigInt(value)
-			}
-		);
+						}
+					: { Envelope: null },
+			destination: destinationLocation,
+			source: sourceLocation,
+			price: priceBigint,
+			value: BigInt(value)
+		});
 
 		invalidate('shipments:shipper');
 		invalidate('shipments:carrier');
 		invalidate('token:balance');
 
-		const id: bigint = unwrap<[number[], bigint]>(res)[1];
+		const id: bigint = unwrap<bigint>(res);
 		setLocalStorage(id.toString(), secret);
 		setLocalStorage(`channel-key-${id}`, Array.from(channelKeys.secret_key()));
 		channelKeys.free();

@@ -8,7 +8,6 @@
 	import RightShipments from '$components/sideMenu/RightShipments.svelte';
 	import type { PrintableShipment, ShipmentLocation } from '$declarations/contract/contract.did';
 	import { connection } from '$lib/connection.svelte';
-	import { flyToLocation } from '$lib/map.ts/focus';
 	import { getContext } from 'svelte';
 	import { MapEvents } from 'svelte-maplibre';
 	import type { MapContext } from 'svelte-maplibre/dist/context';
@@ -60,6 +59,25 @@
 
 	function onShipmentSelect(shipment: PrintableShipment) {
 		setAndFlyToLocation(shipment);
+	}
+
+	function flyToLocation(map: maplibregl.Map, shipment: PrintableShipment) {
+		const { source, destination } = shipment.info;
+
+		map.fitBounds(
+			[
+				[source.lng, source.lat],
+				[destination.lng, destination.lat]
+			],
+			{
+				duration: 1500,
+				animate: true,
+				offset: [150, 0],
+				padding: { right: 500, left: 300, top: 200, bottom: 200 }
+				// padding: {'right': 600, 'left':100},
+				// padding: 100
+			}
+		);
 	}
 
 	function setAndFlyToLocation(shipment: PrintableShipment) {

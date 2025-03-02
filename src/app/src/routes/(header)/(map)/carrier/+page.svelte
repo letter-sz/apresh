@@ -11,7 +11,6 @@
 	import type { PageData } from './$types';
 
 	import FullShipmentMapView from '$components/FullShipmentMapView.svelte';
-	import { flyToLocation } from '$lib/map.ts/focus';
 	import BuyPage from '$routes/(header)/shipment/buy/+page.svelte';
 	import InfoPage from '$routes/(header)/shipment/info/+page.svelte';
 
@@ -41,6 +40,25 @@
 		pushState(`/shipment/buy?id=${shipment.id}`, {
 			page: { mode: 'buy', id: shipment.id, shipment: shipment, balance: data.balance }
 		});
+	}
+
+	function flyToLocation(map: maplibregl.Map, shipment: PrintableShipment) {
+		const { source, destination } = shipment.info;
+
+		map.fitBounds(
+			[
+				[source.lng, source.lat],
+				[destination.lng, destination.lat]
+			],
+			{
+				duration: 1500,
+				animate: true,
+				offset: [150, 0],
+				padding: { right: 500, left: 300, top: 200, bottom: 200 }
+				// padding: {'right': 600, 'left':100},
+				// padding: 100
+			}
+		);
 	}
 
 	function setAndFlyToLocation(shipment: PrintableShipment) {

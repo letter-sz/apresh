@@ -14,14 +14,8 @@ type PrintableShipment = record {
   carrier : opt text;
   channel : Channel;
 };
-type QrCodeOptions = record {
-  transparent : bool;
-  gradient : bool;
-  link : text;
-  size : nat64;
-};
 type Result = variant { Ok; Err : text };
-type Result_1 = variant { Ok : record { blob; nat64 }; Err : text };
+type Result_1 = variant { Ok : nat64; Err : text };
 type Result_2 = variant { Ok : blob; Err : text };
 type Result_3 = variant { Ok : Channel; Err : text };
 type ShipmentInfo = record {
@@ -52,14 +46,7 @@ service : () -> {
   buyShipment : (opt text, nat64, blob) -> (Result);
   cancel_shipment : (nat64) -> (Result);
   carrier_shipments : () -> (vec PrintableShipment) query;
-  createShipment : (
-      opt text,
-      text,
-      blob,
-      blob,
-      QrCodeOptions,
-      ShipmentInfo,
-    ) -> (Result_1);
+  createShipment : (opt text, text, blob, blob, ShipmentInfo) -> (Result_1);
   finalizeShipment : (nat64, opt text) -> (Result);
   generateQr : (text, nat64) -> (Result_2) query;
   getTransferFee : () -> (nat64) query;
