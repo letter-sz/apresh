@@ -1,7 +1,5 @@
-import { createActor, canisterId } from '$declarations/contract';
-import { canisterId as identityCanisterId } from '$declarations/internet_identity';
+import { createActor } from '$declarations/contract';
 import {
-	canisterId as tokenCanisterId,
 	createActor as createTokenActor
 } from '$declarations/icrc1_ledger_canister';
 import { AuthClient } from '@dfinity/auth-client';
@@ -11,14 +9,20 @@ import type { _SERVICE as _ICRC1_SERVICE } from '$declarations/icrc1_ledger_cani
 import { connectPlug } from './connector/plug';
 import type { Principal } from '@dfinity/principal';
 
-export const host = `http://localhost:4943`;
+// export const host = `http://localhost:4943`;
+export const host = `https://icp0.io`;
+
+export const dev = () => false;
+
+export const CANISTER_ID_CONTRACT = 'vujqm-syaaa-aaaag-at46q-cai';
+export const CANISTER_ID_TOKEN = 'ryjl3-tyaaa-aaaaa-aaaba-cai';
 
 export function fetchBackend(fetchFunction: typeof fetch) {
-	return createActor(canisterId, { agentOptions: { host, fetch: fetchFunction } });
+	return createActor(CANISTER_ID_CONTRACT, { agentOptions: { host, fetch: fetchFunction } });
 }
 
 export function mintBackend(fetchFunction: typeof fetch) {
-	return createTokenActor(tokenCanisterId, {
+	return createTokenActor(CANISTER_ID_TOKEN, {
 		agentOptions: {
 			host,
 			fetch: fetchFunction
@@ -53,7 +57,8 @@ export const connect = async (allowReconnect: boolean = true): Promise<IConnecti
 		// Login manually (opens a new tab)
 		await new Promise((resolve) => {
 			authClient.login({
-				identityProvider: `http://${identityCanisterId}.localhost:4943/`, // 'https://identity.ic0.app'
+				// identityProvider: `http://${identityCanisterId}.localhost:4943/`, // 'https://identity.ic0.app'
+				identityProvider: 'https://identity.ic0.app',
 				onSuccess: () => resolve(undefined)
 			});
 		});
@@ -64,14 +69,14 @@ export const connect = async (allowReconnect: boolean = true): Promise<IConnecti
 
 const initActors = (authClient: AuthClient): IConnection => {
 	const identity = authClient.getIdentity();
-	const actor = createActor(canisterId, {
+	const actor = createActor(CANISTER_ID_CONTRACT, {
 		agentOptions: {
 			identity,
 			host,
 			fetch
 		}
 	});
-	const tokenActor = createTokenActor(tokenCanisterId, {
+	const tokenActor = createTokenActor(CANISTER_ID_TOKEN, {
 		agentOptions: {
 			identity,
 			host,
@@ -79,7 +84,7 @@ const initActors = (authClient: AuthClient): IConnection => {
 		}
 	});
 
-	console.log('Connected to backend as', identity.getPrincipal().toText());
+	console.log(`Connected to backend as ${identity.getPrincipal().toText()} in ${dev() ? 'dev' : 'prod'} mode`);
 	const principal = identity.getPrincipal();
 
 	return { actor, tokenActor, identity: principal };

@@ -1,4 +1,3 @@
-import canisterIds from '../../../../.dfx/local/canister_ids.json';
 import { Principal } from '@dfinity/principal';
 import { connection } from './connection.svelte';
 import { unwrap } from './utils';
@@ -7,7 +6,7 @@ import type {
 	TransferResult
 } from '$declarations/icrc1_ledger_canister/icrc1_ledger_canister.did';
 import { invalidate } from '$app/navigation';
-import { mintBackend } from './canisters';
+import { CANISTER_ID_CONTRACT, mintBackend } from './canisters';
 
 class Wallet {
 	async owner() {
@@ -27,7 +26,7 @@ class Wallet {
 	async approve(amount: bigint) {
 		const tokenActor = await connection.getTokenActor();
 
-		const spender = Principal.fromText(canisterIds.contract.local);
+		const spender = Principal.fromText(CANISTER_ID_CONTRACT);
 		const fee = await tokenActor.icrc1_fee();
 		const approveResult = await tokenActor.icrc2_approve({
 			fee: [],
