@@ -12,6 +12,8 @@ import type { Principal } from '@dfinity/principal';
 // export const host = `http://localhost:4943`;
 export const host = `https://icp0.io`;
 
+export const dev = () => false;
+
 export const CANISTER_ID_CONTRACT = 'vujqm-syaaa-aaaag-at46q-cai';
 export const CANISTER_ID_TOKEN = 'ryjl3-tyaaa-aaaaa-aaaba-cai';
 
@@ -82,7 +84,7 @@ const initActors = (authClient: AuthClient): IConnection => {
 		}
 	});
 
-	console.log('Connected to backend as', identity.getPrincipal().toText());
+	console.log(`Connected to backend as ${identity.getPrincipal().toText()} in ${dev() ? 'dev' : 'prod'} mode`);
 	const principal = identity.getPrincipal();
 
 	return { actor, tokenActor, identity: principal };

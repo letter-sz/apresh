@@ -5,6 +5,8 @@
 	import { LogOut } from 'lucide-svelte';
 	import Button from './Buttons/Button.svelte';
 	import PillButton from './Buttons/PillButton.svelte';
+	import { dev } from '$lib/canisters';
+	import { goto } from '$app/navigation';
 
 	let { balance }: { balance: bigint } = $props();
 
@@ -47,11 +49,15 @@
 					<div class="flex space-x-3 rounded-xl bg-white px-5 py-2 text-sm">
 						<div class="flex items-center border-r-2 border-gray-200 pr-3">
 							{#if balance === 0n}
-								<PillButton
-									text="Faucet"
-									className="px-14"
-									onClick={() => (minting = wallet.mint(10_000000n))}
-								/>
+								{#if dev()}
+									<PillButton
+										text="Faucet"
+										className="px-14"
+										onClick={() => (minting = wallet.mint(10_000000n))}
+									/>
+								{:else}
+									<PillButton text="Top up" className="px-14" onClick={() => goto('/topup')} />
+								{/if}
 							{:else}
 								Balance: {balancePretty}
 								<img src="{base}/internet-computer-icp-logo.png" alt="ICP logo" class="ml-2 w-8" />
