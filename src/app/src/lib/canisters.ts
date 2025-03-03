@@ -1,7 +1,5 @@
-import { createActor, canisterId } from '$declarations/contract';
-import { canisterId as identityCanisterId } from '$declarations/internet_identity';
+import { createActor } from '$declarations/contract';
 import {
-	canisterId as tokenCanisterId,
 	createActor as createTokenActor
 } from '$declarations/icrc1_ledger_canister';
 import { AuthClient } from '@dfinity/auth-client';
@@ -14,12 +12,15 @@ import type { Principal } from '@dfinity/principal';
 // export const host = `http://localhost:4943`;
 export const host = `https://icp0.io`;
 
+export const CANISTER_ID_CONTRACT = 'vujqm-syaaa-aaaag-at46q-cai';
+export const CANISTER_ID_TOKEN = 'ryjl3-tyaaa-aaaaa-aaaba-cai';
+
 export function fetchBackend(fetchFunction: typeof fetch) {
-	return createActor(canisterId, { agentOptions: { host, fetch: fetchFunction } });
+	return createActor(CANISTER_ID_CONTRACT, { agentOptions: { host, fetch: fetchFunction } });
 }
 
 export function mintBackend(fetchFunction: typeof fetch) {
-	return createTokenActor(tokenCanisterId, {
+	return createTokenActor(CANISTER_ID_TOKEN, {
 		agentOptions: {
 			host,
 			fetch: fetchFunction
@@ -66,14 +67,14 @@ export const connect = async (allowReconnect: boolean = true): Promise<IConnecti
 
 const initActors = (authClient: AuthClient): IConnection => {
 	const identity = authClient.getIdentity();
-	const actor = createActor(canisterId, {
+	const actor = createActor(CANISTER_ID_CONTRACT, {
 		agentOptions: {
 			identity,
 			host,
 			fetch
 		}
 	});
-	const tokenActor = createTokenActor(tokenCanisterId, {
+	const tokenActor = createTokenActor(CANISTER_ID_TOKEN, {
 		agentOptions: {
 			identity,
 			host,
