@@ -1,7 +1,10 @@
-import { createActor } from '$declarations/contract';
+import { createActor, canisterId as localContractCanisterId } from '$declarations/contract';
 import {
-	createActor as createTokenActor
+	createActor as createTokenActor,
+	canisterId as localTokenCanisterId
 } from '$declarations/icrc1_ledger_canister';
+import { canisterId as localIdentityCanisterId } from '$declarations/internet_identity';
+
 import { AuthClient } from '@dfinity/auth-client';
 import { type ActorSubclass } from '@dfinity/agent';
 import type { _SERVICE } from '$declarations/contract/contract.did';
@@ -9,13 +12,12 @@ import type { _SERVICE as _ICRC1_SERVICE } from '$declarations/icrc1_ledger_cani
 import { connectPlug } from './connector/plug';
 import type { Principal } from '@dfinity/principal';
 
-// export const host = `http://localhost:4943`;
-export const host = `https://icp0.io`;
-
 export const dev = () => false;
 
-export const CANISTER_ID_CONTRACT = 'vujqm-syaaa-aaaag-at46q-cai';
-export const CANISTER_ID_TOKEN = 'ryjl3-tyaaa-aaaaa-aaaba-cai';
+export const host = dev() ? `http://localhost:4943` : `https://icp0.io`;
+
+export const CANISTER_ID_CONTRACT = dev() ? localContractCanisterId : 'vujqm-syaaa-aaaag-at46q-cai';
+export const CANISTER_ID_TOKEN = dev() ? localTokenCanisterId : 'ryjl3-tyaaa-aaaaa-aaaba-cai';
 
 export function fetchBackend(fetchFunction: typeof fetch) {
 	return createActor(CANISTER_ID_CONTRACT, { agentOptions: { host, fetch: fetchFunction } });
@@ -58,7 +60,7 @@ export const connect = async (allowReconnect: boolean = true): Promise<IConnecti
 		await new Promise((resolve) => {
 			authClient.login({
 				// identityProvider: `http://${identityCanisterId}.localhost:4943/`, // 'https://identity.ic0.app'
-				identityProvider: 'https://identity.ic0.app',
+				identityProvider: dev() ? `http://${localIdentityCanisterId}.localhost:4943/` : 'https://identity.ic0.app',
 				onSuccess: () => resolve(undefined)
 			});
 		});
