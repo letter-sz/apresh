@@ -1,9 +1,10 @@
 <script lang="ts">
-	import '../styles.scss';
+	import '$lib/i18n';
 	import type { Snippet } from 'svelte';
-	import type { LayoutData } from './(header)/$types';
-	import { init } from 'wasm';
 	import { onMount } from 'svelte';
+	import { init } from 'wasm';
+	import '../styles.scss';
+	import type { LayoutData } from './(header)/$types';
 
 	const { children, data } = $props<{
 		data: LayoutData;
