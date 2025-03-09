@@ -30,7 +30,7 @@
 	let balancePretty = $derived(
 		balance === undefined
 			? '-'
-			: (balance / 1_000000n).toString() + '.' + (balance % 1_000_000n).toString()
+			: wallet.amountToPretty(balance)
 	);
 </script>
 
@@ -53,7 +53,7 @@
 									<PillButton
 										text="Faucet"
 										className="px-14"
-										onClick={() => (minting = wallet.mint(10_000000n))}
+										onClick={() => (minting = wallet.mint())}
 									/>
 								{:else}
 									<PillButton text="Top up" className="px-14" onClick={() => goto('/topup')} />

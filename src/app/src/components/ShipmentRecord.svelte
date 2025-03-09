@@ -4,6 +4,7 @@
 	import { getDistance } from 'geolib';
 	import { Flame, PackageCheck, PackagePlus, PackageSearch } from 'lucide-svelte';
 	import Tooltip from './common/Tooltip.svelte';
+	import { wallet } from '$lib/wallet.svelte';
 
 	let { shipment, selected = $bindable() } = $props<{
 		shipment: PrintableShipment & { distance: number };
@@ -75,8 +76,8 @@
 		{/if}
 	</td>
 	<td class="text-gray-600">{category}</td>
-	<td class="font-medium text-gray-900">{shipment.info.price} ICP</td>
-	<td class="font-medium text-gray-900">{shipment.info.value} ICP</td>
+	<td class="font-medium text-gray-900">{wallet.amountToPretty(shipment.info.price)} ICP</td>
+	<td class="font-medium text-gray-900">{wallet.amountToPretty(shipment.info.value)} ICP</td>
 	<td class="font-medium text-gray-900">
 		<div class="flex flex-col items-center justify-center">
 			<p>{shipment.distance / 1000} km</p>

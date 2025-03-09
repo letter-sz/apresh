@@ -12,6 +12,7 @@
 	import bs58 from 'bs58';
 	import { get_secret_hash, static_keypair_generate } from 'wasm';
 	import type { PageData } from './$types';
+	import TokenInput from '$components/common/Inputs/TokenInput.svelte';
 
 	const {
 		data,
@@ -27,12 +28,12 @@
 		created?: () => void;
 	} = $props();
 
-	let value: number | undefined = $state(undefined);
+	let value: bigint | undefined = $state(undefined);
 	let size_category: 'Parcel' | 'Envelope' = $state('Parcel');
 	let max_height: number | undefined = $state(undefined);
 	let max_width: number | undefined = $state(undefined);
 	let max_depth: number | undefined = $state(undefined);
-	let price: number | undefined = $state(undefined);
+	let price: bigint | undefined = $state(undefined);
 	let name = $state('');
 
 	const createShipment = async (e: Event) => {
@@ -49,9 +50,8 @@
 			return;
 		}
 
-		const priceBigint = BigInt(price);
 
-		await wallet.approveDoubleFee(priceBigint);
+		await wallet.approveDoubleFee(price);
 		const secret = bs58.encode(crypto.getRandomValues(new Uint8Array(32)));
 		const channelKeys = static_keypair_generate();
 
@@ -63,16 +63,16 @@
 				size_category == 'Parcel'
 					? {
 							Parcel: {
-								max_height: BigInt(max_height),
-								max_width: BigInt(max_width),
-								max_depth: BigInt(max_depth)
+								max_height: max_height ? BigInt(max_height) : 0n,
+								max_width: max_width ? BigInt(max_width) : 0n,
+								max_depth: max_depth ? BigInt(max_depth) : 0n
 							}
 						}
 					: { Envelope: null },
 			destination: destinationLocation,
 			source: sourceLocation,
-			price: priceBigint,
-			value: BigInt(value)
+			price,
+			value
 		});
 
 		invalidate('shipments:shipper');
@@ -109,8 +109,8 @@
 	</h1>
 
 	<TextInput label="Name" id="name" name="name" bind:value={name} required />
-	<DecimalInput label="Value" id="value" name="value" bind:value required />
-	<DecimalInput label="Price" id="price" name="price" bind:value={price} required />
+	<TokenInput label="Value" id="value" name="value" bind:value required />
+	<TokenInput label="Price" id="price" name="price" bind:value={price} required />
 
 	<div class="flex justify-between space-x-6">
 		{@render locationButton('Source', sourceLocation, selectLocationWrapper)}

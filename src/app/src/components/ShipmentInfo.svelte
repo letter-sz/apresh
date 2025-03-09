@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { PrintableShipment } from '$declarations/contract/contract.did';
+	import { wallet } from '$lib/wallet.svelte';
 
 	let { shipment }: { shipment: PrintableShipment } = $props();
 	let parcel = $derived(Object.values(shipment.info.size_category)[0]);
@@ -17,12 +18,12 @@
 		<div class="col-span-3 grid grid-cols-2 border-b border-violet-200 py-4">
 			<div class="flex flex-col space-y-3 px-12 text-center">
 				<span class="text-base font-semibold text-orange-500">Price</span>
-				<span class="text-sm">{shipment.info.price} ICP</span>
+				<span class="text-sm">{wallet.amountToPretty(shipment.info.price)} ICP</span>
 			</div>
 
 			<div class="flex flex-col space-y-3 px-12 text-center">
 				<span class="text-base font-semibold text-orange-500">Value</span>
-				<span class="text-sm">{shipment.info.value} ICP</span>
+				<span class="text-sm">{wallet.amountToPretty(shipment.info.value)} ICP</span>
 			</div>
 		</div>
 
