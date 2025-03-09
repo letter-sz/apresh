@@ -1,0 +1,47 @@
+{
+	"landing": {
+		"header": {
+			"nav": {
+				"about": "About",
+				"contact": "Contact"
+			}
+		},
+		"welcome-section": {
+			"title": "Find a carrier for your shipment",
+			"description": "Apresh is a platform that allows you to find the best carrier for your shipment.",
+			"button": "Join now"
+		},
+		"select-role-section": {
+			"title": "Start using Apresh today!",
+			"description": "Choose your role and start using our platform.",
+			"shipper": {
+				"label": "Shipper",
+				"description": "Create orders and find the best carrier for your shipment."
+			},
+			"carrier": {
+				"label": "Carrier",
+				"description": "Find orders and earn money on shipping shipments."
+			},
+			"track": {
+				"label": "Tracking",
+				"description": "See the status of your shipments and when they will be with you."
+			}
+		},
+		"benefits-section": {
+			"title": "Why should you use Apresh?"
+		},
+		"footer": {
+			"copyright": "All rights reserved.",
+			"nav-1": {
+				"home": "Home",
+				"shipper": "Shipper",
+				"carrier": "Carrier",
+				"track": "Tracking"
+			},
+			"nav-2": {
+				"about": "About",
+				"contact": "Contact"
+			}
+		}
+	}
+}
