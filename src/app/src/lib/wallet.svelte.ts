@@ -9,6 +9,44 @@ import { invalidate } from '$app/navigation';
 import { CANISTER_ID_CONTRACT, mintBackend } from './canisters';
 
 class Wallet {
+	decimalPoints = 8n;
+
+	decimals() {
+		return Number(this.decimalPoints);
+	}
+
+	denominator() {
+		return 10n ** this.decimalPoints;
+	}
+
+	amountToPrettyFull(amount: bigint) {
+		const whole = amount / this.denominator();
+		const fractional = amount % this.denominator();
+		return `${whole.toString()}.${fractional.toString().padStart(Number(this.decimalPoints), '0')}`;
+	}
+
+	amountToPretty(amount: bigint) {
+		const pretty = this.amountToPrettyFull(amount);
+		return pretty.replace(/\.?0+$/, '');
+	}
+
+	amountFromPretty(amount: string) {
+		if (!amount.includes('.')) {
+			amount = amount + '.';
+		}
+		let [whole, fractional] = amount.split('.');
+
+		while (fractional.length < this.decimals()) {
+			fractional += '0';
+		}
+
+		if (whole.length === 0) {
+			whole = '0';
+		}
+
+		return BigInt(whole) * this.denominator() + BigInt(fractional);
+	}
+
 	async owner() {
 		return await connection.getIdentity();
 	}
@@ -59,7 +97,8 @@ class Wallet {
 		return balance;
 	}
 
-	async mint(amount: bigint) {
+	async mint() {
+		const amount = this.denominator() * 10n;
 		console.log('Minting', amount);
 		const tokenActor = mintBackend(fetch);
 		const owner = await connection.getIdentity();

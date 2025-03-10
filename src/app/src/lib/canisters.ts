@@ -12,7 +12,7 @@ import type { _SERVICE as _ICRC1_SERVICE } from '$declarations/icrc1_ledger_cani
 import { connectPlug } from './connector/plug';
 import type { Principal } from '@dfinity/principal';
 
-export const dev = () => false;
+export const dev = () => true;
 
 export const host = dev() ? `http://localhost:4943` : `https://icp0.io`;
 
