@@ -19,7 +19,7 @@
 				"description": "Twórz zlecenia i znajdź najlepszego przewoźnika dla swojej przesyłki."
 			},
 			"carrier": {
-				"label": "Carrier",
+				"label": "Przewoźnik",
 				"description": "Znajdź zlecenia i zarabiaj na przewozie przesyłek."
 			},
 			"track": {
