@@ -8,7 +8,6 @@
 		value?: string;
 		required?: boolean;
 		name: string;
-		className?: string;
 		id: string;
 		label: string;
 	}
@@ -19,7 +18,6 @@
 		value = $bindable(),
 		required,
 		name,
-		className: cls,
 		id,
 		label
 	}: DecimalInputProps = $props();
@@ -39,7 +37,6 @@
 			{placeholder}
 			{id}
 			{required}
-			on:keydown
 		/>
 	</div>
 </InputWrapper>
