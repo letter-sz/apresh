@@ -43,5 +43,26 @@
 				"contact": "Contact"
 			}
 		}
+	},
+	"contact-page": {
+		"title": "Contact us",
+		"description": "If you have any questions, feel free to contact us.",
+		"form": {
+			"name": "Name",
+			"email": "Email",
+			"interest-select": {
+				"label": "Select an interest",
+				"options": {
+					"business": "Business",
+					"technical": "Technical support",
+					"other": "Other"
+				}
+			},
+			"message": "Message",
+			"button": "Send message"
+		},
+		"contact-info": {
+			"title": "Contact information"
+		}
 	}
 }
