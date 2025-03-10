@@ -43,5 +43,26 @@
 				"contact": "Kontakt"
 			}
 		}
+	},
+	"contact-page": {
+		"title": "Skontaktuj się z nami",
+		"description": "Jeśli masz jakieś pytania, skontaktuj się z nami.",
+		"form": {
+			"name": "Imię",
+			"email": "Email",
+			"interest-select": {
+				"label": "Wybierz temat",
+				"options": {
+					"business": "Biznes",
+					"technical": "Wsparcie techniczne",
+					"other": "Inne"
+				}
+			},
+			"message": "Wiadomość",
+			"button": "Wyślij wiadomość"
+		},
+		"contact-info": {
+			"title": "Dane kontaktowe"
+		}
 	}
 }

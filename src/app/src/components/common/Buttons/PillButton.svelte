@@ -5,7 +5,7 @@
 		className = '',
 		disabled = false
 	} = $props<{
-		onClick?: () => void;
+		onClick?: (e: Event) => void;
 		text: string;
 		className?: string;
 		disabled?: boolean;
