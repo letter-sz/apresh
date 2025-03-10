@@ -1,0 +1,47 @@
+{
+	"landing": {
+		"header": {
+			"nav": {
+				"about": "O nas",
+				"contact": "Kontakt"
+			}
+		},
+		"welcome-section": {
+			"title": "Znajdź przewoźnika dla swojej przesyłki",
+			"description": "Apresh to platforma, która pozwala na znalezienie najlepszego przewoźnika dla Twojej przesyłki.",
+			"button": "Dołącz teraz"
+		},
+		"select-role-section": {
+			"title": "Zacznij korzystać z Apresh już dziś!",
+			"description": "Wybierz swoją rolę i zacznij korzystać z naszej platformy.",
+			"shipper": {
+				"label": "Nadawca",
+				"description": "Twórz zlecenia i znajdź najlepszego przewoźnika dla swojej przesyłki."
+			},
+			"carrier": {
+				"label": "Przewoźnik",
+				"description": "Znajdź zlecenia i zarabiaj na przewozie przesyłek."
+			},
+			"track": {
+				"label": "Śledź",
+				"description": "Zobacz status swoich przesyłek i kiedy będą u Ciebie."
+			}
+		},
+		"benefits-section": {
+			"title": "Dlaczego warto korzystać z Apresh?"
+		},
+		"footer": {
+			"copyright": "Wszystkie prawa zastrzeżone.",
+			"nav-1": {
+				"home": "Strona główna",
+				"shipper": "Nadawca",
+				"carrier": "Przewoźnik",
+				"track": "Śledzenie"
+			},
+			"nav-2": {
+				"about": "O nas",
+				"contact": "Kontakt"
+			}
+		}
+	}
+}

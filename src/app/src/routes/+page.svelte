@@ -11,6 +11,7 @@
 	import Header from '$components/landing/Header.svelte';
 	import DottedMap from 'dotted-map';
 	import { Package, PackageSearch, Truck } from 'lucide-svelte';
+	import { _ } from 'svelte-i18n';
 	import { fade } from 'svelte/transition';
 	import '../styles.scss';
 
@@ -45,30 +46,29 @@
 		}
 	}
 
-	const cardData: CardData[] = [
+	const cardData: CardData[] = $derived([
 		{
-			title: 'Nadaj',
+			title: $_('landing.select-role-section.shipper.label'),
 			role: 'shipper',
-			description: 'Twórz zlecenia i znajdź najlepszego przewoźnika dla swojej przesyłki.',
+			description: $_('landing.select-role-section.shipper.description'),
 			icon: Package
 		},
 		{
-			title: 'Przewieź',
+			title: $_('landing.select-role-section.carrier.label'),
 			role: 'carrier',
-			description: 'Znajdź zlecenia i przewieź wybrane przesyłki.',
+			description: $_('landing.select-role-section.carrier.description'),
 			icon: Truck
 		},
 		{
-			title: 'Śledź',
+			title: $_('landing.select-role-section.track.label'),
 			role: 'customer',
-			description: 'Zobacz status swoich przesyłek i kiedy będą u Ciebie.',
+			description: $_('landing.select-role-section.track.description'),
 			icon: PackageSearch
 		}
-	];
+	]);
 
 	let activeElement = $state<number>(1);
 
-	// Function to handle hover effects
 	function handleHover(index: number) {
 		activeElement = index;
 	}
@@ -86,10 +86,9 @@
 		>
 			<div class="clip-diagonal flex h-screen w-[98%] flex-col justify-center bg-white">
 				<div class="w-[80%] px-28">
-					<h1 class="px-20 text-5xl font-bold">Znajdź przewoźnika dla swojej przesyłki</h1>
-					<p class="mt-6 px-20 text-neutral-600">
-						Apresh to platforma, która pozwala na znalezienie najlepszego przewoźnika dla Twojej
-						przesyłki.
+					<h1 class="px-20 text-5xl font-bold">{$_('landing.welcome-section.title')}</h1>
+					<p class="mt-6 px-20 text-lg text-neutral-600">
+						{$_('landing.welcome-section.description')}
 					</p>
 
 					<button
@@ -98,11 +97,11 @@
 							selectedCard ? `bg-${roleToColor(selectedCard)}-500` : ''
 						]}
 						onclick={() => {
-							const optionSection = document.getElementById('option-section');
+							const optionSection = document.getElementById('select-role-section');
 							optionSection?.scrollIntoView({ behavior: 'smooth' });
 						}}
 					>
-						Dołącz teraz
+						{$_('landing.welcome-section.button')}
 					</button>
 				</div>
 			</div>
@@ -111,13 +110,11 @@
 	</section>
 
 	<section
-		id="option-section"
+		id="select-role-section"
 		class="relative flex h-screen w-full flex-col items-center justify-center"
 	>
-		<h1 class="text-center text-3xl font-bold">Zacznij korzystać z Apresh już dziś!</h1>
-		<p class="mt-4 text-center text-neutral-500">
-			Wybierz swoją rolę i zacznij korzystać z naszej platformy.
-		</p>
+		<h1 class="text-center text-3xl font-bold">{$_('landing.select-role-section.title')}</h1>
+		<p class="mt-4 text-center text-neutral-500">{$_('landing.select-role-section.description')}</p>
 
 		<div class="mt-20 flex w-[70%] justify-center">
 			<div class="flex flex-1 flex-col space-y-6 px-40">
@@ -181,9 +178,9 @@
 		</div>
 	</section>
 
-	<section class="container mx-auto h-screen px-52">
+	<section id="benefits-section" class="container mx-auto h-screen px-52">
 		<div class="flex h-full flex-col items-center justify-center space-y-10">
-			<h1 class="mb-10 text-center text-3xl font-bold">Dlaczego warto korzystać z Apresh?</h1>
+			<h1 class="mb-10 text-center text-3xl font-bold">{$_('landing.benefits-section.title')}</h1>
 
 			<div
 				class="flex h-[650px] w-full items-center space-x-14 transition-all duration-[1000ms] ease-in-out"
@@ -310,7 +307,7 @@
 				Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla nec dui at nunc ullamcorper.
 			</p>
 
-			<p class="text-sm text-neutral-500">© 2021 Apresh. All rights reserved.</p>
+			<p class="text-sm text-neutral-500">© 2025 Apresh. {$_('landing.footer.copyright')}</p>
 		</div>
 
 		<div class="flex flex-1 justify-end">
@@ -323,17 +320,17 @@
 					</li>
 					<li>
 						<a href="/shipper" class="text-sm transition-all duration-300 hover:text-orange-500">
-							Shipper
+							{$_('landing.footer.nav-1.shipper')}
 						</a>
 					</li>
 					<li>
 						<a href="/carrier" class="text-sm transition-all duration-300 hover:text-orange-500">
-							Carrier
+							{$_('landing.footer.nav-1.carrier')}
 						</a>
 					</li>
 					<li>
 						<a href="/customer" class="text-sm transition-all duration-300 hover:text-orange-500">
-							Customer
+							{$_('landing.footer.nav-1.track')}
 						</a>
 					</li>
 				</ul>
@@ -345,12 +342,12 @@
 				<ul class="flex flex-col space-y-2 text-neutral-700">
 					<li>
 						<a href="/about" class="text-sm transition-all duration-300 hover:text-orange-500">
-							About
+							{$_('landing.footer.nav-2.about')}
 						</a>
 					</li>
 					<li>
 						<a href="/contact" class="text-sm transition-all duration-300 hover:text-orange-500">
-							Contact
+							{$_('landing.footer.nav-2.contact')}
 						</a>
 					</li>
 				</ul>
