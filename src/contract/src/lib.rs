@@ -1,4 +1,7 @@
+mod migration;
 mod refund_log;
+mod stable_memory;
+mod stable_state;
 mod transfer;
 mod utils;
 
@@ -32,6 +35,7 @@ thread_local! {
     pub static ADMIN: RefCell<Principal> = const{ RefCell::new(Principal::anonymous()) };
     pub static WHITELIST: RefCell<Vec<Principal>> = RefCell::default();
     pub static REFUND_LOG: RefCell<RefundLog> = RefCell::new(RefundLog::default());
+    pub static CANISTER_LOCKED: RefCell<bool> = RefCell::new(false);
 }
 
 #[init]
@@ -453,6 +457,49 @@ fn shipments() -> Vec<PrintableShipment> {
 #[query]
 fn shipment(shipment_id: u64) -> Option<PrintableShipment> {
     STATE.with_borrow(|state| state.shipment(shipment_id).map(PrintableShipment::from))
+}
+
+#[update(name = "lockCanister")]
+fn lock_canister() {
+    assert_admin();
+    CANISTER_LOCKED.with_borrow_mut(|locked| *locked = true);
+}
+
+#[update(name = "unlockCanister")]
+fn unlock_canister() {
+    assert_admin();
+    CANISTER_LOCKED.with_borrow_mut(|locked| *locked = false);
+}
+
+#[update(name = "migrateShippers")]
+fn migrate_shippers() {
+    assert_admin();
+    migration::migrate_shippers();
+}
+
+#[update(name = "migrateCarriers")]
+fn migrate_carriers() {
+    assert_admin();
+    migration::migrate_carriers();
+}
+
+#[update(name = "migrateShipments")]
+fn migrate_shipments() {
+    assert_admin();
+    migration::migrate_shipments();
+}
+
+#[ic_cdk::post_upgrade]
+pub fn post_upgrade() {
+    // lock until the state is explicitly unlocked
+    CANISTER_LOCKED.with_borrow_mut(|locked| {
+        *locked = true;
+    });
+
+    // this can be overkill
+    migration::load_shippers();
+    migration::load_carriers();
+    migration::load_shipments();
 }
 
 ic_cdk::export_candid!();

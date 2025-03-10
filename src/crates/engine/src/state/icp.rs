@@ -8,6 +8,8 @@ use crate::{
     models::shipment::Shipment,
 };
 
+use super::CanisterState;
+
 impl Storable for Shipment {
     const BOUND: Bound = Bound::Unbounded;
 
@@ -33,6 +35,18 @@ impl Storable for Shipper {
 }
 
 impl Storable for Carrier {
+    const BOUND: Bound = Bound::Unbounded;
+
+    fn to_bytes(&self) -> Cow<[u8]> {
+        Cow::Owned(Encode!(self).unwrap())
+    }
+
+    fn from_bytes(bytes: Cow<[u8]>) -> Self {
+        Decode!(bytes.as_ref(), Self).unwrap()
+    }
+}
+
+impl Storable for CanisterState {
     const BOUND: Bound = Bound::Unbounded;
 
     fn to_bytes(&self) -> Cow<[u8]> {

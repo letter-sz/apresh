@@ -1,19 +1,10 @@
-use crate::transfer::Refund;
-use candid::Principal;
-use ic_stable_structures::{
-    memory_manager::{MemoryId, MemoryManager, VirtualMemory},
-    DefaultMemoryImpl, Log,
+use crate::{
+    stable_memory::{REFUND_LOG_DATA_MEMORY_ID, REFUND_LOG_INDEX_MEMORY_ID},
+    stable_state::get_memory,
+    transfer::Refund,
 };
-use std::cell::RefCell;
-
-thread_local! {
-  static MEMORY_MANAGER: RefCell<MemoryManager<DefaultMemoryImpl>> = RefCell::new(
-      MemoryManager::init(DefaultMemoryImpl::default())
-  );
-}
-
-const REFUND_LOG_INDEX_MEMORY_ID: MemoryId = MemoryId::new(0);
-const REFUND_LOG_DATA_MEMORY_ID: MemoryId = MemoryId::new(1);
+use candid::Principal;
+use ic_stable_structures::{memory_manager::VirtualMemory, DefaultMemoryImpl, Log};
 
 pub struct RefundLog(
     Log<Refund, VirtualMemory<DefaultMemoryImpl>, VirtualMemory<DefaultMemoryImpl>>,
@@ -21,8 +12,8 @@ pub struct RefundLog(
 
 impl Default for RefundLog {
     fn default() -> Self {
-        let index_mem = MEMORY_MANAGER.with(|m| m.borrow().get(REFUND_LOG_INDEX_MEMORY_ID));
-        let data_mem = MEMORY_MANAGER.with(|m| m.borrow().get(REFUND_LOG_DATA_MEMORY_ID));
+        let index_mem = get_memory(REFUND_LOG_INDEX_MEMORY_ID);
+        let data_mem = get_memory(REFUND_LOG_DATA_MEMORY_ID);
 
         Self(Log::init(index_mem, data_mem).unwrap())
     }
