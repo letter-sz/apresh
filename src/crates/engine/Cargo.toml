@@ -13,3 +13,8 @@ thiserror = { workspace = true }
 anyhow = { workspace = true }
 sha2 = { workspace = true }
 hex = { workspace = true }
+ic-stable-structures = { workspace = true, optional = true }
+
+[features]
+icp = ["dep:ic-stable-structures"]
+default = []

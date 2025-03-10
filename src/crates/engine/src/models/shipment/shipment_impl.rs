@@ -123,6 +123,8 @@ impl ShipmentStatus {
     }
 }
 
+#[cfg(feature = "icp")]
+#[derive(CandidType)]
 // Shipment, but without principals, so JSON-able
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Shipment {

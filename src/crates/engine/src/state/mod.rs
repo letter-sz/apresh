@@ -1,6 +1,9 @@
 mod actor_collection;
 mod shipments;
 
+#[cfg(feature = "icp")]
+mod icp;
+
 use crate::{
     actors::{carrier::Carrier, shipper::Shipper},
     models::shipment::{Shipment, ShipmentId},

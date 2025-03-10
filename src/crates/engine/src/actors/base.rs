@@ -1,6 +1,6 @@
 use crate::{models::shipment::ShipmentId, ActorId};
 
-use candid::Principal;
+use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 
 /// Base structure that provides common functionality for all actors in the system.
@@ -15,6 +15,8 @@ use serde::{Deserialize, Serialize};
 /// - `active_shipments`: List of shipments currently in progress
 /// - `shipments_history`: Archive of completed or cancelled shipments
 ///
+#[cfg(feature = "icp")]
+#[derive(CandidType)]
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct ActorBase {
     /// The unique principal identifier of the actor.
