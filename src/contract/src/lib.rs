@@ -5,6 +5,8 @@ mod stable_state;
 mod transfer;
 mod utils;
 
+pub use transfer::consts;
+
 #[cfg(not(feature = "no-mocks"))]
 mod mock_data;
 

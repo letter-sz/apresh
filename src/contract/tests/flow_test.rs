@@ -1,122 +1,18 @@
-use candid::{decode_one, encode_one, Principal};
-use candid::{CandidType, Encode};
+use candid::{decode_one, encode_one, Encode, Principal};
+use contract::consts::THIS_CANISTER_ID;
 use engine::models::shipment::{PrintableShipment, ShipmentInfo, ShipmentLocation, SizeCategory};
 use engine::utils::hash_secret;
-use pocket_ic::{PocketIc, PocketIcBuilder, WasmResult};
+use pocket_ic::{PocketIc, WasmResult};
 use rstest::{fixture, rstest};
-use std::fs;
+
+use common::*;
+
+mod common;
 
 const INIT_CYCLES: u128 = 2_000_000_000_000;
-const LEDGER_CANISTER_ID: &str = "mxzaz-hqaaa-aaaar-qaada-cai";
 const TEST_PRINCIPAL: Principal = Principal::from_slice(&[1, 2, 3, 4]);
 const POOR_PRINCIPAL: Principal = Principal::from_slice(&[5, 6, 7, 8]);
 const MINTER_PRINCIPAL: Principal = Principal::from_slice(&[9, 10, 11, 12]);
-
-#[derive(CandidType)]
-struct Metadata {
-    key: String,
-    value: String,
-}
-
-#[derive(CandidType)]
-struct InitArgs {
-    minting_account: Account,
-    transfer_fee: u128,
-    token_symbol: String,
-    token_name: String,
-    metadata: Vec<(String, MetadataValue)>,
-    initial_balances: Vec<(Account, u128)>,
-    archive_options: ArchiveOptions,
-    feature_flags: Option<FeatureFlags>,
-}
-
-#[derive(CandidType)]
-struct Account {
-    owner: Principal,
-    subaccount: Option<Vec<u8>>,
-}
-
-#[derive(CandidType)]
-#[allow(dead_code)]
-enum MetadataValue {
-    Nat(u128),
-    Int(i128),
-    Text(String),
-    Blob(Vec<u8>),
-}
-
-#[derive(CandidType)]
-struct ArchiveOptions {
-    num_blocks_to_archive: u64,
-    trigger_threshold: u64,
-    controller_id: Principal,
-}
-
-#[derive(CandidType)]
-struct FeatureFlags {
-    icrc2: bool,
-}
-
-#[derive(CandidType)]
-enum LedgerArg {
-    Init(InitArgs),
-}
-
-#[derive(CandidType)]
-struct IcrcAccount {
-    owner: Principal,
-    subaccount: Option<Vec<u8>>,
-}
-
-#[derive(CandidType)]
-struct IcrcTransferArg {
-    from_subaccount: Option<Vec<u8>>,
-    to: IcrcAccount,
-    amount: u128,
-    fee: Option<u128>,
-    memo: Option<Vec<u8>>,
-    created_at_time: Option<u64>,
-}
-
-#[derive(CandidType)]
-struct ApproveArgs {
-    spender: Account,
-    amount: u128,
-    fee: Option<u128>,
-    memo: Option<Vec<u8>>,
-    from_subaccount: Option<Vec<u8>>,
-    created_at_time: Option<u64>,
-    expected_allowance: Option<u128>,
-    expires_at: Option<u64>,
-}
-
-fn get_ledger_init_args() -> Vec<u8> {
-    let init = LedgerArg::Init(InitArgs {
-        minting_account: Account {
-            owner: MINTER_PRINCIPAL,
-            subaccount: None,
-        },
-        transfer_fee: 10_000,
-        token_symbol: "ICRC1".to_string(),
-        token_name: "L-ICRC1".to_string(),
-        metadata: Vec::new(),
-        initial_balances: vec![(
-            Account {
-                owner: TEST_PRINCIPAL,
-                subaccount: None,
-            },
-            10_000_000_000,
-        )],
-        archive_options: ArchiveOptions {
-            num_blocks_to_archive: 1000,
-            trigger_threshold: 2000,
-            controller_id: TEST_PRINCIPAL,
-        },
-        feature_flags: Some(FeatureFlags { icrc2: true }),
-    });
-
-    encode_one(init).unwrap()
-}
 
 // fn mint_tokens(
 //     pic: &PocketIc,
@@ -148,60 +44,6 @@ fn get_ledger_init_args() -> Vec<u8> {
 //     }
 // }
 
-struct TestEnvironment {
-    pic: PocketIc,
-    contract_id: Principal,
-}
-
-#[fixture]
-fn test_env() -> TestEnvironment {
-    let pic = PocketIcBuilder::new()
-        .with_nns_subnet()
-        .with_application_subnet()
-        .build();
-
-    let ledger_id = Principal::from_text(LEDGER_CANISTER_ID).unwrap();
-    let ledger_init = get_ledger_init_args();
-    let ledger_wasm = fs::read("scripts/icrc1_ledger.wasm.gz").expect("Failed to read ledger wasm");
-
-    println!("Initializing Ledger ID: {}", ledger_id);
-    pic.create_canister_with_id(None, None, ledger_id).unwrap();
-    pic.add_cycles(ledger_id, INIT_CYCLES);
-    pic.install_canister(ledger_id, ledger_wasm, ledger_init, None);
-
-    // Create and install the contract
-    let contract_id = pic.create_canister();
-    pic.add_cycles(contract_id, INIT_CYCLES);
-    let contract_wasm = fs::read("../../target/wasm32-unknown-unknown/release/contract.wasm")
-        .expect("Failed to read contract wasm");
-    pic.install_canister(contract_id, contract_wasm, vec![], None);
-
-    // Approve contract to spend tokens
-    let approve_args = ApproveArgs {
-        spender: Account {
-            owner: contract_id,
-            subaccount: None,
-        },
-        amount: 1_000_000_000_000, // Large allowance
-        fee: None,
-        memo: None,
-        from_subaccount: None,
-        created_at_time: None,
-        expected_allowance: None,
-        expires_at: None,
-    };
-
-    pic.update_call(
-        ledger_id,
-        TEST_PRINCIPAL,
-        "icrc2_approve",
-        encode_one(approve_args).unwrap(),
-    )
-    .expect("Failed to approve");
-
-    TestEnvironment { pic, contract_id }
-}
-
 fn query_canister(
     pic: &PocketIc,
     contract_id: Principal,
@@ -229,13 +71,13 @@ fn update_canister(
 }
 
 struct TestEnvironmentWithShipment {
-    test_env: TestEnvironment,
+    pic: PocketIc,
     shipment_id: u64,
 }
 
 #[fixture]
 fn test_shipment(
-    test_env: TestEnvironment,
+    pic: PocketIc,
     #[default("Test Package")] name: String,
 ) -> TestEnvironmentWithShipment {
     let customer_name = Some("Test Customer".to_string());
@@ -253,8 +95,8 @@ fn test_shipment(
     );
 
     let result = update_canister(
-        &test_env.pic,
-        test_env.contract_id,
+        &pic,
+        Principal::from_text(THIS_CANISTER_ID).unwrap(),
         "createShipment",
         Encode!(
             &customer_name,
@@ -269,7 +111,7 @@ fn test_shipment(
 
     let res: Result<u64, String> = decode_one(&result).unwrap();
     TestEnvironmentWithShipment {
-        test_env,
+        pic,
         shipment_id: res.unwrap(),
     }
 }
@@ -284,16 +126,12 @@ fn get_reply_bytes(result: WasmResult) -> Vec<u8> {
 
 #[rstest]
 fn test_create_shipment(test_shipment: TestEnvironmentWithShipment) {
-    let TestEnvironmentWithShipment {
-        test_env,
-        shipment_id,
-    } = test_shipment;
-    let TestEnvironment { pic, contract_id } = test_env;
+    let TestEnvironmentWithShipment { pic, shipment_id } = test_shipment;
 
     // Verify shipment was created
     let result = query_canister(
         &pic,
-        contract_id,
+        Principal::from_text(THIS_CANISTER_ID).unwrap(),
         "shipment",
         encode_one(shipment_id).unwrap(),
         TEST_PRINCIPAL,
@@ -310,13 +148,7 @@ fn test_create_shipment(test_shipment: TestEnvironmentWithShipment) {
 #[case(0_u64, 1_u64)]
 #[case(0_u64, 1_000_000_000_u64)]
 #[rstest]
-fn test_create_shipment_with_zero_funds(
-    test_env: TestEnvironment,
-    #[case] value: u64,
-    #[case] price: u64,
-) {
-    let TestEnvironment { pic, contract_id } = test_env;
-
+fn test_create_shipment_with_zero_funds(pic: PocketIc, #[case] value: u64, #[case] price: u64) {
     let customer_name = Some("Poor Customer".to_string());
     let shipment_name = "Unwanted Package".to_string();
     let secret = b"test_secret";
@@ -334,7 +166,7 @@ fn test_create_shipment_with_zero_funds(
 
     let result = update_canister(
         &pic,
-        contract_id,
+        Principal::from_text(THIS_CANISTER_ID).unwrap(),
         "createShipment",
         Encode!(
             &customer_name,
@@ -365,7 +197,7 @@ fn test_create_shipment_with_zero_funds(
     // Query all shipments to verify none were created
     let result = query_canister(
         &pic,
-        contract_id,
+        Principal::from_text(THIS_CANISTER_ID).unwrap(),
         "shipments",
         encode_one(()).unwrap(),
         POOR_PRINCIPAL,
@@ -381,7 +213,7 @@ fn test_create_shipment_with_zero_funds(
     // Also verify the specific shipment doesn't exist
     let result = query_canister(
         &pic,
-        contract_id,
+        Principal::from_text(THIS_CANISTER_ID).unwrap(),
         "shipment",
         encode_one(expected_shipment_id).unwrap(),
         POOR_PRINCIPAL,
@@ -395,11 +227,10 @@ fn test_create_shipment_with_zero_funds(
 }
 
 #[rstest]
-fn test_get_transfer_fee(test_env: TestEnvironment) {
-    let TestEnvironment { pic, contract_id } = test_env;
+fn test_get_transfer_fee(pic: PocketIc) {
     let result = pic
         .query_call(
-            contract_id,
+            Principal::from_text(THIS_CANISTER_ID).unwrap(),
             Principal::anonymous(),
             "getTransferFee",
             encode_one(()).unwrap(),
