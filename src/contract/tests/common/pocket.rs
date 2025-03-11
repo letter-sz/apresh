@@ -5,7 +5,7 @@ use rstest::fixture;
 
 use crate::{Account, ApproveArgs, INIT_CYCLES, MINTER_PRINCIPAL, TEST_PRINCIPAL};
 
-use super::{ArchiveOptions, FeatureFlags, InitArgs, LedgerArg};
+use super::{ArchiveOptions, FeatureFlags, InitArgs, LedgerArg, CONTRACT_WASM, LEDGER_WASM};
 
 #[fixture]
 pub fn pic() -> PocketIc {
@@ -14,15 +14,12 @@ pub fn pic() -> PocketIc {
         .with_application_subnet()
         .build();
 
-    let contract_wasm =
-        include_bytes!("../../../../target/wasm32-unknown-unknown/release/contract.wasm").to_vec();
-
     // Create and install the contract
     let contract_id = Principal::from_text(THIS_CANISTER_ID).unwrap();
     pic.create_canister_with_id(None, None, contract_id)
         .unwrap();
     pic.add_cycles(contract_id, INIT_CYCLES);
-    pic.install_canister(contract_id, contract_wasm, vec![], None);
+    pic.install_canister(contract_id, CONTRACT_WASM.to_vec(), vec![], None);
 
     init_ledger(&pic, contract_id);
 
@@ -54,16 +51,13 @@ fn init_ledger(pic: &PocketIc, contract_id: Principal) {
         feature_flags: Some(FeatureFlags { icrc2: true }),
     });
 
-    // Load the wasm files for canisters
-    let ledger_wasm = include_bytes!("../../scripts/icrc1_ledger.wasm.gz").to_vec();
-
     // Create and install the ledger
     let ledger_id = Principal::from_text(LEDGER_CANISTER_ID).unwrap();
     pic.create_canister_with_id(None, None, ledger_id).unwrap();
     pic.add_cycles(ledger_id, INIT_CYCLES);
     pic.install_canister(
         ledger_id,
-        ledger_wasm,
+        LEDGER_WASM.to_vec(),
         encode_one(ledger_init).unwrap(),
         None,
     );

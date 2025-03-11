@@ -2,17 +2,12 @@ use candid::{decode_one, encode_one, Encode, Principal};
 use contract::consts::THIS_CANISTER_ID;
 use engine::models::shipment::{PrintableShipment, ShipmentInfo, ShipmentLocation, SizeCategory};
 use engine::utils::hash_secret;
-use pocket_ic::{PocketIc, WasmResult};
-use rstest::{fixture, rstest};
+use pocket_ic::PocketIc;
+use rstest::rstest;
 
 use common::*;
 
 mod common;
-
-const INIT_CYCLES: u128 = 2_000_000_000_000;
-const TEST_PRINCIPAL: Principal = Principal::from_slice(&[1, 2, 3, 4]);
-const POOR_PRINCIPAL: Principal = Principal::from_slice(&[5, 6, 7, 8]);
-const MINTER_PRINCIPAL: Principal = Principal::from_slice(&[9, 10, 11, 12]);
 
 // fn mint_tokens(
 //     pic: &PocketIc,
@@ -43,86 +38,6 @@ const MINTER_PRINCIPAL: Principal = Principal::from_slice(&[9, 10, 11, 12]);
 //         _ => Err("Failed to mint tokens".to_string()),
 //     }
 // }
-
-fn query_canister(
-    pic: &PocketIc,
-    contract_id: Principal,
-    method: &str,
-    args: Vec<u8>,
-    principal: Principal,
-) -> Vec<u8> {
-    let result = pic
-        .query_call(contract_id, principal, method, args)
-        .unwrap();
-    get_reply_bytes(result)
-}
-
-fn update_canister(
-    pic: &PocketIc,
-    contract_id: Principal,
-    method: &str,
-    args: Vec<u8>,
-    principal: Principal,
-) -> Vec<u8> {
-    let result = pic
-        .update_call(contract_id, principal, method, args)
-        .unwrap();
-    get_reply_bytes(result)
-}
-
-struct TestEnvironmentWithShipment {
-    pic: PocketIc,
-    shipment_id: u64,
-}
-
-#[fixture]
-fn test_shipment(
-    pic: PocketIc,
-    #[default("Test Package")] name: String,
-) -> TestEnvironmentWithShipment {
-    let customer_name = Some("Test Customer".to_string());
-    let shipment_name = name;
-    let secret = b"test_secret";
-    let hashed_secret = hash_secret(secret);
-    let channel_key = vec![0u8; 32];
-
-    let shipment_info = ShipmentInfo::new(
-        100, // price
-        10,  // value
-        ShipmentLocation::new("Origin".to_string(), 40.7128, -74.0060),
-        ShipmentLocation::new("Destination".to_string(), 34.0522, -118.2437),
-        SizeCategory::Envelope,
-    );
-
-    let result = update_canister(
-        &pic,
-        Principal::from_text(THIS_CANISTER_ID).unwrap(),
-        "createShipment",
-        Encode!(
-            &customer_name,
-            &shipment_name,
-            &hashed_secret,
-            &channel_key,
-            &shipment_info
-        )
-        .unwrap(),
-        TEST_PRINCIPAL,
-    );
-
-    let res: Result<u64, String> = decode_one(&result).unwrap();
-    TestEnvironmentWithShipment {
-        pic,
-        shipment_id: res.unwrap(),
-    }
-}
-
-// Helper function to extract bytes from WasmResult
-fn get_reply_bytes(result: WasmResult) -> Vec<u8> {
-    match result {
-        WasmResult::Reply(bytes) => bytes,
-        _ => panic!("Unexpected result type"),
-    }
-}
 
 #[rstest]
 fn test_create_shipment(test_shipment: TestEnvironmentWithShipment) {
