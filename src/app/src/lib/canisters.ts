@@ -12,7 +12,7 @@ import { AuthClient } from '@dfinity/auth-client';
 import type { Principal } from '@dfinity/principal';
 import { connectPlug } from './connector/plug';
 
-export const dev = () => false;
+export const dev = () => true;
 
 export const host = dev() ? `http://localhost:4943` : `https://icp0.io`;
 
