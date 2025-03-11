@@ -1,5 +1,5 @@
 <script lang="ts">
-	import '$lib/i18n';
+	import { locale } from '$lib/i18n';
 	import type { Snippet } from 'svelte';
 	import { onMount } from 'svelte';
 	import { init } from 'wasm';
@@ -12,6 +12,7 @@
 	}>();
 
 	onMount(() => {
+		locale.set('en');
 		init();
 	});
 </script>

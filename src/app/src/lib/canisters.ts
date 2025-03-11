@@ -5,14 +5,14 @@ import {
 } from '$declarations/icrc1_ledger_canister';
 import { canisterId as localIdentityCanisterId } from '$declarations/internet_identity';
 
-import { AuthClient } from '@dfinity/auth-client';
-import { type ActorSubclass } from '@dfinity/agent';
 import type { _SERVICE } from '$declarations/contract/contract.did';
 import type { _SERVICE as _ICRC1_SERVICE } from '$declarations/icrc1_ledger_canister/icrc1_ledger_canister.did';
-import { connectPlug } from './connector/plug';
+import { type ActorSubclass } from '@dfinity/agent';
+import { AuthClient } from '@dfinity/auth-client';
 import type { Principal } from '@dfinity/principal';
+import { connectPlug } from './connector/plug';
 
-export const dev = () => true;
+export const dev = () => false;
 
 export const host = dev() ? `http://localhost:4943` : `https://icp0.io`;
 
@@ -60,7 +60,9 @@ export const connect = async (allowReconnect: boolean = true): Promise<IConnecti
 		await new Promise((resolve) => {
 			authClient.login({
 				// identityProvider: `http://${identityCanisterId}.localhost:4943/`, // 'https://identity.ic0.app'
-				identityProvider: dev() ? `http://${localIdentityCanisterId}.localhost:4943/` : 'https://identity.ic0.app',
+				identityProvider: dev()
+					? `http://${localIdentityCanisterId}.localhost:4943/`
+					: 'https://identity.ic0.app',
 				onSuccess: () => resolve(undefined)
 			});
 		});
@@ -86,7 +88,9 @@ const initActors = (authClient: AuthClient): IConnection => {
 		}
 	});
 
-	console.log(`Connected to backend as ${identity.getPrincipal().toText()} in ${dev() ? 'dev' : 'prod'} mode`);
+	console.log(
+		`Connected to backend as ${identity.getPrincipal().toText()} in ${dev() ? 'dev' : 'prod'} mode`
+	);
 	const principal = identity.getPrincipal();
 
 	return { actor, tokenActor, identity: principal };
