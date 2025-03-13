@@ -1,15 +1,14 @@
-use candid::{decode_one, encode_one, Encode, Principal};
+use candid::{decode_one, encode_one, Principal};
 use contract::consts::THIS_CANISTER_ID;
-use engine::models::shipment::{PrintableShipment, ShipmentInfo, ShipmentLocation, SizeCategory};
-use engine::utils::hash_secret;
-use pocket_ic::{PocketIc, WasmResult};
-use rstest::{fixture, rstest};
+use engine::models::shipment::PrintableShipment;
+use pocket_ic::PocketIc;
+use rstest::rstest;
 
 use common::*;
 
 mod common;
 
-fn migrate_sequence(pic: &PocketIc, principal: Principal) {
+fn migrate_sequence(pic: &PocketIc) {
     // Verify shipment was created
     update_canister(
         &pic,
@@ -48,7 +47,7 @@ fn migrate_sequence(pic: &PocketIc, principal: Principal) {
 fn test_create_shipment(test_shipment: TestEnvironmentWithShipment) {
     let TestEnvironmentWithShipment { pic, shipment_id } = test_shipment;
 
-    migrate_sequence(&pic, TEST_PRINCIPAL);
+    migrate_sequence(&pic);
 
     pic.upgrade_canister(
         Principal::from_text(THIS_CANISTER_ID).unwrap(),

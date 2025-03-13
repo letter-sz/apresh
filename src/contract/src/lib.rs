@@ -15,8 +15,10 @@ use std::cell::RefCell;
 use apresh_qr::{generate, QrCodeOptions};
 use candid::Principal;
 use engine::{
-    actors::carrier::Carrier,
-    models::shipment::{Channel, ChannelKey, PrintableShipment, ShipmentInfo, ShipmentStatus},
+    actors::{carrier::Carrier, shipper::Shipper},
+    models::shipment::{
+        Channel, ChannelKey, PrintableShipment, Shipment, ShipmentInfo, ShipmentStatus,
+    },
     operations::{
         AddMessageOp, BuyShipmentOp, CancelShipmentOp, CreateShipmentOp, FinalizeShipmentOp,
         ReadMessageOp, RegisterActorOp, StateOp, ValidatedStateOp,
@@ -505,3 +507,11 @@ pub fn post_upgrade() {
 }
 
 ic_cdk::export_candid!();
+
+// At this stage there is a risk of deadlocking migration. This is a last resort solution to avoid losing data.
+#[query]
+pub fn admin_migrate_out() -> (Vec<Shipper>, Vec<Carrier>, Vec<Shipment>, u64) {
+    assert_admin();
+
+    STATE.with_borrow(|state| state.admin_migrate_out())
+}

@@ -21,7 +21,6 @@ pub struct CanisterState {
     shipment_counter: u64,
 }
 
-
 impl CanisterState {
     pub fn set_shipment_counter(&mut self, counter: u64) {
         self.shipment_counter = counter;
@@ -178,5 +177,17 @@ impl CanisterCollections for CanisterState {
     #[cfg(feature = "icp")]
     fn shipments_mut(&mut self) -> &mut Shipments {
         &mut self.shipments
+    }
+}
+
+#[cfg(feature = "icp")]
+impl CanisterState {
+    pub fn admin_migrate_out(&self) -> (Vec<Shipper>, Vec<Carrier>, Vec<Shipment>, u64) {
+        (
+            self.shippers.values().cloned().collect(),
+            self.carriers.values().cloned().collect(),
+            self.shipments.values().cloned().collect(),
+            self.shipment_counter,
+        )
     }
 }

@@ -1,9 +1,9 @@
-use candid::{decode_one, encode_one, Encode, Principal};
+use candid::{decode_one, Encode, Principal};
 use contract::consts::THIS_CANISTER_ID;
-use engine::models::shipment::{PrintableShipment, ShipmentInfo, ShipmentLocation, SizeCategory};
+use engine::models::shipment::{ShipmentInfo, ShipmentLocation, SizeCategory};
 use engine::utils::hash_secret;
-use pocket_ic::{PocketIc, WasmResult};
-use rstest::{fixture, rstest};
+use pocket_ic::PocketIc;
+use rstest::fixture;
 
 use crate::TEST_PRINCIPAL;
 

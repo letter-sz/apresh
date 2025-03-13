@@ -16,9 +16,12 @@ use serde::{Deserialize, Serialize};
 /// - `shipments_history`: Archive of completed or cancelled shipments
 ///
 #[cfg(feature = "icp")]
-#[derive(CandidType)]
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(CandidType, Deserialize, Serialize, Debug, Clone)]
 pub struct ActorBase {
+    /// The version of the actor.
+    /// This is used to ensure backwards compatibility with older versions when migrating data.
+    version: ActorVersion,
+
     /// The unique principal identifier of the actor.
     /// This is used for authentication and authorization throughout the system.
     id: ActorId,
@@ -38,6 +41,14 @@ pub struct ActorBase {
     shipments_history: Vec<ShipmentId>,
 }
 
+#[cfg(feature = "icp")]
+#[derive(CandidType, Deserialize, Serialize, Debug, Clone)]
+#[repr(u8)]
+pub enum ActorVersion {
+    Invalid = 0,
+    V1 = 1,
+}
+
 impl ActorBase {
     /// Creates a new ActorBase instance with the given principal ID and name.
     ///
@@ -49,6 +60,7 @@ impl ActorBase {
     /// A new ActorBase instance with empty shipment lists
     pub fn new(id: Principal, name: String) -> Self {
         Self {
+            version: ActorVersion::V1,
             id: ActorId(id),
             name,
             active_shipments: vec![],
