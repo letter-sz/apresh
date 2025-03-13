@@ -2,8 +2,8 @@ use engine::actors::carrier::Carrier;
 use engine::actors::shipper::Shipper;
 use engine::models::shipment::Shipment;
 use engine::state::{CanisterCollections, CanisterShipments};
+use state::{principal_to_bytes, CARRIERS, SHIPMENTS, SHIPMENT_COUNTER, SHIPPERS};
 
-use crate::stable_state::{principal_to_bytes, CARRIERS, SHIPMENTS, SHIPMENT_COUNTER, SHIPPERS};
 use crate::STATE;
 
 pub fn migrate_shippers() {

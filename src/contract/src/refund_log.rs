@@ -1,10 +1,8 @@
-use crate::{
-    stable_memory::{REFUND_LOG_DATA_MEMORY_ID, REFUND_LOG_INDEX_MEMORY_ID},
-    stable_state::get_memory,
-    transfer::Refund,
-};
 use candid::Principal;
 use ic_stable_structures::{memory_manager::VirtualMemory, DefaultMemoryImpl, Log};
+use state::{get_memory, REFUND_LOG_DATA_MEMORY_ID, REFUND_LOG_INDEX_MEMORY_ID};
+
+use crate::transfer::Refund;
 
 pub struct RefundLog(
     Log<Refund, VirtualMemory<DefaultMemoryImpl>, VirtualMemory<DefaultMemoryImpl>>,

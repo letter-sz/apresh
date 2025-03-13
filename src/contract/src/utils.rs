@@ -1,4 +1,3 @@
-use candid::Principal;
 use icrc_ledger_types::icrc1::transfer::Memo;
 
 use crate::{ADMIN, CANISTER_LOCKED};
@@ -16,11 +15,11 @@ pub fn assert_admin() {
 
 pub fn assert_whitelisted() {
     #[cfg(feature = "whitelist")]
-    if !WHITELIST.with_borrow(|whitelist| whitelist.contains(&ic_cdk::caller())) {
+    if !crate::WHITELIST.with_borrow(|whitelist| whitelist.contains(&ic_cdk::caller())) {
         ic_cdk::trap("Not whitelisted");
     }
     #[cfg(not(feature = "whitelist"))]
-    if ic_cdk::caller() == Principal::anonymous() {
+    if ic_cdk::caller() == candid::Principal::anonymous() {
         ic_cdk::trap("Caller is anonymous");
     }
 

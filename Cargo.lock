@@ -345,6 +345,7 @@ dependencies = [
  "rstest",
  "serde",
  "sha2",
+ "state",
 ]
 
 [[package]]
@@ -2215,6 +2216,15 @@ dependencies = [
  "libc",
  "psm",
  "winapi",
+]
+
+[[package]]
+name = "state"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "engine",
+ "ic-stable-structures",
 ]
 
 [[package]]

@@ -1,7 +1,5 @@
 mod migration;
 mod refund_log;
-mod stable_memory;
-mod stable_state;
 mod transfer;
 mod utils;
 

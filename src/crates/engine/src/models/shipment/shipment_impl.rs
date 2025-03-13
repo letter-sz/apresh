@@ -124,7 +124,7 @@ impl ShipmentStatus {
 }
 
 #[cfg(feature = "icp")]
-#[derive(CandidType, Deserialize, Serialize, Debug, Clone)]
+#[derive(CandidType, Deserialize, Serialize, Debug, Clone, PartialEq)]
 #[repr(u8)]
 pub enum ShipmentVersion {
     Invalid = 0,
@@ -134,7 +134,7 @@ pub enum ShipmentVersion {
 #[cfg(feature = "icp")]
 #[derive(CandidType)]
 // Shipment, but without principals, so JSON-able
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
 pub struct Shipment {
     /// Shipment version
     version: ShipmentVersion,

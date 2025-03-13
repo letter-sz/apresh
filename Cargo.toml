@@ -6,6 +6,7 @@ members = [
     "src/crates/apresh-qr",
     "src/crates/apresh-wasm",
     "src/crates/engine",
+    "src/crates/state",
 ]
 resolver = "2"
 
@@ -14,6 +15,7 @@ actor-derive = { path = "src/crates/actor-derive" }
 engine = { path = "src/crates/engine" }
 apresh-qr = { path = "src/crates/apresh-qr" }
 apresh-crypto = { path = "src/crates/apresh-crypto" }
+state = { path = "src/crates/state" }
 
 wasm-bindgen = { version = "0.2.84" }
 web-sys = { version = "0.3.63", features = ["Crypto", "Window"] }
