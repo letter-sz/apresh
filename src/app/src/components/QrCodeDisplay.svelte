@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { page } from '$app/state';
 	import { Jumper } from 'svelte-loading-spinners';
 	import { generate_qr } from 'wasm';
 	import PillButton from './common/Buttons/PillButton.svelte';
@@ -8,9 +9,8 @@
 		settleSecret: string | null;
 	}>();
 
-	const baseUrl = 'http://localhost:3000';
 	const settleUrl = $derived(
-		`${baseUrl}/shipment/confirm?id=${settleId}&secret=${settleSecret ?? ''}`
+		`${page.url.origin}/shipment/confirm?id=${settleId}&secret=${settleSecret ?? ''}`
 	);
 	let copied = $state(false);
 

@@ -19,9 +19,18 @@
 	}
 </script>
 
-<ShipmentInfo shipment={data.shipment} />
-<PillButton
-	onClick={() => handle(data.shipment)}
-	text="Confirm Delivery"
-	className="w-1/2 mx-auto"
-/>
+<div class="flex h-screen items-center justify-center">
+	<div class="rounded-3xl bg-gradient-to-tr from-violet-500 to-orange-400 p-0.5">
+		<div
+			class="relative flex flex-1 flex-col items-center justify-center rounded-3xl bg-white px-8 py-8"
+		>
+			<ShipmentInfo shipment={data.shipment} />
+
+			<PillButton
+				onClick={() => handle(data.shipment)}
+				text="Confirm Delivery"
+				className="w-full uppercase mt-10"
+			/>
+		</div>
+	</div>
+</div>

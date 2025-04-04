@@ -27,11 +27,28 @@
 				"description": "Zobacz status swoich przesyłek i kiedy będą u Ciebie."
 			}
 		},
+		"dotted-map-section": {
+			"title": "Łączymy nadawców i podróżników na całym świecie",
+			"description": "Dzięki naszej społeczności przesyłki docierają szybciej i taniej. Wykorzystujemy podróże użytkowników, by łączyć ludzi i paczki w najbardziej efektywny sposób."
+		},
 		"benefits-section": {
-			"title": "Dlaczego warto korzystać z Apresh?"
+			"title": "Dlaczego warto korzystać z Apresh?",
+			"card-1": {
+				"title": "Dostępne dla wszystkich",
+				"description": "Każdy, kto podróżuje, może zostać przewoźnikiem, wykorzystując swoje trasy do oferowania przystępnych cenowo dostaw."
+			},
+			"card-2": {
+				"title": "Sieć bez zaufania",
+				"description": "Oparta na blockchainie ICP, eliminuje pośredników i tworzy zdecentralizowaną sieć dostaw z pełną przejrzystością."
+			},
+			"card-3": {
+				"title": "Pełna kontrola",
+				"description": "Twoja paczka, Twój wybór. Niezależni przewoźnicy zapewniają lepszą komunikację i wygodniejsze dostawy."
+			}
 		},
 		"footer": {
 			"copyright": "Wszystkie prawa zastrzeżone.",
+			"description": "Apresh to platforma, która pozwala na znalezienie najlepszego przewoźnika dla Twojej przesyłki.",
 			"nav-1": {
 				"home": "Strona główna",
 				"shipper": "Nadawca",

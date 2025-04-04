@@ -4,6 +4,9 @@
 	import o2 from '$assets/o2.jpg';
 	import o4 from '$assets/o4.jpg';
 	import o5 from '$assets/o5.jpg';
+	import o6 from '$assets/o6.jpg';
+	import o7 from '$assets/o7.jpg';
+	import o8 from '$assets/o8.jpg';
 	import discord from '$assets/socials/discord-brands-solid.svg';
 	import telegram from '$assets/socials/telegram-brands-solid.svg';
 	import twitter from '$assets/socials/twitter-brands-solid.svg';
@@ -23,7 +26,7 @@
 		icon: typeof Truck;
 	};
 
-	let map = new DottedMap({ height: 60, grid: 'diagonal' });
+	let map = new DottedMap({ height: 70, grid: 'diagonal' });
 	let selectedCard: Chosen | null = $state('shipper');
 
 	const svgMap = map.getSVG({
@@ -113,8 +116,12 @@
 		id="select-role-section"
 		class="relative flex h-screen w-full flex-col items-center justify-center"
 	>
-		<h1 class="text-center text-3xl font-bold">{$_('landing.select-role-section.title')}</h1>
-		<p class="mt-4 text-center text-neutral-500">{$_('landing.select-role-section.description')}</p>
+		<div class="flex flex-col items-center justify-center space-y-6">
+			<h1 class="text-center text-4xl font-bold">{$_('landing.select-role-section.title')}</h1>
+			<p class="text-center text-lg text-neutral-500">
+				{$_('landing.select-role-section.description')}
+			</p>
+		</div>
 
 		<div class="mt-20 flex w-[70%] justify-center">
 			<div class="flex flex-1 flex-col space-y-6 px-40">
@@ -127,6 +134,7 @@
 						color={roleToColor(role)}
 						Icon={icon}
 						onClick={() => {
+							if (role === 'customer') return;
 							goto(`/${role}`);
 						}}
 					>
@@ -168,18 +176,24 @@
 	<section class="bg-white py-32">
 		<div class="flex flex-col items-center justify-center">
 			<div class="flex flex-col items-center justify-center space-y-10">
-				<!-- <h1 class="text-3xl font-bold">Znajdź przewoźnika dla swojej przesyłki</h1> -->
-				<p class="text-lg text-neutral-500"></p>
+				<h1 class="text-4xl font-bold">{$_('landing.dotted-map-section.title')}</h1>
+				<p class="w-3/5 text-center text-lg text-neutral-500">
+					{$_('landing.dotted-map-section.description')}
+				</p>
 			</div>
 
-			<div class="relative">
-				<img src={`data:image/svg+xml;utf8,${encodeURIComponent(svgMap)}`} alt="" class="h-96" />
+			<div class="relative mt-16">
+				<img
+					src={`data:image/svg+xml;utf8,${encodeURIComponent(svgMap)}`}
+					alt=""
+					class="h-[450px]"
+				/>
 			</div>
 		</div>
 	</section>
 
 	<section id="benefits-section" class="container mx-auto h-screen px-52">
-		<div class="flex h-full flex-col items-center justify-center space-y-10">
+		<div class="flex h-full flex-col items-center justify-center space-y-6">
 			<h1 class="mb-10 text-center text-3xl font-bold">{$_('landing.benefits-section.title')}</h1>
 
 			<div
@@ -196,27 +210,28 @@
 				>
 					<div
 						class={[
-							'absolute bottom-0 z-20 w-full space-y-7 px-10 py-6 transition-all duration-300 ease-in',
+							'absolute bottom-0 z-20 w-full space-y-7 px-10 transition-all duration-300 ease-in',
 							`bg-${roleToColor(selectedCard)}-500/90`,
-							activeElement === 0 ? 'h-1/3' : 'h-1/6'
+							activeElement === 0 ? 'h-1/3 py-6' : 'h-1/6 py-3'
 						]}
 					>
-						<h1 class="text-center text-lg font-bold text-white">Peer-to-peer</h1>
+						<h1 class="text-center text-lg font-bold text-white">
+							{$_('landing.benefits-section.card-1.title')}
+						</h1>
 						<p
+							style={activeElement === 0 ? 'transition-delay: 850ms;' : ''}
 							class={[
-								'text-center text-sm text-white',
+								'text-center text-base text-white',
 								activeElement === 0
-									? 'opacity-100 transition-all delay-700 duration-300 ease-in'
+									? 'opacity-100 transition-all duration-300 ease-in'
 									: 'opacity-0'
 							]}
 						>
-							Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla nec dui at nunc
-							ullamcorper. Nullam nec nunc nec nunc ullamcorper. Nullam nec nunc nec nunc
-							ullamcorper. Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+							{$_('landing.benefits-section.card-1.description')}
 						</p>
 					</div>
 
-					<img src={o4} alt="" class="absolute top-0 mx-auto h-full min-w-[1000px]" />
+					<img src={o8} alt="" class="absolute top-0 mx-auto h-full min-w-[1000px]" />
 				</div>
 
 				<!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -230,30 +245,29 @@
 				>
 					<div
 						class={[
-							'absolute bottom-0 z-20 w-full space-y-7 bg-white/90 px-10 py-6 transition-all duration-300 ease-in',
-							activeElement === 1 ? 'h-1/3' : 'h-1/6'
+							'absolute bottom-0 z-20 w-full space-y-7 bg-white/90 px-10  transition-all duration-300 ease-in',
+							activeElement === 1 ? 'h-1/3 py-6' : 'h-1/6 py-3'
 						]}
 					>
 						<h1 class={['text-center text-lg font-bold', `text-${roleToColor(selectedCard)}-600`]}>
-							Peer-to-peer
+							{$_('landing.benefits-section.card-2.title')}
 						</h1>
 
 						<p
+							style={activeElement === 1 ? 'transition-delay: 850ms;' : ''}
 							class={[
-								'text-center text-sm',
+								'text-center text-base',
 								activeElement === 1
-									? 'opacity-100 transition-all delay-700 duration-300 ease-in'
+									? 'opacity-100 transition-all duration-300 ease-in'
 									: 'opacity-0',
 								`text-${roleToColor(selectedCard)}-600`
 							]}
 						>
-							Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla nec dui at nunc
-							ullamcorper. Nullam nec nunc nec nunc ullamcorper. Nullam nec nunc nec nunc
-							ullamcorper. Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+							{$_('landing.benefits-section.card-2.description')}
 						</p>
 					</div>
 
-					<img src={o5} alt="" class="absolute top-0 mx-auto h-full min-w-[1000px]" />
+					<img src={o6} alt="" class="absolute top-0 mx-auto h-full min-w-[1000px]" />
 				</div>
 
 				<!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -267,27 +281,28 @@
 				>
 					<div
 						class={[
-							'absolute bottom-0 z-20 w-full space-y-7 px-10 py-6 transition-all duration-300 ease-in',
+							'absolute bottom-0 z-20 w-full space-y-7 px-10 transition-all duration-300 ease-in',
 							`bg-${roleToColor(selectedCard)}-500/90`,
-							activeElement === 2 ? 'h-1/3' : 'h-1/6'
+							activeElement === 2 ? 'h-1/3 py-6' : 'h-1/6 py-3'
 						]}
 					>
-						<h1 class="text-center text-lg font-bold text-white">Peer-to-peer</h1>
+						<h1 class="text-center text-lg font-bold text-white">
+							{$_('landing.benefits-section.card-3.title')}
+						</h1>
 						<p
+							style={activeElement === 2 ? 'transition-delay: 850ms;' : ''}
 							class={[
-								'text-center text-sm text-white',
+								'text-center text-base text-white',
 								activeElement === 2
-									? 'opacity-100 transition-all delay-700 duration-300 ease-in'
+									? 'opacity-100 transition-all duration-300 ease-in'
 									: 'opacity-0'
 							]}
 						>
-							Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla nec dui at nunc
-							ullamcorper. Nullam nec nunc nec nunc ullamcorper. Nullam nec nunc nec nunc
-							ullamcorper. Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+							{$_('landing.benefits-section.card-3.description')}
 						</p>
 					</div>
 
-					<img src={o2} alt="" class="absolute top-0 mx-auto h-full min-w-[1000px]" />
+					<img src={o7} alt="" class="absolute top-0 mx-auto h-full min-w-[1000px]" />
 				</div>
 			</div>
 		</div>
@@ -304,7 +319,7 @@
 			<h2 class="uppercase">Apresh</h2>
 
 			<p class="w-3/4 text-sm text-neutral-500">
-				Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla nec dui at nunc ullamcorper.
+				{$_('landing.footer.description')}
 			</p>
 
 			<p class="text-sm text-neutral-500">© 2025 Apresh. {$_('landing.footer.copyright')}</p>

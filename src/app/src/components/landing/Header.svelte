@@ -20,7 +20,7 @@
 	let selectedLanguage = $state(0);
 
 	const navElements: NavElement[] = $derived([
-		{ name: $_('landing.header.nav.about'), href: '/about' },
+		{ name: $_('landing.header.nav.about'), href: '/' },
 		{ name: $_('landing.header.nav.contact'), href: '/contact' }
 	]);
 
