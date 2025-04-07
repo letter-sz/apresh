@@ -123,9 +123,21 @@ impl ShipmentStatus {
     }
 }
 
+#[cfg(feature = "icp")]
+#[derive(CandidType, Deserialize, Serialize, Debug, Clone, PartialEq)]
+#[repr(u8)]
+pub enum ShipmentVersion {
+    Invalid = 0,
+    V1 = 1,
+}
+
+#[cfg(feature = "icp")]
+#[derive(CandidType)]
 // Shipment, but without principals, so JSON-able
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
 pub struct Shipment {
+    /// Shipment version
+    version: ShipmentVersion,
     /// Unique id for the shipment
     id: ShipmentId,
     /// A descriptive name for the shipment
@@ -186,6 +198,7 @@ impl Shipment {
         info: &ShipmentInfo,
     ) -> Self {
         Self {
+            version: ShipmentVersion::V1,
             id,
             info: info.clone(),
             name: name.to_string(),

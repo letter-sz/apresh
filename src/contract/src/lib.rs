@@ -1,6 +1,9 @@
+mod migration;
 mod refund_log;
 mod transfer;
 mod utils;
+
+pub use transfer::consts;
 
 #[cfg(not(feature = "no-mocks"))]
 mod mock_data;
@@ -10,8 +13,10 @@ use std::cell::RefCell;
 use apresh_qr::{generate, QrCodeOptions};
 use candid::Principal;
 use engine::{
-    actors::carrier::Carrier,
-    models::shipment::{Channel, ChannelKey, PrintableShipment, ShipmentInfo, ShipmentStatus},
+    actors::{carrier::Carrier, shipper::Shipper},
+    models::shipment::{
+        Channel, ChannelKey, PrintableShipment, Shipment, ShipmentInfo, ShipmentStatus,
+    },
     operations::{
         AddMessageOp, BuyShipmentOp, CancelShipmentOp, CreateShipmentOp, FinalizeShipmentOp,
         ReadMessageOp, RegisterActorOp, StateOp, ValidatedStateOp,
@@ -32,6 +37,7 @@ thread_local! {
     pub static ADMIN: RefCell<Principal> = const{ RefCell::new(Principal::anonymous()) };
     pub static WHITELIST: RefCell<Vec<Principal>> = RefCell::default();
     pub static REFUND_LOG: RefCell<RefundLog> = RefCell::new(RefundLog::default());
+    pub static CANISTER_LOCKED: RefCell<bool> = RefCell::new(false);
 }
 
 #[init]
@@ -455,4 +461,55 @@ fn shipment(shipment_id: u64) -> Option<PrintableShipment> {
     STATE.with_borrow(|state| state.shipment(shipment_id).map(PrintableShipment::from))
 }
 
+#[update(name = "lockCanister")]
+fn lock_canister() {
+    assert_admin();
+    CANISTER_LOCKED.with_borrow_mut(|locked| *locked = true);
+}
+
+#[update(name = "unlockCanister")]
+fn unlock_canister() {
+    assert_admin();
+    CANISTER_LOCKED.with_borrow_mut(|locked| *locked = false);
+}
+
+#[update(name = "migrateShippers")]
+fn migrate_shippers() {
+    assert_admin();
+    migration::migrate_shippers();
+}
+
+#[update(name = "migrateCarriers")]
+fn migrate_carriers() {
+    assert_admin();
+    migration::migrate_carriers();
+}
+
+#[update(name = "migrateShipments")]
+fn migrate_shipments() {
+    assert_admin();
+    migration::migrate_shipments();
+}
+
+#[ic_cdk::post_upgrade]
+pub fn post_upgrade() {
+    // lock until the state is explicitly unlocked
+    CANISTER_LOCKED.with_borrow_mut(|locked| {
+        *locked = true;
+    });
+
+    // this can be overkill
+    migration::load_shippers();
+    migration::load_carriers();
+    migration::load_shipments();
+}
+
 ic_cdk::export_candid!();
+
+// At this stage there is a risk of deadlocking migration. This is a last resort solution to avoid losing data.
+#[query]
+pub fn admin_migrate_out() -> (Vec<Shipper>, Vec<Carrier>, Vec<Shipment>, u64) {
+    assert_admin();
+
+    STATE.with_borrow(|state| state.admin_migrate_out())
+}

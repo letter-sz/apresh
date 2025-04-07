@@ -1,4 +1,5 @@
 mod actor_collection;
+mod icp;
 mod shipments;
 
 use crate::{
@@ -7,9 +8,12 @@ use crate::{
     ActorId,
 };
 use actor_collection::ActorCollection;
+use candid::CandidType;
+use serde::Deserialize;
 use shipments::Shipments;
 
-#[derive(Default)]
+#[cfg(feature = "icp")]
+#[derive(CandidType, Default, Deserialize)]
 pub struct CanisterState {
     shippers: ActorCollection<Shipper>,
     carriers: ActorCollection<Carrier>,
@@ -17,11 +21,25 @@ pub struct CanisterState {
     shipment_counter: u64,
 }
 
-#[cfg(test)]
 impl CanisterState {
     pub fn set_shipment_counter(&mut self, counter: u64) {
         self.shipment_counter = counter;
     }
+}
+
+pub trait CanisterCollections {
+    fn shippers(&self) -> &ActorCollection<Shipper>;
+    fn carriers(&self) -> &ActorCollection<Carrier>;
+    fn shipments_collection(&self) -> &Shipments;
+
+    #[cfg(feature = "icp")]
+    fn shippers_mut(&mut self) -> &mut ActorCollection<Shipper>;
+
+    #[cfg(feature = "icp")]
+    fn carriers_mut(&mut self) -> &mut ActorCollection<Carrier>;
+
+    #[cfg(feature = "icp")]
+    fn shipments_mut(&mut self) -> &mut Shipments;
 }
 
 pub trait CanisterActors {
@@ -130,5 +148,46 @@ impl CanisterShipments for CanisterState {
         let shipment = shipments.get(&shipment_id)?;
 
         Some((carrier, shipment))
+    }
+}
+
+impl CanisterCollections for CanisterState {
+    fn shippers(&self) -> &ActorCollection<Shipper> {
+        &self.shippers
+    }
+
+    fn carriers(&self) -> &ActorCollection<Carrier> {
+        &self.carriers
+    }
+
+    fn shipments_collection(&self) -> &Shipments {
+        &self.shipments
+    }
+
+    #[cfg(feature = "icp")]
+    fn shippers_mut(&mut self) -> &mut ActorCollection<Shipper> {
+        &mut self.shippers
+    }
+
+    #[cfg(feature = "icp")]
+    fn carriers_mut(&mut self) -> &mut ActorCollection<Carrier> {
+        &mut self.carriers
+    }
+
+    #[cfg(feature = "icp")]
+    fn shipments_mut(&mut self) -> &mut Shipments {
+        &mut self.shipments
+    }
+}
+
+#[cfg(feature = "icp")]
+impl CanisterState {
+    pub fn admin_migrate_out(&self) -> (Vec<Shipper>, Vec<Carrier>, Vec<Shipment>, u64) {
+        (
+            self.shippers.values().cloned().collect(),
+            self.carriers.values().cloned().collect(),
+            self.shipments.values().cloned().collect(),
+            self.shipment_counter,
+        )
     }
 }

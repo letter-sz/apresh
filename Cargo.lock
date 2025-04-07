@@ -345,6 +345,7 @@ dependencies = [
  "rstest",
  "serde",
  "sha2",
+ "state",
 ]
 
 [[package]]
@@ -519,6 +520,7 @@ dependencies = [
  "candid",
  "derive_deref",
  "hex",
+ "ic-stable-structures",
  "serde",
  "sha2",
  "thiserror 2.0.11",
@@ -933,9 +935,9 @@ dependencies = [
 
 [[package]]
 name = "ic-stable-structures"
-version = "0.6.7"
+version = "0.6.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b492c5a16455ae78623eaa12ead96dda6c69a83c535b1b00789f19b381c8a24c"
+checksum = "f0f5684f577e0146738cd11afed789109c4f51ba963c75823c48c1501dc53278"
 dependencies = [
  "ic_principal",
 ]
@@ -2214,6 +2216,15 @@ dependencies = [
  "libc",
  "psm",
  "winapi",
+]
+
+[[package]]
+name = "state"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "engine",
+ "ic-stable-structures",
 ]
 
 [[package]]
