@@ -5,9 +5,17 @@ pub trait Record: serde::Serialize + serde::de::DeserializeOwned {
     type Key: serde::Serialize + serde::de::DeserializeOwned;
 
     fn key(&self) -> Self::Key;
+
+    fn set(self) {
+        set_record(self);
+    }
+
+    fn get(key: Self::Key) -> Option<Self> {
+        get_record(key)
+    }
 }
 
-pub fn get_record<T: Record>(key: T::Key) -> Option<T> {
+fn get_record<T: Record>(key: T::Key) -> Option<T> {
     let key = bcs::to_bytes(&key).unwrap();
     DB_MEMORY.with_borrow(|db| {
         let record = db.get(&key)?;
@@ -17,7 +25,7 @@ pub fn get_record<T: Record>(key: T::Key) -> Option<T> {
     })
 }
 
-pub fn set_record<T: Record>(record: T) {
+fn set_record<T: Record>(record: T) {
     let key = record.key();
     let key = bcs::to_bytes(&key).unwrap();
     DB_MEMORY.with_borrow_mut(|db| {

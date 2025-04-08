@@ -1,6 +1,6 @@
 use apresh_derive::DeriveKey;
 use serde::{Deserialize, Serialize};
-use state::db::{get_record, set_record, Record};
+use state::db::Record;
 
 #[derive(Serialize, Deserialize)]
 struct TestRecord {
@@ -30,15 +30,15 @@ fn test_db() {
         id: 1,
         name: "test".to_string(),
     };
-    set_record(record);
-    let record = get_record::<TestRecord>(1).unwrap();
+    record.set();
+    let record = TestRecord::get(1).unwrap();
     assert_eq!(record.name, "test");
 
     let another_record = AnotherRecord {
         id: 1,
         name: (1, 2, 3, 4),
     };
-    set_record(another_record);
-    let another_record = get_record::<AnotherRecord>(1).unwrap();
+    another_record.set();
+    let another_record = AnotherRecord::get(1).unwrap();
     assert_eq!(another_record.name, (1, 2, 3, 4));
 }
