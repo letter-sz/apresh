@@ -1,13 +1,12 @@
 use crate::{models::shipment::ShipmentId, ActorId};
 
 use super::{base::ActorBase, Actor, ActorRole};
-use actor_derive::IsActor;
+use apresh_derive::IsActor;
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
-#[cfg(feature = "icp")]
-#[derive(CandidType)]
-#[derive(Debug, Clone, Deserialize, Serialize, IsActor)]
+
+#[derive(CandidType, Debug, Clone, Deserialize, Serialize, IsActor)]
 pub struct Carrier {
     base: ActorBase,
 }

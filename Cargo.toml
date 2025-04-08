@@ -1,7 +1,7 @@
 [workspace]
 members = [
     "src/contract",
-    "src/crates/actor-derive",
+    "src/crates/apresh-derive",
     "src/crates/apresh-crypto",
     "src/crates/apresh-qr",
     "src/crates/apresh-wasm",
@@ -11,7 +11,7 @@ members = [
 resolver = "2"
 
 [workspace.dependencies]
-actor-derive = { path = "src/crates/actor-derive" }
+apresh-derive = { path = "src/crates/apresh-derive" }
 engine = { path = "src/crates/engine" }
 apresh-qr = { path = "src/crates/apresh-qr" }
 apresh-crypto = { path = "src/crates/apresh-crypto" }
@@ -45,3 +45,4 @@ sha2 = "0.10.8"
 hex-literal = "0.4.1"
 hex = "0.4.3"
 bincode = { version = "1.3.3" }
+bcs = "0.1.6"

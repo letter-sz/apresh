@@ -78,12 +78,17 @@ export interface _SERVICE {
   'getTransferFee' : ActorMethod<[], bigint>,
   'is_mainnet' : ActorMethod<[], boolean>,
   'listPendingShipments' : ActorMethod<[], Array<PrintableShipment>>,
+  'lockCanister' : ActorMethod<[], undefined>,
+  'migrateCarriers' : ActorMethod<[], undefined>,
+  'migrateShipments' : ActorMethod<[], undefined>,
+  'migrateShippers' : ActorMethod<[], undefined>,
   'read_channel' : ActorMethod<[bigint], Result_3>,
   'roles' : ActorMethod<[], [boolean, boolean]>,
   'setTransferFee' : ActorMethod<[bigint], undefined>,
   'shipment' : ActorMethod<[bigint], [] | [PrintableShipment]>,
   'shipments' : ActorMethod<[], Array<PrintableShipment>>,
   'shipper_shipments' : ActorMethod<[], Array<PrintableShipment>>,
+  'unlockCanister' : ActorMethod<[], undefined>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

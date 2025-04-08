@@ -52,10 +52,15 @@ service : () -> {
   getTransferFee : () -> (nat64) query;
   is_mainnet : () -> (bool) query;
   listPendingShipments : () -> (vec PrintableShipment) query;
+  lockCanister : () -> ();
+  migrateCarriers : () -> ();
+  migrateShipments : () -> ();
+  migrateShippers : () -> ();
   read_channel : (nat64) -> (Result_3) query;
   roles : () -> (bool, bool) query;
   setTransferFee : (nat64) -> ();
   shipment : (nat64) -> (opt PrintableShipment) query;
   shipments : () -> (vec PrintableShipment) query;
   shipper_shipments : () -> (vec PrintableShipment) query;
+  unlockCanister : () -> ();
 }

@@ -1,4 +1,4 @@
-dfx canister create app && \
+# dfx canister create app && \
 dfx canister create contract && \
 dfx canister create internet_identity && \
 source scripts/deploy_icrc_ledger.sh && \

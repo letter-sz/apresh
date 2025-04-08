@@ -27,22 +27,7 @@
       "package": "contract",
       "type": "custom",
       "build": "./build.sh contract",
-      "wasm": "target/wasm32-unknown-unknown/release/contract.wasm",
-      "remote": {
-        "id": {
-          "ic": "vujqm-syaaa-aaaag-at46q-cai"
-        }
-      }
-    },
-    "app": {
-      "dependencies": [
-        "contract"
-      ],
-      "source": [
-        "src/app/dist"
-      ],
-      "type": "assets",
-      "workspace": "app"
+      "wasm": "target/wasm32-unknown-unknown/release/contract.wasm"
     }
   },
   "defaults": {

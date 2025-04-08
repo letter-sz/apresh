@@ -123,7 +123,6 @@ impl ShipmentStatus {
     }
 }
 
-#[cfg(feature = "icp")]
 #[derive(CandidType, Deserialize, Serialize, Debug, Clone, PartialEq)]
 #[repr(u8)]
 pub enum ShipmentVersion {
@@ -131,7 +130,7 @@ pub enum ShipmentVersion {
     V1 = 1,
 }
 
-#[cfg(feature = "icp")]
+
 #[derive(CandidType)]
 // Shipment, but without principals, so JSON-able
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
