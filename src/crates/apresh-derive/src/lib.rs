@@ -160,8 +160,7 @@ pub fn derive_key(input: TokenStream) -> TokenStream {
 
         impl #key_type {
             pub fn get(self) -> Option<#name #ty_generics #where_clause> {
-                use state::db::Record;
-                #name::get(self)
+                <#name as state::db::Record>::get(self)
             }
         }
 
