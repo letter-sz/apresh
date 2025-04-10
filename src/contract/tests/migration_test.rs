@@ -15,7 +15,7 @@ fn migrate_sequence(pic: &PocketIc) {
         Principal::from_text(THIS_CANISTER_ID).unwrap(),
         "lockCanister",
         encode_one(()).unwrap(),
-        TEST_PRINCIPAL,
+        ADMIN_PRINCIPAL,
     );
 
     update_canister(
@@ -23,7 +23,7 @@ fn migrate_sequence(pic: &PocketIc) {
         Principal::from_text(THIS_CANISTER_ID).unwrap(),
         "migrateShippers",
         encode_one(()).unwrap(),
-        TEST_PRINCIPAL,
+        ADMIN_PRINCIPAL,
     );
 
     update_canister(
@@ -31,7 +31,7 @@ fn migrate_sequence(pic: &PocketIc) {
         Principal::from_text(THIS_CANISTER_ID).unwrap(),
         "migrateCarriers",
         encode_one(()).unwrap(),
-        TEST_PRINCIPAL,
+        ADMIN_PRINCIPAL,
     );
 
     update_canister(
@@ -39,7 +39,7 @@ fn migrate_sequence(pic: &PocketIc) {
         Principal::from_text(THIS_CANISTER_ID).unwrap(),
         "migrateShipments",
         encode_one(()).unwrap(),
-        TEST_PRINCIPAL,
+        ADMIN_PRINCIPAL,
     );
 }
 
@@ -53,7 +53,7 @@ fn test_create_shipment(test_shipment: TestEnvironmentWithShipment) {
         Principal::from_text(THIS_CANISTER_ID).unwrap(),
         CONTRACT_WASM.to_vec(),
         vec![],
-        None,
+        Some(ADMIN_PRINCIPAL),
     )
     .unwrap();
 
