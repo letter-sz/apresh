@@ -151,14 +151,26 @@ pub fn derive_key(input: TokenStream) -> TokenStream {
     // Split generics for use in impl
     let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
+    let key_type = syn::Ident::new(&format!("{}Key", name), name.span());
+
     // Generate the key() method implementation
     let key_impl = quote! {
-        impl #impl_generics Record for #name #ty_generics #where_clause {
+        #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+        struct #key_type(pub #first_field_type);
+
+        impl #key_type {
+            pub fn get(self) -> Option<#name #ty_generics #where_clause> {
+                use state::db::Record;
+                #name::get(self)
+            }
+        }
+
+        impl #impl_generics state::db::Record for #name #ty_generics #where_clause {
             const SCOPE: u8 = #table_value;
-            type Key = #first_field_type;
+            type Key = #key_type;
 
             fn key(&self) -> Self::Key {
-                self.#first_field.clone()
+                #key_type(self.#first_field.clone())
             }
         }
     };
