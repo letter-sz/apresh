@@ -1,6 +1,6 @@
 use apresh_derive::DeriveKey;
+use apresh_store::Record;
 use serde::{Deserialize, Serialize};
-use store::Record;
 
 #[derive(DeriveKey, Serialize, Deserialize, Debug, PartialEq, Eq, Clone)]
 #[table(1)]

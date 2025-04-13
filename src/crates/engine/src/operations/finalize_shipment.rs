@@ -118,10 +118,10 @@ mod tests {
         EngineError,
     };
     use apresh_crypto::hash_secret;
-    use candid::Principal;
-    use types::{
+    use apresh_types::{
         Shipment, ShipmentError, ShipmentInfo, ShipmentLocation, ShipmentStatus, SizeCategory,
     };
+    use candid::Principal;
 
     const REGISTERED_SHIPPER_ID: ActorId = ActorId(Principal::from_slice(&[1, 2, 3, 4]));
     const REGISTERED_CARRIER_ID: ActorId = ActorId(Principal::from_slice(&[5, 6, 7, 8]));

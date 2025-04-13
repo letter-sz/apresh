@@ -1,11 +1,11 @@
 use apresh_crypto::hash_secret;
+use apresh_types::{PrintableShipment, ShipmentInfo, ShipmentLocation, SizeCategory};
 use candid::{decode_one, encode_one, Encode, Principal};
 use common::pocket::pic;
 use common::*;
 use contract::consts::THIS_CANISTER_ID;
 use pocket_ic::PocketIc;
 use rstest::rstest;
-use types::{PrintableShipment, ShipmentInfo, ShipmentLocation, SizeCategory};
 
 mod common;
 

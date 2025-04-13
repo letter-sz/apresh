@@ -3,8 +3,8 @@ use contract::consts::THIS_CANISTER_ID;
 use pocket_ic::PocketIc;
 use rstest::rstest;
 
+use apresh_types::PrintableShipment;
 use common::*;
-use types::PrintableShipment;
 
 mod common;
 

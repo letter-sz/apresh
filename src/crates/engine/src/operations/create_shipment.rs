@@ -35,7 +35,7 @@ impl<'a> CreateShipmentOp<'a> {
     }
 }
 
-impl<'a> ValidatedStateOp<ShipmentId> for CreateShipmentOp<'a> {
+impl ValidatedStateOp<ShipmentId> for CreateShipmentOp<'_> {
     type ValidationResult = u64;
 
     fn validate(&self, state: &CanisterState) -> Result<u64, Self::Error> {
@@ -51,7 +51,7 @@ impl<'a> ValidatedStateOp<ShipmentId> for CreateShipmentOp<'a> {
     }
 }
 
-impl<'a> StateOp<ShipmentId> for CreateShipmentOp<'a> {
+impl StateOp<ShipmentId> for CreateShipmentOp<'_> {
     type Error = crate::errors::EngineError;
 
     fn apply(&self, state: &mut CanisterState) -> crate::Result<ShipmentId> {
@@ -90,8 +90,8 @@ mod tests {
 
     use super::*;
     use apresh_crypto::hash_secret;
+    use apresh_types::{ShipmentLocation, ShipmentStatus, SizeCategory};
     use candid::Principal;
-    use types::{ShipmentLocation, ShipmentStatus, SizeCategory};
 
     pub const REGISTERED_SHIPPER_NAME: &str = "Ben Dover";
     pub const REGISTERED_SHIPPER_ACTOR_ID: ActorId = ActorId(Principal::from_slice(&[1, 3, 3, 7]));

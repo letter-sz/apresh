@@ -57,7 +57,6 @@ impl Shipper {
 /// - `active_shipments`: List of shipments currently in progress
 /// - `shipments_history`: Archive of completed or cancelled shipments
 ///
-
 #[cfg(feature = "icp")]
 #[derive(CandidType)] //
 #[derive(Deserialize, Serialize, Debug, Clone, Eq, PartialEq)]
