@@ -17,5 +17,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Clippy
         run: cargo clippy --all --all-targets -- -D warnings
+      - name: Build Contract
+        run: cargo build --target wasm32-unknown-unknown -r -p contract
       - name: Test
-        run: cargo test --all --all-targets
+        run: cargo nextest run --all --all-targets

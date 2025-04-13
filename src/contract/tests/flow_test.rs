@@ -1,5 +1,6 @@
 use apresh_crypto::hash_secret;
 use candid::{decode_one, encode_one, Encode, Principal};
+use common::pocket::pic;
 use common::*;
 use contract::consts::THIS_CANISTER_ID;
 use pocket_ic::PocketIc;
