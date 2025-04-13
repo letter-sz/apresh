@@ -1,0 +1,19 @@
+[package]
+name = "types"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+candid = { workspace = true }
+ic-stable-structures = { workspace = true, optional = true }
+apresh-derive = { workspace = true }
+serde = { workspace = true }
+derive_deref = { workspace = true }
+apresh-crypto = { workspace = true }
+thiserror = { workspace = true }
+store = { workspace = true }
+
+[features]
+# Shouldn't be default feature to minimize binary size
+default = ["icp"]
+icp = ["dep:ic-stable-structures"]

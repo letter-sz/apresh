@@ -1,11 +1,9 @@
-use crate::{
-    models::shipment::{ChannelKey, Shipment, ShipmentId, ShipmentInfo},
-    state::{CanisterActors, CanisterShipments},
-    ActorId,
-};
+use types::{Actor, ActorId, ChannelKey, Shipment, ShipmentId, ShipmentInfo, Shipper};
+
+use crate::state::{CanisterActors, CanisterShipments};
+use store::Record;
 
 use super::{CanisterState, StateOp, ValidatedStateOp};
-use crate::actors::Actor;
 
 #[derive(Debug)]
 pub struct CreateShipmentOp<'a> {
@@ -42,11 +40,11 @@ impl<'a> ValidatedStateOp<ShipmentId> for CreateShipmentOp<'a> {
 
     fn validate(&self, state: &CanisterState) -> Result<u64, Self::Error> {
         if state.shipment_counter() == u64::MAX {
-            return Err(crate::Error::ShipmentLimitReached);
+            return Err(crate::EngineError::ShipmentLimitReached);
         }
 
         if state.shipper(&self.creator).is_none() {
-            return Err(crate::Error::ShipperNotFound);
+            return Err(crate::EngineError::ShipperNotFound);
         }
 
         Ok(state.shipment_counter())
@@ -54,20 +52,20 @@ impl<'a> ValidatedStateOp<ShipmentId> for CreateShipmentOp<'a> {
 }
 
 impl<'a> StateOp<ShipmentId> for CreateShipmentOp<'a> {
-    type Error = crate::errors::Error;
+    type Error = crate::errors::EngineError;
 
     fn apply(&self, state: &mut CanisterState) -> crate::Result<ShipmentId> {
         let new_shipment_id = state.shipment_counter();
 
         if new_shipment_id == u64::MAX {
-            return Err(crate::Error::ShipmentLimitReached);
+            return Err(crate::EngineError::ShipmentLimitReached);
         }
 
         let mut shipper = state
-            .shipper_mut(&self.creator)
-            .ok_or(crate::Error::ShipperNotFound)?;
+            .shipper(&self.creator)
+            .ok_or(crate::EngineError::ShipperNotFound)?;
 
-        let shipment = Shipment::new(
+        let mut shipment = Shipment::new(
             self.timestamp,
             shipper.id(),
             new_shipment_id,
@@ -80,21 +78,20 @@ impl<'a> StateOp<ShipmentId> for CreateShipmentOp<'a> {
         shipper.add_shipment(new_shipment_id);
         state.create_shipment(shipment)?;
 
+        Shipper::set(shipper);
+
         Ok(new_shipment_id)
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        models::shipment::{ShipmentLocation, ShipmentStatus, SizeCategory},
-        operations::RegisterActorOp,
-        utils::hash_secret,
-        ActorId, Error,
-    };
+    use crate::{operations::RegisterActorOp, EngineError};
 
     use super::*;
+    use apresh_crypto::hash_secret;
     use candid::Principal;
+    use types::{ShipmentLocation, ShipmentStatus, SizeCategory};
 
     pub const REGISTERED_SHIPPER_NAME: &str = "Ben Dover";
     pub const REGISTERED_SHIPPER_ACTOR_ID: ActorId = ActorId(Principal::from_slice(&[1, 3, 3, 7]));
@@ -155,7 +152,7 @@ mod tests {
 
         assert!(matches!(
             op2.apply(&mut state),
-            Err(Error::ShipmentLimitReached)
+            Err(EngineError::ShipmentLimitReached)
         ));
     }
 
@@ -175,7 +172,7 @@ mod tests {
         );
 
         let result = op.apply(&mut state);
-        assert!(matches!(result, Err(Error::ShipperNotFound)));
+        assert!(matches!(result, Err(EngineError::ShipperNotFound)));
     }
 
     #[test]

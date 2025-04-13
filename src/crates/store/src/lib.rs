@@ -1,4 +1,27 @@
-use crate::DB_MEMORY;
+use ic_stable_structures::{
+    memory_manager::{MemoryId, MemoryManager, VirtualMemory},
+    DefaultMemoryImpl, StableBTreeMap,
+};
+use std::cell::RefCell;
+
+pub const DB_MEMORY_ID: MemoryId = MemoryId::new(7);
+
+thread_local! {
+        pub static MEMORY_MANAGER: RefCell<MemoryManager<DefaultMemoryImpl>> = RefCell::new(
+        MemoryManager::init(DefaultMemoryImpl::default())
+    );
+
+    pub(crate) static DB_MEMORY: RefCell<StableBTreeMap<Vec<u8>, Vec<u8>, VirtualMemory<DefaultMemoryImpl>>> = RefCell::new(
+        StableBTreeMap::init(MEMORY_MANAGER.with(|m| m.borrow().get(DB_MEMORY_ID)))
+    );
+
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum StoreError {
+    #[error("Store error: {0}")]
+    Other(String),
+}
 
 pub trait Record: serde::Serialize + serde::de::DeserializeOwned {
     const SCOPE: u8;
@@ -48,19 +71,41 @@ pub trait Record: serde::Serialize + serde::de::DeserializeOwned {
         });
 
         DB_MEMORY.with_borrow(|db| {
-            if let Some(start) = start {
+            let range_iterator = if let Some(start) = start {
                 if let Some(end) = end {
                     db.keys_range(start..end)
                 } else {
-                    db.keys_range(start..)
+                    db.keys_range(start..vec![Self::SCOPE + 1])
                 }
             } else if let Some(end) = end {
-                db.keys_range(..end)
+                db.keys_range(vec![Self::SCOPE]..end)
             } else {
-                db.keys_range(..)
-            }
-            .map(|key| bcs::from_bytes::<Self::Key>(&key[1..]).unwrap())
-            .collect()
+                db.keys_range(vec![Self::SCOPE]..vec![Self::SCOPE + 1])
+            };
+
+            let keys = range_iterator.collect::<Vec<_>>();
+            dbg!(&keys);
+
+            keys.clone()
+                .into_iter()
+                .map(|key| {
+                    bcs::from_bytes::<Self::Key>(&key[1..])
+                        .map_err(|_| {
+                            StoreError::Other(format!(
+                                "Failed to deserialize key: {:?} {:?}",
+                                key, keys
+                            ))
+                        })
+                        .unwrap()
+                })
+                .collect()
         })
     }
+}
+
+#[test]
+fn test_vec_ord() {
+    assert!(vec![1, 2] < vec![1, 3]);
+    assert!(vec![1] < vec![1, 2]);
+    assert!(vec![1, 2] < vec![2]);
 }

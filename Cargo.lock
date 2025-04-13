@@ -80,6 +80,7 @@ dependencies = [
  "aes-gcm",
  "bincode",
  "serde",
+ "sha2",
  "thiserror 2.0.11",
  "x25519-dalek",
 ]
@@ -337,6 +338,7 @@ name = "contract"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "apresh-crypto",
  "apresh-derive",
  "apresh-qr",
  "candid",
@@ -356,6 +358,8 @@ dependencies = [
  "serde",
  "sha2",
  "state",
+ "store",
+ "types",
 ]
 
 [[package]]
@@ -526,6 +530,7 @@ name = "engine"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "apresh-crypto",
  "apresh-derive",
  "candid",
  "derive_deref",
@@ -533,7 +538,9 @@ dependencies = [
  "ic-stable-structures",
  "serde",
  "sha2",
+ "store",
  "thiserror 2.0.11",
+ "types",
 ]
 
 [[package]]
@@ -2232,12 +2239,23 @@ dependencies = [
 name = "state"
 version = "0.1.0"
 dependencies = [
- "apresh-derive",
  "bcs",
  "candid",
  "engine",
  "ic-stable-structures",
  "serde",
+ "store",
+]
+
+[[package]]
+name = "store"
+version = "0.1.0"
+dependencies = [
+ "apresh-derive",
+ "bcs",
+ "ic-stable-structures",
+ "serde",
+ "thiserror 2.0.11",
 ]
 
 [[package]]
@@ -2627,6 +2645,20 @@ name = "typenum"
 version = "1.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "42ff0bf0c66b8238c6f3b578df37d0b7848e55df8577b3f74f92a69acceeb825"
+
+[[package]]
+name = "types"
+version = "0.1.0"
+dependencies = [
+ "apresh-crypto",
+ "apresh-derive",
+ "candid",
+ "derive_deref",
+ "ic-stable-structures",
+ "serde",
+ "store",
+ "thiserror 2.0.11",
+]
 
 [[package]]
 name = "unicase"

@@ -1,10 +1,10 @@
 use candid::{decode_one, encode_one, Principal};
 use contract::consts::THIS_CANISTER_ID;
-use engine::models::shipment::PrintableShipment;
 use pocket_ic::PocketIc;
 use rstest::rstest;
 
 use common::*;
+use types::PrintableShipment;
 
 mod common;
 

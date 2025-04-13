@@ -1,9 +1,9 @@
+use apresh_crypto::hash_secret;
 use candid::{decode_one, Encode, Principal};
 use contract::consts::THIS_CANISTER_ID;
-use engine::models::shipment::{ShipmentInfo, ShipmentLocation, SizeCategory};
-use engine::utils::hash_secret;
 use pocket_ic::PocketIc;
 use rstest::fixture;
+use types::{ShipmentInfo, ShipmentLocation, SizeCategory};
 
 use crate::TEST_PRINCIPAL;
 

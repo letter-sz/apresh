@@ -3,6 +3,8 @@ use aes_gcm::{
     Aes256Gcm, Key, Nonce,
 };
 use serde::{Deserialize, Serialize};
+use sha2::Digest;
+use sha2::Sha256;
 use thiserror::Error;
 pub use x25519_dalek::{PublicKey, StaticSecret};
 
@@ -14,6 +16,12 @@ pub enum Error {
     InvalidSecretKey,
     #[error("Neither public key matches")]
     NeitherPublicKeyMatches,
+}
+
+pub fn hash_secret(secret: &[u8]) -> Vec<u8> {
+    let mut hasher = Sha256::new();
+    hasher.update(secret);
+    hasher.finalize().to_vec()
 }
 
 #[derive(Debug, Serialize, Deserialize)]

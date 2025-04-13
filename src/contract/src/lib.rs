@@ -1,9 +1,12 @@
-mod migration;
 mod refund_log;
 mod transfer;
 mod utils;
 
 pub use transfer::consts;
+use types::{
+    ActorId, Carrier, Channel, ChannelKey, PrintableShipment, Shipment, ShipmentInfo,
+    ShipmentStatus, Shipper,
+};
 
 #[cfg(not(feature = "no-mocks"))]
 mod mock_data;
@@ -13,16 +16,11 @@ use std::cell::RefCell;
 use apresh_qr::{generate, QrCodeOptions};
 use candid::Principal;
 use engine::{
-    actors::{carrier::Carrier, shipper::Shipper},
-    models::shipment::{
-        Channel, ChannelKey, PrintableShipment, Shipment, ShipmentInfo, ShipmentStatus,
-    },
     operations::{
         AddMessageOp, BuyShipmentOp, CancelShipmentOp, CreateShipmentOp, FinalizeShipmentOp,
         ReadMessageOp, RegisterActorOp, StateOp, ValidatedStateOp,
     },
     state::{CanisterActors, CanisterShipments, CanisterState},
-    ActorId,
 };
 use ic_cdk::{init, query, update};
 use icrc_ledger_types::icrc1::transfer::NumTokens;
@@ -100,7 +98,7 @@ async fn finalize_shipment(shipment_id: u64, secret_key: Option<String>) -> Resu
 
     let finalize_shipment_result = STATE
         .with_borrow_mut(|state| op.validate(state))
-        .map_err(|e: anyhow::Error| e.to_string())?;
+        .map_err(|e| e.to_string())?;
 
     let fee = get_transfer_fee();
     let amount = finalize_shipment_result.value() + finalize_shipment_result.price();
@@ -400,7 +398,7 @@ fn get_pending_shipments() -> Vec<PrintableShipment> {
             .shipments()
             .iter()
             .filter(|shipment| *shipment.status() == ShipmentStatus::Pending)
-            .map(|shipment| PrintableShipment::from(*shipment))
+            .map(|shipment| PrintableShipment::from(shipment))
             .collect()
     })
 }
@@ -415,7 +413,7 @@ fn shipper_shipments() -> Vec<PrintableShipment> {
             .iter()
             .filter(|shipment| shipment.shipper_id() == customer_id)
             .filter(|shipment| !shipment.status().is_finished())
-            .map(|shipment| PrintableShipment::from(*shipment))
+            .map(|shipment| PrintableShipment::from(shipment))
             .collect()
     })
 }
@@ -430,7 +428,7 @@ fn carrier_shipments() -> Vec<PrintableShipment> {
             .iter()
             .filter(|shipment| shipment.carrier_id() == Some(customer_id))
             .filter(|shipment| !shipment.status().is_finished())
-            .map(|shipment| PrintableShipment::from(*shipment))
+            .map(|shipment| PrintableShipment::from(shipment))
             .collect()
     })
 }
@@ -451,14 +449,19 @@ fn shipments() -> Vec<PrintableShipment> {
         state
             .shipments()
             .iter()
-            .map(|shipment| PrintableShipment::from(*shipment))
+            .map(|shipment| PrintableShipment::from(shipment))
             .collect()
     })
 }
 
 #[query]
 fn shipment(shipment_id: u64) -> Option<PrintableShipment> {
-    STATE.with_borrow(|state| state.shipment(shipment_id).map(PrintableShipment::from))
+    STATE.with_borrow(|state| {
+        state
+            .shipment(shipment_id)
+            .as_ref()
+            .map(PrintableShipment::from)
+    })
 }
 
 #[update(name = "lockCanister")]
@@ -476,19 +479,19 @@ fn unlock_canister() {
 #[update(name = "migrateShippers")]
 fn migrate_shippers() {
     assert_admin();
-    migration::migrate_shippers();
+    // migration::migrate_shippers();
 }
 
 #[update(name = "migrateCarriers")]
 fn migrate_carriers() {
     assert_admin();
-    migration::migrate_carriers();
+    // migration::migrate_carriers();
 }
 
 #[update(name = "migrateShipments")]
 fn migrate_shipments() {
     assert_admin();
-    migration::migrate_shipments();
+    // migration::migrate_shipments();
 }
 
 #[ic_cdk::post_upgrade]
@@ -499,17 +502,18 @@ pub fn post_upgrade() {
     });
 
     // this can be overkill
-    migration::load_shippers();
-    migration::load_carriers();
-    migration::load_shipments();
+    // migration::load_shippers();
+    // migration::load_carriers();
+    // migration::load_shipments();
 }
-
-ic_cdk::export_candid!();
 
 // At this stage there is a risk of deadlocking migration. This is a last resort solution to avoid losing data.
 #[query]
 pub fn admin_migrate_out() -> (Vec<Shipper>, Vec<Carrier>, Vec<Shipment>, u64) {
     assert_admin();
 
-    STATE.with_borrow(|state| state.admin_migrate_out())
+    // STATE.with_borrow(|state| state.admin_migrate_out())
+    (vec![], vec![], vec![], 0)
 }
+
+ic_cdk::export_candid!();

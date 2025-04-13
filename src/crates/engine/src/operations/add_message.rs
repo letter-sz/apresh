@@ -1,8 +1,7 @@
-use crate::{
-    models::shipment::Message,
-    state::{CanisterShipments, CanisterState},
-    ActorId,
-};
+use store::Record;
+use types::{ActorId, Message, Shipment};
+
+use crate::state::{CanisterShipments, CanisterState};
 
 use super::StateOp;
 use anyhow::anyhow;
@@ -27,16 +26,16 @@ impl AddMessageOp {
 }
 
 impl StateOp<()> for AddMessageOp {
-    type Error = crate::Error;
+    type Error = crate::EngineError;
 
     fn apply(&self, state: &mut CanisterState) -> Result<(), Self::Error> {
         if self.message.len() > MAX_MESSAGE_LENGTH {
-            return Err(crate::Error::MessageTooLong);
+            return Err(crate::EngineError::MessageTooLong);
         }
 
-        let shipment = state
-            .shipment_mut(self.shipment_id)
-            .ok_or(crate::Error::ShipmentNotFound)?;
+        let mut shipment = state
+            .shipment(self.shipment_id)
+            .ok_or(crate::EngineError::ShipmentNotFound)?;
 
         let is_carrier = shipment
             .carrier_id()
@@ -44,10 +43,11 @@ impl StateOp<()> for AddMessageOp {
             .unwrap_or(false);
 
         if shipment.shipper_id() != self.caller && !is_carrier {
-            return Err(crate::Error::NotAuthorizedAsNeitherCarrierNorShipper);
+            return Err(crate::EngineError::NotAuthorizedAsNeitherCarrierNorShipper);
         }
 
         shipment.attach_message(self.message.clone());
+        Shipment::set(shipment);
 
         Ok(())
     }

@@ -156,15 +156,15 @@ pub fn derive_key(input: TokenStream) -> TokenStream {
     // Generate the key() method implementation
     let key_impl = quote! {
         #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
-        struct #key_type(pub #first_field_type);
+        pub struct #key_type(pub #first_field_type);
 
         impl #key_type {
             pub fn get(self) -> Option<#name #ty_generics #where_clause> {
-                <#name as state::db::Record>::get(self)
+                <#name as store::Record>::get(self)
             }
         }
 
-        impl #impl_generics state::db::Record for #name #ty_generics #where_clause {
+        impl #impl_generics store::Record for #name #ty_generics #where_clause {
             const SCOPE: u8 = #table_value;
             type Key = #key_type;
 

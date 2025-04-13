@@ -1,12 +1,11 @@
-mod crypto;
-mod utils;
-
+use apresh_crypto::hash_secret;
+use apresh_qr::{generate, QrCodeOptions};
 use wasm_bindgen::prelude::*;
 
-use apresh_qr::{generate, QrCodeOptions};
-use engine::utils::hash_secret;
-
 use utils::set_panic_hook;
+
+mod crypto;
+mod utils;
 
 pub use crypto::*;
 

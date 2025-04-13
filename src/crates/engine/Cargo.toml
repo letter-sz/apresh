@@ -13,9 +13,12 @@ thiserror = { workspace = true }
 anyhow = { workspace = true }
 sha2 = { workspace = true }
 hex = { workspace = true }
+types = { workspace = true }
 ic-stable-structures = { workspace = true }
+store = { workspace = true }
+apresh-crypto = { workspace = true }
 
 [features]
 # icp = ["dep:ic-stable-structures"]
-icp = []
+icp = ["types/icp"]
 default = []

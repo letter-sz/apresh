@@ -1,11 +1,10 @@
+use apresh_crypto::hash_secret;
 use candid::{decode_one, encode_one, Encode, Principal};
+use common::*;
 use contract::consts::THIS_CANISTER_ID;
-use engine::models::shipment::{PrintableShipment, ShipmentInfo, ShipmentLocation, SizeCategory};
-use engine::utils::hash_secret;
 use pocket_ic::PocketIc;
 use rstest::rstest;
-
-use common::*;
+use types::{PrintableShipment, ShipmentInfo, ShipmentLocation, SizeCategory};
 
 mod common;
 

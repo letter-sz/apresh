@@ -4,7 +4,9 @@ use serde::{Deserialize, Serialize};
 pub type Message = Vec<u8>;
 pub type ChannelKey = Vec<u8>;
 
-#[derive(Deserialize, Serialize, Debug, Clone, CandidType, PartialEq, Eq)]
+#[cfg(feature = "icp")]
+#[derive(CandidType)] //
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq)]
 pub struct Channel {
     host_key: ChannelKey,
     messages: Vec<Message>,

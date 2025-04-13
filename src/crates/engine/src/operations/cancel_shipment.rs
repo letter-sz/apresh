@@ -1,12 +1,11 @@
-use crate::{
-    models::shipment::{ShipmentActions, ShipmentId},
-    state::{CanisterActors, CanisterShipments},
-    ActorId,
-};
+use anyhow::anyhow;
+use store::Record;
+use types::{ActorId, Shipment, ShipmentActions, ShipmentId};
+
+use crate::state::{CanisterActors, CanisterShipments};
 
 use super::StateOp;
-use crate::{actors::carrier::Carrier, state::CanisterState};
-use anyhow::anyhow;
+use crate::state::CanisterState;
 
 pub type Cost = u64;
 
@@ -25,22 +24,25 @@ impl CancelShipmentOp {
 }
 
 impl StateOp<Cost> for CancelShipmentOp {
-    type Error = crate::Error;
+    type Error = crate::EngineError;
 
     fn apply(&self, state: &mut CanisterState) -> crate::Result<Cost> {
         let shipper = state
-            .shipper_mut(&self.shipper)
-            .ok_or(crate::Error::ShipperNotFound)?;
+            .shipper(&self.shipper)
+            .ok_or(crate::EngineError::ShipperNotFound)?;
 
-        let shipment = state
-            .shipment_mut(self.shipment_id)
-            .ok_or(crate::Error::ShipmentNotFound)?;
+        let mut shipment = state
+            .shipment(self.shipment_id)
+            .ok_or(crate::EngineError::ShipmentNotFound)?;
 
         shipment.action(ShipmentActions::Cancel {
             shipper: self.shipper,
         })?;
 
-        Ok(shipment.info().value())
+        let value = shipment.info().value();
+        Shipment::set(shipment);
+
+        Ok(value)
     }
 }
 
@@ -48,15 +50,12 @@ impl StateOp<Cost> for CancelShipmentOp {
 mod tests {
     use super::*;
     use crate::{
-        actors::Actor,
-        models::shipment::{
-            Shipment, ShipmentInfo, ShipmentLocation, ShipmentStatus, SizeCategory,
-        },
         operations::{BuyShipmentOp, RegisterActorOp},
-        utils::hash_secret,
-        ActorId, Error,
+        EngineError,
     };
+    use apresh_crypto::hash_secret;
     use candid::Principal;
+    use types::{ShipmentError, ShipmentInfo, ShipmentLocation, ShipmentStatus, SizeCategory};
 
     const REGISTERED_SHIPPER_ID: ActorId = ActorId(Principal::from_slice(&[1, 2, 3, 4]));
     const UNREGISTERED_SHIPPER_ID: ActorId = ActorId(Principal::from_slice(&[5, 6, 7, 8]));
@@ -105,7 +104,7 @@ mod tests {
         let op = CancelShipmentOp::new(UNREGISTERED_SHIPPER_ID, 0);
 
         let result = op.apply(&mut state);
-        assert!(matches!(result, Err(Error::ShipperNotFound)));
+        assert!(matches!(result, Err(EngineError::ShipperNotFound)));
     }
 
     #[test]
@@ -114,7 +113,7 @@ mod tests {
         let op = CancelShipmentOp::new(REGISTERED_SHIPPER_ID, 999);
 
         let result = op.apply(&mut state);
-        assert!(matches!(result, Err(Error::ShipmentNotFound)));
+        assert!(matches!(result, Err(EngineError::ShipmentNotFound)));
     }
 
     #[test]
@@ -130,7 +129,12 @@ mod tests {
 
         let op = CancelShipmentOp::new(other_shipper_id, 0);
         let result = op.apply(&mut state);
-        assert!(matches!(result, Err(Error::NotAuthorizedAsShipper)));
+        assert!(matches!(
+            result,
+            Err(EngineError::ShipmentError(
+                ShipmentError::NotAuthorizedAsShipper
+            ))
+        ));
     }
 
     #[test]
@@ -142,7 +146,12 @@ mod tests {
 
         let cancel_op = CancelShipmentOp::new(REGISTERED_SHIPPER_ID, 0);
         let result = cancel_op.apply(&mut state);
-        assert!(matches!(result, Err(Error::ShipmentNotReadyToBeCanceled)));
+        assert!(matches!(
+            result,
+            Err(EngineError::ShipmentError(
+                ShipmentError::ShipmentNotReadyToBeCanceled
+            ))
+        ));
     }
 
     #[test]
@@ -180,6 +189,11 @@ mod tests {
         let op = CancelShipmentOp::new(REGISTERED_CARRIER_ID, shipment_id);
         let result = op.apply(&mut state);
 
-        assert!(matches!(result, Err(Error::NotAuthorizedAsShipper)));
+        assert!(matches!(
+            result,
+            Err(EngineError::ShipmentError(
+                ShipmentError::NotAuthorizedAsShipper
+            ))
+        ));
     }
 }

@@ -1,6 +1,6 @@
 use apresh_derive::DeriveKey;
 use serde::{Deserialize, Serialize};
-use state::db::Record;
+use store::Record;
 
 #[derive(DeriveKey, Serialize, Deserialize)]
 #[table(1)]
@@ -9,7 +9,7 @@ struct User {
     name: [u8; 16],
 }
 
-#[derive(DeriveKey, Serialize, Deserialize, Debug, PartialEq, Eq)]
+#[derive(DeriveKey, Serialize, Deserialize, Debug, PartialEq)]
 #[table(2)]
 struct Post {
     id: u32,

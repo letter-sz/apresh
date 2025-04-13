@@ -1,6 +1,6 @@
 use apresh_derive::DeriveKey;
 use serde::{Deserialize, Serialize};
-use state::db::Record;
+use store::Record;
 
 #[derive(Serialize, Deserialize)]
 struct TestRecord {

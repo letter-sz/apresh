@@ -7,6 +7,8 @@ members = [
     "src/crates/apresh-wasm",
     "src/crates/engine",
     "src/crates/state",
+    "src/crates/types",
+    "src/crates/store",
 ]
 resolver = "2"
 
@@ -16,7 +18,8 @@ engine = { path = "src/crates/engine" }
 apresh-qr = { path = "src/crates/apresh-qr" }
 apresh-crypto = { path = "src/crates/apresh-crypto" }
 state = { path = "src/crates/state" }
-
+types = { path = "src/crates/types" }
+store = { path = "src/crates/store" }
 wasm-bindgen = { version = "0.2.84" }
 web-sys = { version = "0.3.63", features = ["Crypto", "Window"] }
 aes-gcm = { version = "0.10.3", default-features = false, features = [

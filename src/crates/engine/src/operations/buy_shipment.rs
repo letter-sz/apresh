@@ -1,12 +1,9 @@
-use crate::{
-    models::shipment::{ChannelKey, ShipmentActions, ShipmentId},
-    state::{CanisterActors, CanisterShipments},
-    ActorId,
-};
+use store::Record;
+use types::{ActorId, Carrier, ChannelKey, Shipment, ShipmentActions, ShipmentId};
 
 use super::{StateOp, ValidatedStateOp};
-use crate::{actors::carrier::Carrier, state::CanisterState};
-use anyhow::anyhow;
+use crate::state::CanisterState;
+use crate::state::{CanisterActors, CanisterShipments};
 
 pub type Cost = u64;
 
@@ -31,12 +28,12 @@ impl ValidatedStateOp<Cost> for BuyShipmentOp {
 
     fn validate(&self, state: &CanisterState) -> Result<u64, Self::Error> {
         if state.carrier(&self.carrier_id).is_none() {
-            return Err(crate::Error::CarrierNotFound);
+            return Err(crate::EngineError::CarrierNotFound);
         }
 
         let shipment = state
             .shipment(self.shipment_id)
-            .ok_or(crate::Error::ShipmentNotFound)?;
+            .ok_or(crate::EngineError::ShipmentNotFound)?;
 
         let value = shipment.info().value();
         Ok(value)
@@ -44,26 +41,29 @@ impl ValidatedStateOp<Cost> for BuyShipmentOp {
 }
 
 impl StateOp<Cost> for BuyShipmentOp {
-    type Error = crate::Error;
+    type Error = crate::EngineError;
 
     fn apply(&self, state: &mut CanisterState) -> crate::Result<Cost> {
         if state.carrier(&self.carrier_id).is_none() {
-            return Err(crate::Error::CarrierNotFound);
+            return Err(crate::EngineError::CarrierNotFound);
         }
 
         let value = {
-            let shipment = state
-                .shipment_mut(self.shipment_id)
-                .ok_or(crate::Error::ShipmentNotFound)?;
+            let mut shipment = state
+                .shipment(self.shipment_id)
+                .ok_or(crate::EngineError::ShipmentNotFound)?;
 
             shipment.action(ShipmentActions::Buy(self.carrier_id))?;
             shipment.add_guest_to_channel(self.channel_key.clone());
             let value = shipment.info().value();
+            Shipment::set(shipment);
+
             value
         };
 
-        let carrier = state.carrier_mut(&self.carrier_id).unwrap();
+        let mut carrier = state.carrier(&self.carrier_id).unwrap();
         carrier.add_shipment(self.shipment_id);
+        Carrier::set(carrier);
 
         Ok(value)
     }
@@ -73,15 +73,15 @@ impl StateOp<Cost> for BuyShipmentOp {
 mod tests {
     use super::*;
     use crate::{
-        actors::Actor,
-        models::shipment::{
-            Shipment, ShipmentInfo, ShipmentLocation, ShipmentStatus, SizeCategory,
-        },
         operations::{CancelShipmentOp, RegisterActorOp},
-        utils::hash_secret,
-        ActorId, Error,
+        EngineError,
     };
+    use apresh_crypto::hash_secret;
     use candid::Principal;
+    use types::{
+        Actor, ActorId, Shipment, ShipmentActions, ShipmentError, ShipmentId, ShipmentInfo,
+        ShipmentLocation, ShipmentStatus, SizeCategory,
+    };
 
     const REGISTERED_CARRIER_ID: ActorId = ActorId(Principal::from_slice(&[1, 2, 3, 4]));
     const UNREGISTERED_CARRIER_ID: ActorId = ActorId(Principal::from_slice(&[5, 6, 7, 8]));
@@ -130,7 +130,7 @@ mod tests {
         let op = BuyShipmentOp::new(UNREGISTERED_CARRIER_ID, 0, CHANNEL_KEY.to_vec());
 
         let result = op.apply(&mut state);
-        assert!(matches!(result, Err(Error::CarrierNotFound)));
+        assert!(matches!(result, Err(EngineError::CarrierNotFound)));
     }
 
     #[test]
@@ -139,7 +139,7 @@ mod tests {
         let op = BuyShipmentOp::new(REGISTERED_CARRIER_ID, 999, CHANNEL_KEY.to_vec());
 
         let result = op.apply(&mut state);
-        assert!(matches!(result, Err(Error::ShipmentNotFound)));
+        assert!(matches!(result, Err(EngineError::ShipmentNotFound)));
     }
 
     #[test]
@@ -150,7 +150,12 @@ mod tests {
         let result = op.apply(&mut state);
         assert!(result.is_ok());
         let result = op.apply(&mut state);
-        assert!(matches!(result, Err(Error::ShipmentCannotBeBought)));
+        assert!(matches!(
+            result,
+            Err(EngineError::ShipmentError(
+                ShipmentError::ShipmentCannotBeBought
+            ))
+        ));
     }
 
     #[test]
@@ -205,6 +210,11 @@ mod tests {
 
         let buy_op = BuyShipmentOp::new(REGISTERED_CARRIER_ID, shipment_id, CHANNEL_KEY.to_vec());
         let result = buy_op.apply(&mut state);
-        assert!(matches!(result, Err(Error::ShipmentCannotBeBought)));
+        assert!(matches!(
+            result,
+            Err(EngineError::ShipmentError(
+                ShipmentError::ShipmentCannotBeBought
+            ))
+        ));
     }
 }
