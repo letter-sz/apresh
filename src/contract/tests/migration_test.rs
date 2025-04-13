@@ -11,7 +11,7 @@ mod common;
 fn migrate_sequence(pic: &PocketIc) {
     // Verify shipment was created
     update_canister(
-        &pic,
+        pic,
         Principal::from_text(THIS_CANISTER_ID).unwrap(),
         "lockCanister",
         encode_one(()).unwrap(),
@@ -19,7 +19,7 @@ fn migrate_sequence(pic: &PocketIc) {
     );
 
     update_canister(
-        &pic,
+        pic,
         Principal::from_text(THIS_CANISTER_ID).unwrap(),
         "migrateShippers",
         encode_one(()).unwrap(),
@@ -27,7 +27,7 @@ fn migrate_sequence(pic: &PocketIc) {
     );
 
     update_canister(
-        &pic,
+        pic,
         Principal::from_text(THIS_CANISTER_ID).unwrap(),
         "migrateCarriers",
         encode_one(()).unwrap(),
@@ -35,7 +35,7 @@ fn migrate_sequence(pic: &PocketIc) {
     );
 
     update_canister(
-        &pic,
+        pic,
         Principal::from_text(THIS_CANISTER_ID).unwrap(),
         "migrateShipments",
         encode_one(()).unwrap(),

@@ -17,7 +17,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Build Contract Binary
         run: rustup target add wasm32-unknown-unknown && cargo build --target wasm32-unknown-unknown -r -p contract
-      - name: Clippy
-        run: cargo clippy --all --all-targets -- -D warnings
       - name: Test
         run: cargo nextest run --all --all-targets
+      - name: Clippy
+        run: cargo clippy --all --all-targets -- -D warnings
