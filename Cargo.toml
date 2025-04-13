@@ -1,25 +1,23 @@
 [workspace]
 members = [
     "src/contract",
-    "src/crates/apresh-derive",
-    "src/crates/apresh-crypto",
-    "src/crates/apresh-qr",
-    "src/crates/apresh-wasm",
+    "src/crates/derive",
+    "src/crates/crypto",
+    "src/crates/qr-code",
+    "src/crates/wasm",
     "src/crates/engine",
-    "src/crates/state",
     "src/crates/types",
     "src/crates/store",
 ]
 resolver = "2"
 
 [workspace.dependencies]
-apresh-derive = { path = "src/crates/apresh-derive" }
-engine = { path = "src/crates/engine" }
-apresh-qr = { path = "src/crates/apresh-qr" }
-apresh-crypto = { path = "src/crates/apresh-crypto" }
-state = { path = "src/crates/state" }
-types = { path = "src/crates/types" }
-store = { path = "src/crates/store" }
+apresh-derive = { path = "src/crates/derive" }
+apresh-engine = { path = "src/crates/engine" }
+apresh-qr-code = { path = "src/crates/qr-code" }
+apresh-crypto = { path = "src/crates/crypto" }
+apresh-types = { path = "src/crates/types" }
+apresh-store = { path = "src/crates/store" }
 wasm-bindgen = { version = "0.2.84" }
 web-sys = { version = "0.3.63", features = ["Crypto", "Window"] }
 aes-gcm = { version = "0.10.3", default-features = false, features = [

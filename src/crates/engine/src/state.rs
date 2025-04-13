@@ -1,7 +1,9 @@
+use apresh_store::Record;
+use apresh_types::{
+    ActorId, Carrier, CarrierKey, Shipment, ShipmentId, ShipmentKey, Shipper, ShipperKey,
+};
 use candid::CandidType;
 use serde::Deserialize;
-use store::Record;
-use types::{ActorId, Carrier, CarrierKey, Shipment, ShipmentId, ShipmentKey, Shipper, ShipperKey};
 
 #[derive(CandidType, Default, Deserialize)]
 pub struct CanisterState {

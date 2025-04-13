@@ -160,11 +160,11 @@ pub fn derive_key(input: TokenStream) -> TokenStream {
 
         impl #key_type {
             pub fn get(self) -> Option<#name #ty_generics #where_clause> {
-                <#name as store::Record>::get(self)
+                <#name as apresh_store::Record>::get(self)
             }
         }
 
-        impl #impl_generics store::Record for #name #ty_generics #where_clause {
+        impl #impl_generics apresh_store::Record for #name #ty_generics #where_clause {
             const SCOPE: u8 = #table_value;
             type Key = #key_type;
 

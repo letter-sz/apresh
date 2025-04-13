@@ -1,5 +1,5 @@
 [package]
-name = "types"
+name = "apresh-types"
 version = "0.1.0"
 edition = "2021"
 
@@ -11,7 +11,7 @@ serde = { workspace = true }
 derive_deref = { workspace = true }
 apresh-crypto = { workspace = true }
 thiserror = { workspace = true }
-store = { workspace = true }
+apresh-store = { workspace = true }
 
 [features]
 # Shouldn't be default feature to minimize binary size

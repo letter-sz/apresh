@@ -6,15 +6,17 @@ use std::cell::RefCell;
 
 pub const DB_MEMORY_ID: MemoryId = MemoryId::new(7);
 
+pub fn get_memory(id: MemoryId) -> VirtualMemory<DefaultMemoryImpl> {
+    MEMORY_MANAGER.with(|m| m.borrow().get(id))
+}
 thread_local! {
-        pub static MEMORY_MANAGER: RefCell<MemoryManager<DefaultMemoryImpl>> = RefCell::new(
+    pub static MEMORY_MANAGER: RefCell<MemoryManager<DefaultMemoryImpl>> = RefCell::new(
         MemoryManager::init(DefaultMemoryImpl::default())
     );
 
     pub(crate) static DB_MEMORY: RefCell<StableBTreeMap<Vec<u8>, Vec<u8>, VirtualMemory<DefaultMemoryImpl>>> = RefCell::new(
-        StableBTreeMap::init(MEMORY_MANAGER.with(|m| m.borrow().get(DB_MEMORY_ID)))
+        StableBTreeMap::init(get_memory(DB_MEMORY_ID))
     );
-
 }
 
 #[derive(Debug, thiserror::Error)]

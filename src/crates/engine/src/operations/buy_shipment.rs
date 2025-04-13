@@ -1,5 +1,5 @@
-use store::Record;
-use types::{ActorId, Carrier, ChannelKey, Shipment, ShipmentActions, ShipmentId};
+use apresh_store::Record;
+use apresh_types::{ActorId, Carrier, ChannelKey, Shipment, ShipmentActions, ShipmentId};
 
 use super::{StateOp, ValidatedStateOp};
 use crate::state::CanisterState;

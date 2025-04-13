@@ -1,5 +1,5 @@
 use apresh_crypto::hash_secret;
-use apresh_qr::{generate, QrCodeOptions};
+use apresh_qr_code::{generate, QrCodeOptions};
 use wasm_bindgen::prelude::*;
 
 use utils::set_panic_hook;

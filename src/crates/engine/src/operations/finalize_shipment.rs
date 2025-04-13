@@ -2,8 +2,8 @@ use crate::state::{CanisterActors, CanisterShipments, CanisterState};
 
 use super::{buy_shipment::Cost, StateOp, ValidatedStateOp};
 use anyhow::anyhow;
-use store::Record;
-use types::{ActorId, Shipment, ShipmentActions, ShipmentId};
+use apresh_store::Record;
+use apresh_types::{ActorId, Shipment, ShipmentActions, ShipmentId};
 
 #[derive(Debug, Clone)]
 pub struct FinalizeShipmentResult {

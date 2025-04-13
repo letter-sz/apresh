@@ -1,4 +1,4 @@
-use types::{ActorId, Carrier, Shipper};
+use apresh_types::{ActorId, Carrier, Shipper};
 
 use crate::state::{CanisterActors, CanisterState};
 

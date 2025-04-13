@@ -3,9 +3,9 @@ pub type Result<T> = std::result::Result<T, EngineError>;
 #[derive(thiserror::Error, Debug)]
 pub enum EngineError {
     #[error("Store error: {0}")]
-    StoreError(#[from] store::StoreError),
+    StoreError(#[from] apresh_store::StoreError),
     #[error("Shipment error: {0}")]
-    ShipmentError(#[from] types::ShipmentError),
+    ShipmentError(#[from] apresh_types::ShipmentError),
     #[error("Shipment not found")]
     ShipmentNotFound,
     #[error("Carrier not found")]

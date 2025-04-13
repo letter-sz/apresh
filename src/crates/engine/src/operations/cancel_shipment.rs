@@ -1,6 +1,6 @@
 use anyhow::anyhow;
-use store::Record;
-use types::{ActorId, Shipment, ShipmentActions, ShipmentId};
+use apresh_store::Record;
+use apresh_types::{ActorId, Shipment, ShipmentActions, ShipmentId};
 
 use crate::state::{CanisterActors, CanisterShipments};
 

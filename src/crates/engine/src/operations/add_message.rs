@@ -1,5 +1,5 @@
-use store::Record;
-use types::{ActorId, Message, Shipment};
+use apresh_store::Record;
+use apresh_types::{ActorId, Message, Shipment};
 
 use crate::state::{CanisterShipments, CanisterState};
 

@@ -1,4 +1,4 @@
-use types::{ActorId, Channel, Message, ShipmentId};
+use apresh_types::{ActorId, Channel, Message, ShipmentId};
 
 use super::StateOp;
 use crate::state::{CanisterShipments, CanisterState};

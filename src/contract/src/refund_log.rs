@@ -1,8 +1,14 @@
+use apresh_store::get_memory;
 use candid::Principal;
-use ic_stable_structures::{memory_manager::VirtualMemory, DefaultMemoryImpl, Log};
-use state::{get_memory, REFUND_LOG_DATA_MEMORY_ID, REFUND_LOG_INDEX_MEMORY_ID};
+use ic_stable_structures::{
+    memory_manager::{MemoryId, VirtualMemory},
+    DefaultMemoryImpl, Log,
+};
 
 use crate::transfer::Refund;
+
+pub const REFUND_LOG_INDEX_MEMORY_ID: MemoryId = MemoryId::new(4);
+pub const REFUND_LOG_DATA_MEMORY_ID: MemoryId = MemoryId::new(5);
 
 pub struct RefundLog(
     Log<Refund, VirtualMemory<DefaultMemoryImpl>, VirtualMemory<DefaultMemoryImpl>>,

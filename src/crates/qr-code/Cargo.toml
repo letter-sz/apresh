@@ -1,5 +1,5 @@
 [package]
-name = "apresh-qr"
+name = "apresh-qr-code"
 version = "0.1.0"
 edition = "2021"
 
@@ -10,5 +10,3 @@ colorgrad = { workspace = true }
 image = { workspace = true }
 serde = { workspace = true }
 qrcode-generator = { workspace = true }
-
-engine = { workspace = true }
