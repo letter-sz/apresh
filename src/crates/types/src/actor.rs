@@ -248,4 +248,4 @@ impl Carrier {
     pub fn add_shipment(&mut self, shipment_id: ShipmentId) {
         self.base.add_shipment(shipment_id);
     }
-} 
+}

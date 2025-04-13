@@ -35,7 +35,7 @@ thread_local! {
     pub static ADMIN: RefCell<Principal> = const{ RefCell::new(Principal::anonymous()) };
     pub static WHITELIST: RefCell<Vec<Principal>> = RefCell::default();
     pub static REFUND_LOG: RefCell<RefundLog> = RefCell::new(RefundLog::default());
-    pub static CANISTER_LOCKED: RefCell<bool> = RefCell::new(false);
+    pub static CANISTER_LOCKED: RefCell<bool> = const { RefCell::new(false) };
 }
 
 #[init]
@@ -398,7 +398,7 @@ fn get_pending_shipments() -> Vec<PrintableShipment> {
             .shipments()
             .iter()
             .filter(|shipment| *shipment.status() == ShipmentStatus::Pending)
-            .map(|shipment| PrintableShipment::from(shipment))
+            .map(PrintableShipment::from)
             .collect()
     })
 }
@@ -413,7 +413,7 @@ fn shipper_shipments() -> Vec<PrintableShipment> {
             .iter()
             .filter(|shipment| shipment.shipper_id() == customer_id)
             .filter(|shipment| !shipment.status().is_finished())
-            .map(|shipment| PrintableShipment::from(shipment))
+            .map(PrintableShipment::from)
             .collect()
     })
 }
@@ -428,7 +428,7 @@ fn carrier_shipments() -> Vec<PrintableShipment> {
             .iter()
             .filter(|shipment| shipment.carrier_id() == Some(customer_id))
             .filter(|shipment| !shipment.status().is_finished())
-            .map(|shipment| PrintableShipment::from(shipment))
+            .map(PrintableShipment::from)
             .collect()
     })
 }
@@ -449,7 +449,7 @@ fn shipments() -> Vec<PrintableShipment> {
         state
             .shipments()
             .iter()
-            .map(|shipment| PrintableShipment::from(shipment))
+            .map(PrintableShipment::from)
             .collect()
     })
 }

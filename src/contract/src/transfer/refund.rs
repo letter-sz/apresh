@@ -12,7 +12,7 @@ pub struct Refund {
 }
 
 impl Storable for Refund {
-    const BOUND:Bound = Bound::Unbounded;
+    const BOUND: Bound = Bound::Unbounded;
 
     fn to_bytes(&self) -> std::borrow::Cow<[u8]> {
         Cow::Owned(Encode!(self).unwrap())

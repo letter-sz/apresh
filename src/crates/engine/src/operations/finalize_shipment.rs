@@ -46,7 +46,10 @@ impl FinalizeShipmentOp {
 impl ValidatedStateOp<FinalizeShipmentResult> for FinalizeShipmentOp {
     type ValidationResult = FinalizeShipmentResult;
 
-    fn validate(&self, state: &CanisterState) -> Result<FinalizeShipmentResult, crate::EngineError> {
+    fn validate(
+        &self,
+        state: &CanisterState,
+    ) -> Result<FinalizeShipmentResult, crate::EngineError> {
         let shipment = state
             .shipment(self.shipment_id)
             .ok_or(crate::errors::EngineError::ShipmentNotFound)?;
@@ -73,7 +76,10 @@ impl ValidatedStateOp<FinalizeShipmentResult> for FinalizeShipmentOp {
 impl StateOp<FinalizeShipmentResult> for FinalizeShipmentOp {
     type Error = crate::EngineError;
 
-    fn apply(&self, state: &mut CanisterState) -> Result<FinalizeShipmentResult, crate::EngineError> {
+    fn apply(
+        &self,
+        state: &mut CanisterState,
+    ) -> Result<FinalizeShipmentResult, crate::EngineError> {
         let mut shipment = state
             .shipment(self.shipment_id)
             .ok_or(crate::errors::EngineError::ShipmentNotFound)?;
@@ -194,7 +200,9 @@ mod tests {
         let result = op.apply(&mut state);
         assert!(matches!(
             result,
-            Err(EngineError::ShipmentError(ShipmentError::SecretKeyIsInvalid))
+            Err(EngineError::ShipmentError(
+                ShipmentError::SecretKeyIsInvalid
+            ))
         ));
     }
 
@@ -206,7 +214,9 @@ mod tests {
         let result = op.apply(&mut state);
         assert!(matches!(
             result,
-            Err(EngineError::ShipmentError(ShipmentError::SecretKeyNotPresent))
+            Err(EngineError::ShipmentError(
+                ShipmentError::SecretKeyNotPresent
+            ))
         ));
     }
 
@@ -218,7 +228,9 @@ mod tests {
         let result = op.apply(&mut state);
         assert!(matches!(
             result,
-            Err(EngineError::ShipmentError(ShipmentError::SecretKeyNotPresent))
+            Err(EngineError::ShipmentError(
+                ShipmentError::SecretKeyNotPresent
+            ))
         ));
     }
 
