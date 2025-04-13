@@ -15,7 +15,7 @@ use serde::{Deserialize, Serialize};
 /// - `active_shipments`: List of shipments currently in progress
 /// - `shipments_history`: Archive of completed or cancelled shipments
 ///
-#[cfg(feature = "icp")]
+
 #[derive(CandidType, Deserialize, Serialize, Debug, Clone)]
 pub struct ActorBase {
     /// The version of the actor.
@@ -41,7 +41,6 @@ pub struct ActorBase {
     shipments_history: Vec<ShipmentId>,
 }
 
-#[cfg(feature = "icp")]
 #[derive(CandidType, Deserialize, Serialize, Debug, Clone)]
 #[repr(u8)]
 pub enum ActorVersion {

@@ -35,7 +35,10 @@ export const idlFactory = ({ IDL }) => {
     'time_per_token_ns' : IDL.Nat64,
   });
   const InternetIdentityInit = IDL.Record({
+    'fetch_root_key' : IDL.Opt(IDL.Bool),
     'openid_google' : IDL.Opt(IDL.Opt(OpenIdConfig)),
+    'is_production' : IDL.Opt(IDL.Bool),
+    'enable_dapps_explorer' : IDL.Opt(IDL.Bool),
     'assigned_user_number_range' : IDL.Opt(IDL.Tuple(IDL.Nat64, IDL.Nat64)),
     'archive_config' : IDL.Opt(ArchiveConfig),
     'canister_creation_cycles_cost' : IDL.Opt(IDL.Nat64),
@@ -217,7 +220,7 @@ export const idlFactory = ({ IDL }) => {
     'iss' : Iss,
     'sub' : Sub,
     'metadata' : MetadataMapV2,
-    'last_usage_timestamp' : Timestamp,
+    'last_usage_timestamp' : IDL.Opt(Timestamp),
   });
   const DeviceRegistrationInfo = IDL.Record({
     'tentative_device' : IDL.Opt(DeviceData),
@@ -353,6 +356,7 @@ export const idlFactory = ({ IDL }) => {
     'NoSuchAnchor' : IDL.Null,
     'JwtVerificationFailed' : IDL.Null,
   });
+  const OpenIDRegFinishArg = IDL.Record({ 'jwt' : JWT, 'salt' : Salt });
   const UserKey = PublicKey;
   const OpenIdPrepareDelegationResponse = IDL.Record({
     'user_key' : UserKey,
@@ -571,6 +575,11 @@ export const idlFactory = ({ IDL }) => {
         ],
         ['query'],
       ),
+    'openid_identity_registration_finish' : IDL.Func(
+        [OpenIDRegFinishArg],
+        [IDL.Variant({ 'Ok' : IdRegFinishResult, 'Err' : IdRegFinishError })],
+        [],
+      ),
     'openid_prepare_delegation' : IDL.Func(
         [JWT, Salt, SessionKey],
         [
@@ -642,7 +651,10 @@ export const init = ({ IDL }) => {
     'time_per_token_ns' : IDL.Nat64,
   });
   const InternetIdentityInit = IDL.Record({
+    'fetch_root_key' : IDL.Opt(IDL.Bool),
     'openid_google' : IDL.Opt(IDL.Opt(OpenIdConfig)),
+    'is_production' : IDL.Opt(IDL.Bool),
+    'enable_dapps_explorer' : IDL.Opt(IDL.Bool),
     'assigned_user_number_range' : IDL.Opt(IDL.Tuple(IDL.Nat64, IDL.Nat64)),
     'archive_config' : IDL.Opt(ArchiveConfig),
     'canister_creation_cycles_cost' : IDL.Opt(IDL.Nat64),

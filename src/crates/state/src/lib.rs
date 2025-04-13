@@ -9,6 +9,7 @@ use ic_stable_structures::{
 };
 use std::cell::RefCell;
 
+pub mod db;
 mod memory;
 pub use memory::*;
 
@@ -40,6 +41,11 @@ thread_local! {
     pub static SHIPMENT_COUNTER: RefCell<StableCell<u64, VirtualMemory<DefaultMemoryImpl>>> = RefCell::new(
         StableCell::init(get_memory(SHIPMENT_COUNTER_ID), 0).unwrap()
     );
+
+    pub(crate) static DB_MEMORY: RefCell<StableBTreeMap<Vec<u8>, Vec<u8>, VirtualMemory<DefaultMemoryImpl>>> = RefCell::new(
+        StableBTreeMap::init(get_memory(DB_MEMORY_ID))
+    );
+
 }
 
 #[macro_export]

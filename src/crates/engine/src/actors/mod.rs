@@ -40,7 +40,7 @@ pub enum ActorRole {
 /// use engine::actors::{base::ActorBase, Actor, ActorRole};
 /// use engine::{models::shipment::ShipmentId, ActorId};
 ///
-/// #[derive(actor_derive::IsActor)]
+/// #[derive(apresh_derive::IsActor)]
 /// struct Carrier {
 ///     base: ActorBase,
 /// }

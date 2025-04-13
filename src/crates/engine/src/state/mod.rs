@@ -12,7 +12,6 @@ use candid::CandidType;
 use serde::Deserialize;
 use shipments::Shipments;
 
-#[cfg(feature = "icp")]
 #[derive(CandidType, Default, Deserialize)]
 pub struct CanisterState {
     shippers: ActorCollection<Shipper>,
@@ -32,13 +31,10 @@ pub trait CanisterCollections {
     fn carriers(&self) -> &ActorCollection<Carrier>;
     fn shipments_collection(&self) -> &Shipments;
 
-    #[cfg(feature = "icp")]
     fn shippers_mut(&mut self) -> &mut ActorCollection<Shipper>;
 
-    #[cfg(feature = "icp")]
     fn carriers_mut(&mut self) -> &mut ActorCollection<Carrier>;
 
-    #[cfg(feature = "icp")]
     fn shipments_mut(&mut self) -> &mut Shipments;
 }
 
@@ -164,23 +160,19 @@ impl CanisterCollections for CanisterState {
         &self.shipments
     }
 
-    #[cfg(feature = "icp")]
     fn shippers_mut(&mut self) -> &mut ActorCollection<Shipper> {
         &mut self.shippers
     }
 
-    #[cfg(feature = "icp")]
     fn carriers_mut(&mut self) -> &mut ActorCollection<Carrier> {
         &mut self.carriers
     }
 
-    #[cfg(feature = "icp")]
     fn shipments_mut(&mut self) -> &mut Shipments {
         &mut self.shipments
     }
 }
 
-#[cfg(feature = "icp")]
 impl CanisterState {
     pub fn admin_migrate_out(&self) -> (Vec<Shipper>, Vec<Carrier>, Vec<Shipment>, u64) {
         (

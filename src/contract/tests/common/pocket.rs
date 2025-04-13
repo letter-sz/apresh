@@ -5,7 +5,10 @@ use rstest::fixture;
 
 use crate::{Account, ApproveArgs, INIT_CYCLES, MINTER_PRINCIPAL, TEST_PRINCIPAL};
 
-use super::{ArchiveOptions, FeatureFlags, InitArgs, LedgerArg, CONTRACT_WASM, LEDGER_WASM};
+use super::{
+    update_canister, ArchiveOptions, FeatureFlags, InitArgs, LedgerArg, ADMIN_PRINCIPAL,
+    CONTRACT_WASM, LEDGER_WASM, POOR_PRINCIPAL,
+};
 
 #[fixture]
 pub fn pic() -> PocketIc {
@@ -16,10 +19,25 @@ pub fn pic() -> PocketIc {
 
     // Create and install the contract
     let contract_id = Principal::from_text(THIS_CANISTER_ID).unwrap();
-    pic.create_canister_with_id(None, None, contract_id)
+    pic.create_canister_with_id(Some(ADMIN_PRINCIPAL), None, contract_id)
         .unwrap();
     pic.add_cycles(contract_id, INIT_CYCLES);
-    pic.install_canister(contract_id, CONTRACT_WASM.to_vec(), vec![], None);
+    pic.install_canister(
+        contract_id,
+        CONTRACT_WASM.to_vec(),
+        vec![],
+        Some(ADMIN_PRINCIPAL),
+    );
+
+    for whitelisted in [TEST_PRINCIPAL, POOR_PRINCIPAL] {
+        update_canister(
+            &pic,
+            contract_id,
+            "addWhitelisted",
+            encode_one(whitelisted).unwrap(),
+            ADMIN_PRINCIPAL,
+        );
+    }
 
     init_ledger(&pic, contract_id);
 

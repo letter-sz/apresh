@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-actor-derive = { workspace = true }
+apresh-derive = { workspace = true }
 
 candid = { workspace = true }
 derive_deref = { workspace = true }
@@ -13,8 +13,9 @@ thiserror = { workspace = true }
 anyhow = { workspace = true }
 sha2 = { workspace = true }
 hex = { workspace = true }
-ic-stable-structures = { workspace = true, optional = true }
+ic-stable-structures = { workspace = true }
 
 [features]
-icp = ["dep:ic-stable-structures"]
+# icp = ["dep:ic-stable-structures"]
+icp = []
 default = []

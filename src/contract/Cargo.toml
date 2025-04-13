@@ -32,7 +32,7 @@ hex-literal = { workspace = true }
 hex = { workspace = true }
 ic-stable-structures = { workspace = true }
 
-actor-derive = { workspace = true }
+apresh-derive = { workspace = true }
 engine = { workspace = true, features = ["icp"] }
 apresh-qr = { workspace = true }
 state = { workspace = true }

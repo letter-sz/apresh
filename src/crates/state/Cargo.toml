@@ -7,3 +7,8 @@ edition = "2021"
 ic-stable-structures = { workspace = true }
 candid = { workspace = true }
 engine = { workspace = true, features = ["icp"] }
+serde = { workspace = true }
+bcs = { workspace = true }
+
+[dev-dependencies]
+apresh-derive = { workspace = true }

@@ -9,10 +9,17 @@ pub mod state;
 pub mod utils;
 pub use errors::{Error, Result};
 
-#[cfg(feature = "icp")]
-#[derive(CandidType)]
 #[derive(
-    Deref, DerefMut, serde::Deserialize, serde::Serialize, Debug, Clone, Copy, Eq, PartialEq,
+    CandidType,
+    Deref,
+    DerefMut,
+    serde::Deserialize,
+    serde::Serialize,
+    Debug,
+    Clone,
+    Copy,
+    Eq,
+    PartialEq,
 )]
 pub struct ActorId(pub candid::Principal);
 

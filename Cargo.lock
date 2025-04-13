@@ -3,15 +3,6 @@
 version = 4
 
 [[package]]
-name = "actor-derive"
-version = "0.1.0"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.96",
-]
-
-[[package]]
 name = "addr2line"
 version = "0.24.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -94,6 +85,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "apresh-derive"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.96",
+]
+
+[[package]]
 name = "apresh-qr"
 version = "0.1.0"
 dependencies = [
@@ -156,6 +156,16 @@ name = "base64"
 version = "0.22.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "72b3254f16251a8381aa12e40e3c4d2f0199f8c6508fbecb9d91f575e0fbb8c6"
+
+[[package]]
+name = "bcs"
+version = "0.1.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "85b6598a2f5d564fb7855dc6b06fd1c38cff5a72bd8b863a4d021938497b440a"
+dependencies = [
+ "serde",
+ "thiserror 1.0.63",
+]
 
 [[package]]
 name = "bincode"
@@ -326,8 +336,8 @@ dependencies = [
 name = "contract"
 version = "0.1.0"
 dependencies = [
- "actor-derive",
  "anyhow",
+ "apresh-derive",
  "apresh-qr",
  "candid",
  "colorgrad",
@@ -515,8 +525,8 @@ checksum = "60b1af1c220855b6ceac025d3f6ecdd2b7c4894bfe9cd9bda4fbb4bc7c0d4cf0"
 name = "engine"
 version = "0.1.0"
 dependencies = [
- "actor-derive",
  "anyhow",
+ "apresh-derive",
  "candid",
  "derive_deref",
  "hex",
@@ -2222,9 +2232,12 @@ dependencies = [
 name = "state"
 version = "0.1.0"
 dependencies = [
+ "apresh-derive",
+ "bcs",
  "candid",
  "engine",
  "ic-stable-structures",
+ "serde",
 ]
 
 [[package]]

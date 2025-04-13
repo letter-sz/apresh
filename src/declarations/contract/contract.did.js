@@ -79,12 +79,17 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Vec(PrintableShipment)],
         ['query'],
       ),
+    'lockCanister' : IDL.Func([], [], []),
+    'migrateCarriers' : IDL.Func([], [], []),
+    'migrateShipments' : IDL.Func([], [], []),
+    'migrateShippers' : IDL.Func([], [], []),
     'read_channel' : IDL.Func([IDL.Nat64], [Result_3], ['query']),
     'roles' : IDL.Func([], [IDL.Bool, IDL.Bool], ['query']),
     'setTransferFee' : IDL.Func([IDL.Nat64], [], []),
     'shipment' : IDL.Func([IDL.Nat64], [IDL.Opt(PrintableShipment)], ['query']),
     'shipments' : IDL.Func([], [IDL.Vec(PrintableShipment)], ['query']),
     'shipper_shipments' : IDL.Func([], [IDL.Vec(PrintableShipment)], ['query']),
+    'unlockCanister' : IDL.Func([], [], []),
   });
 };
 export const init = ({ IDL }) => { return []; };
