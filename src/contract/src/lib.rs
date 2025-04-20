@@ -3,8 +3,7 @@ mod transfer;
 mod utils;
 
 use apresh_types::{
-    ActorId, Carrier, Channel, ChannelKey, PrintableShipment, Shipment, ShipmentInfo,
-    ShipmentStatus, Shipper,
+    ActorId, Carrier, Channel, ChannelKey, PrintableShipment, ShipmentInfo, ShipmentStatus,
 };
 pub use transfer::consts;
 
@@ -476,44 +475,12 @@ fn unlock_canister() {
     CANISTER_LOCKED.with_borrow_mut(|locked| *locked = false);
 }
 
-#[update(name = "migrateShippers")]
-fn migrate_shippers() {
-    assert_admin();
-    // migration::migrate_shippers();
-}
-
-#[update(name = "migrateCarriers")]
-fn migrate_carriers() {
-    assert_admin();
-    // migration::migrate_carriers();
-}
-
-#[update(name = "migrateShipments")]
-fn migrate_shipments() {
-    assert_admin();
-    // migration::migrate_shipments();
-}
-
 #[ic_cdk::post_upgrade]
 pub fn post_upgrade() {
     // lock until the state is explicitly unlocked
     CANISTER_LOCKED.with_borrow_mut(|locked| {
         *locked = true;
     });
-
-    // this can be overkill
-    // migration::load_shippers();
-    // migration::load_carriers();
-    // migration::load_shipments();
-}
-
-// At this stage there is a risk of deadlocking migration. This is a last resort solution to avoid losing data.
-#[query]
-pub fn admin_migrate_out() -> (Vec<Shipper>, Vec<Carrier>, Vec<Shipment>, u64) {
-    assert_admin();
-
-    // STATE.with_borrow(|state| state.admin_migrate_out())
-    (vec![], vec![], vec![], 0)
 }
 
 ic_cdk::export_candid!();
