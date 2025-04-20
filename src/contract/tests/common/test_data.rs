@@ -33,6 +33,15 @@ pub fn test_shipment(
         SizeCategory::Envelope,
     );
 
+    update_canister(
+        &pic,
+        Principal::from_text(THIS_CANISTER_ID).unwrap(),
+        "deposit",
+        Encode!(&100_000_000_u64).unwrap(),
+        TEST_PRINCIPAL,
+    )
+    .unwrap();
+
     let result = update_canister(
         &pic,
         Principal::from_text(THIS_CANISTER_ID).unwrap(),
@@ -46,7 +55,8 @@ pub fn test_shipment(
         )
         .unwrap(),
         TEST_PRINCIPAL,
-    );
+    )
+    .unwrap();
 
     let res: Result<u64, String> = decode_one(&result).unwrap();
     TestEnvironmentWithShipment {

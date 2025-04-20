@@ -29,17 +29,3 @@ pub trait StateOp<R> {
         unimplemented!()
     }
 }
-
-/// A trait for operations that need validation before being applied
-pub trait ValidatedStateOp<R>: StateOp<R> {
-    type ValidationResult;
-
-    /// Validates the operation without modifying state
-    fn validate(&self, state: &CanisterState) -> Result<Self::ValidationResult, Self::Error>;
-
-    /// Validates and then applies the operation
-    fn validate_and_apply(&self, state: &mut CanisterState) -> Result<R, Self::Error> {
-        self.validate(state)?;
-        self.apply(state)
-    }
-}

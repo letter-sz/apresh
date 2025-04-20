@@ -20,11 +20,10 @@ pub fn update_canister(
     method: &str,
     args: Vec<u8>,
     principal: Principal,
-) -> Vec<u8> {
-    let result = pic
-        .update_call(contract_id, principal, method, args)
-        .unwrap();
-    get_reply_bytes(result)
+) -> Result<Vec<u8>, String> {
+    pic.update_call(contract_id, principal, method, args)
+        .map(get_reply_bytes)
+        .map_err(|e| e.to_string())
 }
 
 pub fn get_reply_bytes(result: WasmResult) -> Vec<u8> {

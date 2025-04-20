@@ -1,6 +1,6 @@
 use crate::state::CanisterState;
 
-use super::{buy_shipment::Cost, StateOp, ValidatedStateOp};
+use super::{buy_shipment::Cost, StateOp};
 use anyhow::anyhow;
 use apresh_store::Record;
 use apresh_types::{ActorId, CarrierKey, Shipment, ShipmentActions, ShipmentId, ShipmentKey};
@@ -40,40 +40,6 @@ impl FinalizeShipmentOp {
             secret_key,
             caller: CarrierKey(caller),
         }
-    }
-}
-
-impl ValidatedStateOp<FinalizeShipmentResult> for FinalizeShipmentOp {
-    type ValidationResult = FinalizeShipmentResult;
-
-    fn validate(
-        &self,
-        state: &CanisterState,
-    ) -> Result<FinalizeShipmentResult, crate::EngineError> {
-        let shipment = self
-            .shipment
-            .get()
-            .ok_or(crate::errors::EngineError::ShipmentNotFound)?;
-
-        // TODO: store as [CarrierKey]
-        let carrier_id = CarrierKey(
-            shipment
-                .carrier_id()
-                .ok_or(crate::errors::EngineError::CarrierNotSet)?,
-        );
-
-        let value = shipment.info().value();
-        let price = shipment.info().price();
-
-        let carrier = carrier_id
-            .get()
-            .ok_or(crate::errors::EngineError::CarrierNotFound)?;
-
-        Ok(FinalizeShipmentResult {
-            carrier_id,
-            value,
-            price,
-        })
     }
 }
 
