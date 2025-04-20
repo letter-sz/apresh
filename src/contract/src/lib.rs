@@ -182,15 +182,16 @@ async fn buy_shipment(
     channel_key: ChannelKey,
 ) -> Result<(), String> {
     assert_whitelisted();
-    let caller = ActorId(ic_cdk::caller());
+    let caller = CarrierKey(ActorId(ic_cdk::caller()));
+    let shipment = ShipmentKey(shipment_id);
 
-    let op = BuyShipmentOp::new(caller, shipment_id, channel_key);
+    let op = BuyShipmentOp::new(caller, shipment, channel_key);
 
     let shipment_value = STATE
         .with_borrow_mut(|state| {
             // Register carrier if carrier name is provided
             if let Some(carrier_name) = carrier_name {
-                let carrier = Carrier::new(caller, carrier_name.as_str());
+                let carrier = Carrier::new(caller.0, carrier_name.as_str());
 
                 RegisterActorOp::AddCarrier {
                     id: carrier.id(),
@@ -211,7 +212,7 @@ async fn buy_shipment(
             amount: NumTokens::from(shipment_value),
             memo: memo("BUY", shipment_id),
         },
-        from: caller.0.into(),
+        from: caller.0 .0.into(),
     };
 
     // If transfer fails, return the error
@@ -230,7 +231,7 @@ async fn buy_shipment(
                     amount: NumTokens::from(shipment_value),
                     memo: memo("REFUND", shipment_id),
                 },
-                to: caller.0.into(),
+                to: caller.0 .0.into(),
             },
             get_transfer_fee(),
         )
@@ -241,7 +242,7 @@ async fn buy_shipment(
             REFUND_LOG.with_borrow_mut(|log| {
                 log.append(
                     shipment_value,
-                    caller.0,
+                    caller.0 .0,
                     format!(
                         "ERROR BUY SHIPMENT: {}, REFUND ERROR: {}",
                         shipment_id, refund_error
@@ -252,7 +253,7 @@ async fn buy_shipment(
             REFUND_LOG.with_borrow_mut(|log| {
                 log.append(
                     shipment_value,
-                    caller.0,
+                    caller.0 .0,
                     format!("BUY SHIPMENT REFUNDED: {} DONE", shipment_id),
                 )
             })?;
@@ -284,7 +285,7 @@ async fn create_shipment(
     shipment_info: ShipmentInfo,
 ) -> Result<u64, String> {
     assert_whitelisted();
-    let caller = ActorId(ic_cdk::caller());
+    let caller = ShipperKey(ActorId(ic_cdk::caller()));
     let price = shipment_info.price();
     let created_at = ic_cdk::api::time();
 
@@ -293,7 +294,7 @@ async fn create_shipment(
         STATE
             .with_borrow_mut(|state| {
                 RegisterActorOp::AddShipper {
-                    id: caller,
+                    id: caller.0,
                     name: customer_name.clone(),
                 }
                 .apply(state)
@@ -322,7 +323,7 @@ async fn create_shipment(
             amount: NumTokens::from(price),
             memo: memo("CREATE", expected_shipment_id),
         },
-        from: caller.0.into(),
+        from: caller.0 .0.into(),
     };
 
     // If transfer fails, return the error
@@ -343,7 +344,7 @@ async fn create_shipment(
                         amount: NumTokens::from(price),
                         memo: memo("REFUND", expected_shipment_id),
                     },
-                    to: caller.0.into(),
+                    to: caller.0 .0.into(),
                 },
                 get_transfer_fee(),
             )
@@ -356,7 +357,7 @@ async fn create_shipment(
                 REFUND_LOG.with_borrow_mut(|log| {
                     log.append(
                         price,
-                        caller.0,
+                        caller.0 .0,
                         format!(
                             "ERROR CREATE SHIPMENT: {}, REFUND ERROR: {}",
                             expected_shipment_id, refund_error
@@ -367,7 +368,7 @@ async fn create_shipment(
                 REFUND_LOG.with_borrow_mut(|log| {
                     log.append(
                         price,
-                        caller.0,
+                        caller.0 .0,
                         format!("CREATE SHIPMENT REFUNDED: {} DONE", expected_shipment_id),
                     )
                 })?;
@@ -383,10 +384,12 @@ async fn create_shipment(
 #[update]
 fn cancel_shipment(shipment_id: u64) -> Result<(), String> {
     assert_whitelisted();
-    let caller = ActorId(ic_cdk::caller());
+    let caller = ShipperKey(ActorId(ic_cdk::caller()));
 
     STATE
-        .with_borrow_mut(|state| CancelShipmentOp::new(caller, shipment_id).apply(state))
+        .with_borrow_mut(|state| {
+            CancelShipmentOp::new(caller, ShipmentKey(shipment_id)).apply(state)
+        })
         .map_err(|e| e.to_string())?;
 
     Ok(())

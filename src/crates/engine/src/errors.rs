@@ -1,6 +1,6 @@
 pub type Result<T> = std::result::Result<T, EngineError>;
 
-#[derive(thiserror::Error, Debug)]
+#[derive(thiserror::Error, Debug, Eq, PartialEq)]
 pub enum EngineError {
     #[error("Store error: {0}")]
     StoreError(#[from] apresh_store::StoreError),

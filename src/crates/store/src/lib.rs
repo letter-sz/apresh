@@ -19,7 +19,7 @@ thread_local! {
     );
 }
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, Eq, PartialEq)]
 pub enum StoreError {
     #[error("Store error: {0}")]
     Other(String),

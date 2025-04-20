@@ -44,6 +44,7 @@ fn migrate_sequence(pic: &PocketIc) {
 }
 
 #[rstest]
+#[ignore] // Migration is not needed anymore
 fn test_create_shipment(test_shipment: TestEnvironmentWithShipment) {
     let TestEnvironmentWithShipment { pic, shipment_id } = test_shipment;
 

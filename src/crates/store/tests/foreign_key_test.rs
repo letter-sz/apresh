@@ -35,7 +35,7 @@ fn test_foreign_key() {
 
     // Get correct post
     let post_key = PostKey(1);
-    let post = Post::get(post_key.clone()).unwrap();
+    let post = Post::get(post_key).unwrap();
     assert_eq!(post, post_key.get().unwrap());
     assert_eq!(post.user_id, UserKey(1));
     assert_eq!(post.title, "Hello, world!".to_string());

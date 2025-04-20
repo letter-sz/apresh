@@ -174,7 +174,11 @@ mod tests {
 
     fn setup_bought_shipment_state() -> CanisterState {
         let mut state = setup_test_state();
-        let buy_op = BuyShipmentOp::new(REGISTERED_CARRIER_ID, 0, CHANNEL_KEY.to_vec());
+        let buy_op = BuyShipmentOp::new(
+            CarrierKey(REGISTERED_CARRIER_ID),
+            ShipmentKey(0),
+            CHANNEL_KEY.to_vec(),
+        );
         buy_op.apply(&mut state).unwrap();
         state
     }

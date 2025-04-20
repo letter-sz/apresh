@@ -18,7 +18,7 @@ pub struct CreateShipmentOp<'a> {
 
 impl<'a> CreateShipmentOp<'a> {
     pub fn new(
-        creator: ActorId,
+        creator: ShipperKey,
         hashed_secret: Vec<u8>,
         channel_key: ChannelKey,
         shipment_name: &'a str,
@@ -26,7 +26,7 @@ impl<'a> CreateShipmentOp<'a> {
         timestamp: u64,
     ) -> Self {
         Self {
-            creator: ShipperKey(creator),
+            creator,
             hashed_secret,
             channel_key,
             shipment_name,
@@ -40,15 +40,11 @@ impl ValidatedStateOp<ShipmentId> for CreateShipmentOp<'_> {
     type ValidationResult = u64;
 
     fn validate(&self, state: &CanisterState) -> Result<u64, Self::Error> {
-        if state.shipment_counter() == u64::MAX {
-            return Err(crate::EngineError::ShipmentLimitReached);
-        }
-
         if self.creator.get().is_none() {
             return Err(crate::EngineError::ShipperNotFound);
         }
 
-        Ok(state.shipment_counter())
+        Ok(0)
     }
 }
 
@@ -56,7 +52,7 @@ impl StateOp<ShipmentId> for CreateShipmentOp<'_> {
     type Error = crate::errors::EngineError;
 
     fn apply(&self, state: &mut CanisterState) -> crate::Result<ShipmentId> {
-        let new_shipment_id = state.shipment_counter();
+        let new_shipment_id = state.get_new_shipment_id();
 
         if new_shipment_id == u64::MAX {
             return Err(crate::EngineError::ShipmentLimitReached);
@@ -96,9 +92,10 @@ mod tests {
     use candid::Principal;
 
     pub const REGISTERED_SHIPPER_NAME: &str = "Ben Dover";
-    pub const REGISTERED_SHIPPER_ACTOR_ID: ActorId = ActorId(Principal::from_slice(&[1, 3, 3, 7]));
-    pub const UNREGISTERED_SHIPPER_ACTOR_ID: ActorId =
-        ActorId(Principal::from_slice(&[2, 1, 3, 7]));
+    pub const REGISTERED_SHIPPER_ACTOR_ID: ShipperKey =
+        ShipperKey(ActorId(Principal::from_slice(&[1, 3, 3, 7])));
+    pub const UNREGISTERED_SHIPPER_ACTOR_ID: ShipperKey =
+        ShipperKey(ActorId(Principal::from_slice(&[2, 1, 3, 7])));
     pub const CHANNEL_KEY: &[u8] = b"channel_key_123";
 
     fn default_shipper_info() -> ShipmentInfo {
@@ -115,7 +112,7 @@ mod tests {
         let mut state = CanisterState::default();
 
         let register_op = RegisterActorOp::AddShipper {
-            id: REGISTERED_SHIPPER_ACTOR_ID,
+            id: REGISTERED_SHIPPER_ACTOR_ID.0,
             name: REGISTERED_SHIPPER_NAME.to_string(),
         };
 
@@ -130,7 +127,7 @@ mod tests {
         let hashed_secret = hash_secret(b"secret_key");
         let info = default_shipper_info();
 
-        state.set_shipment_counter(u64::MAX - 1);
+        state.set_shipment_counter(u64::MAX - 2);
 
         let op1 = CreateShipmentOp::new(
             REGISTERED_SHIPPER_ACTOR_ID,
@@ -141,7 +138,7 @@ mod tests {
             1234567890,
         );
 
-        assert!(op1.apply(&mut state).is_ok());
+        assert_eq!(op1.apply(&mut state), Ok(u64::MAX - 1));
 
         let op2 = CreateShipmentOp::new(
             REGISTERED_SHIPPER_ACTOR_ID,
@@ -152,10 +149,10 @@ mod tests {
             1234567890,
         );
 
-        assert!(matches!(
+        assert_eq!(
             op2.apply(&mut state),
             Err(EngineError::ShipmentLimitReached)
-        ));
+        );
     }
 
     #[test]
@@ -184,10 +181,10 @@ mod tests {
         let info = default_shipper_info();
         let timestamp = 1234567890;
         let shipment_name = "Test Shipment";
-        let expected_shipment_id = 0;
+        let expected_shipment_id = 1;
 
         let initial_counter = state.shipment_counter();
-        let initial_shipments = ShipperKey(REGISTERED_SHIPPER_ACTOR_ID)
+        let initial_shipments = REGISTERED_SHIPPER_ACTOR_ID
             .get()
             .unwrap()
             .get_active_shipments()
@@ -204,7 +201,7 @@ mod tests {
 
         let expected_shipment = Shipment::new(
             timestamp,
-            REGISTERED_SHIPPER_ACTOR_ID,
+            REGISTERED_SHIPPER_ACTOR_ID.0,
             expected_shipment_id,
             hashed_secret,
             CHANNEL_KEY.to_vec(),
@@ -213,10 +210,10 @@ mod tests {
         );
 
         let result = op.apply(&mut state);
-        assert!(result.is_ok());
+        assert_eq!(result, Ok(expected_shipment_id));
 
         let shipment_id = result.unwrap();
-        let shipper = ShipperKey(REGISTERED_SHIPPER_ACTOR_ID).get().unwrap();
+        let shipper = (REGISTERED_SHIPPER_ACTOR_ID).get().unwrap();
         let state_shipment_id = state.shipment_counter();
         let state_shipment = ShipmentKey(expected_shipment_id).get();
         let shipper_shipments = shipper.get_active_shipments();
@@ -226,10 +223,10 @@ mod tests {
         assert!(state_shipment.is_some());
         assert_eq!(shipper_shipments.len(), initial_shipments + 1);
         assert_eq!(state.shipment_counter(), initial_counter + 1);
-        assert!(ShipmentKey(state_shipment_id).get().is_none());
+        assert!(ShipmentKey(state_shipment_id + 1).get().is_none());
 
         let shipment = state_shipment.unwrap();
-        assert_eq!(shipment.shipper_id(), REGISTERED_SHIPPER_ACTOR_ID);
+        assert_eq!(shipment.shipper_id(), REGISTERED_SHIPPER_ACTOR_ID.0);
         assert_eq!(shipment._name(), shipment_name);
         assert_eq!(shipment.info(), &info);
         assert_eq!(shipment.status(), &ShipmentStatus::Pending);
