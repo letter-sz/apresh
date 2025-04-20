@@ -16,7 +16,8 @@ fn migrate_sequence(pic: &PocketIc) {
         "lockCanister",
         encode_one(()).unwrap(),
         ADMIN_PRINCIPAL,
-    );
+    )
+    .unwrap();
 
     update_canister(
         pic,
@@ -24,7 +25,8 @@ fn migrate_sequence(pic: &PocketIc) {
         "migrateShippers",
         encode_one(()).unwrap(),
         ADMIN_PRINCIPAL,
-    );
+    )
+    .unwrap();
 
     update_canister(
         pic,
@@ -32,7 +34,8 @@ fn migrate_sequence(pic: &PocketIc) {
         "migrateCarriers",
         encode_one(()).unwrap(),
         ADMIN_PRINCIPAL,
-    );
+    )
+    .unwrap();
 
     update_canister(
         pic,
@@ -40,7 +43,8 @@ fn migrate_sequence(pic: &PocketIc) {
         "migrateShipments",
         encode_one(()).unwrap(),
         ADMIN_PRINCIPAL,
-    );
+    )
+    .unwrap();
 }
 
 #[rstest]

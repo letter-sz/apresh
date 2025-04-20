@@ -16,12 +16,12 @@ use std::cell::RefCell;
 use apresh_engine::{
     operations::{
         AddMessageOp, BuyShipmentOp, CancelShipmentOp, CreateShipmentOp, FinalizeShipmentOp,
-        ReadMessageOp, RegisterActorOp, StateOp, ValidatedStateOp,
+        ReadMessageOp, RegisterActorOp, StateOp,
     },
     state::CanisterState,
 };
 use apresh_qr_code::{generate, QrCodeOptions};
-use apresh_store::Record;
+use apresh_store::{Record, BALANCES};
 use candid::Principal;
 use ic_cdk::{init, query, update};
 use icrc_ledger_types::icrc1::transfer::NumTokens;
@@ -32,7 +32,6 @@ use utils::{assert_admin, assert_whitelisted, memo};
 thread_local! {
     pub static STATE: RefCell<CanisterState> = RefCell::new(CanisterState::default());
     pub static TRANSFER_FEE: RefCell<u64> = const { RefCell::new(10_000) };
-    pub static DEAD_TOKENS: RefCell<u64> = RefCell::default(); // Tokens, where transfer amount is less than the fee needed to transfer it.
     pub static ADMIN: RefCell<Principal> = const{ RefCell::new(Principal::anonymous()) };
     pub static WHITELIST: RefCell<Vec<Principal>> = RefCell::default();
     pub static REFUND_LOG: RefCell<RefundLog> = RefCell::new(RefundLog::default());
@@ -45,6 +44,82 @@ fn init() {
 
     #[cfg(not(feature = "no-mocks"))]
     mock_data::mock_shipments();
+}
+
+#[query]
+fn balance() -> (u64, u64) {
+    BALANCES.with_borrow(|balances| {
+        let caller_bytes = ic_cdk::caller().as_slice().to_vec();
+        let (balance, locked) = balances.get(&caller_bytes).unwrap_or((0, 0));
+        (balance, locked)
+    })
+}
+
+#[update]
+async fn deposit(amount: u64) {
+    assert_whitelisted();
+
+    if let Err(e) = transfer_in(TransferInParams {
+        params: TransferParams {
+            amount: NumTokens::from(amount),
+            memo: memo("DEPOSIT", amount),
+        },
+        from: ic_cdk::caller().into(),
+    })
+    .await
+    {
+        ic_cdk::trap(&e.to_string());
+    }
+
+    BALANCES.with_borrow_mut(|balances| {
+        let caller_bytes = ic_cdk::caller().as_slice().to_vec();
+        let (balance, locked) = balances.get(&caller_bytes).unwrap_or((0, 0));
+        balances.insert(caller_bytes, (balance + amount, locked));
+    });
+}
+
+#[update]
+async fn withdraw(amount: u64) {
+    assert_whitelisted();
+
+    // If the amount is smaller than the fee, nothing happens
+    let fee = get_transfer_fee();
+    if amount <= fee {
+        ic_cdk::trap("Insufficient balance");
+    }
+
+    BALANCES.with_borrow_mut(|balances| {
+        let caller_bytes = ic_cdk::caller().as_slice().to_vec();
+        let (balance, locked) = balances.get(&caller_bytes).unwrap_or((0, 0));
+
+        if balance < amount {
+            ic_cdk::trap("Insufficient balance");
+        }
+
+        balances.insert(caller_bytes, (balance - amount, locked));
+    });
+
+    let transfer_args = TransferOutParams {
+        params: TransferParams {
+            amount: NumTokens::from(amount),
+            memo: memo("WITHDRAW", amount),
+        },
+        to: ic_cdk::caller().into(),
+    };
+
+    // If transfer fails, return the error
+    if let Err(e) = transfer_out(transfer_args, get_transfer_fee()).await {
+        if let Err(e_log) = REFUND_LOG.with_borrow_mut(|log| {
+            log.append(amount, ic_cdk::caller(), format!("ERROR WITHDRAW: {}", e))
+        }) {
+            ic_cdk::trap(&format!(
+                "Error while withdrawing and appending to log {} {}",
+                e, e_log
+            ));
+        }
+
+        ic_cdk::trap(&format!("Error while withdrawing, {}", e));
+    }
 }
 
 #[query]
@@ -95,83 +170,20 @@ async fn read_channel(shipment_id: u64) -> Result<Channel, String> {
 async fn finalize_shipment(shipment_id: u64, secret_key: Option<String>) -> Result<(), String> {
     let caller = ActorId(ic_cdk::caller());
 
-    let op = FinalizeShipmentOp::new(shipment_id, secret_key, caller);
-
     let finalize_shipment_result = STATE
-        .with_borrow_mut(|state| op.validate(state))
+        .with_borrow_mut(|state| {
+            FinalizeShipmentOp::new(shipment_id, secret_key, caller).apply(state)
+        })
         .map_err(|e| e.to_string())?;
 
-    let fee = get_transfer_fee();
     let amount = finalize_shipment_result.value() + finalize_shipment_result.price();
 
-    // If the amount is smaller than the fee, skip the transfer and add the amount to the dead tokens
-    if amount <= fee {
-        DEAD_TOKENS.with_borrow_mut(|dead_tokens| *dead_tokens += amount);
+    BALANCES.with_borrow_mut(|balances| {
+        let caller_bytes = ic_cdk::caller().as_slice().to_vec();
+        let (balance, locked) = balances.get(&caller_bytes).unwrap_or((0, 0));
+        balances.insert(caller_bytes, (balance + amount, locked));
+    });
 
-        STATE
-            .with_borrow_mut(|state| op.validate_and_apply(state))
-            .map_err(|e| e.to_string())?;
-
-        ic_cdk::print(format!("Shipment finalized, without transfers: {:?}", shipment_id).as_str());
-        return Ok(());
-    }
-
-    let transfer_args = TransferOutParams {
-        params: TransferParams {
-            amount: NumTokens::from(amount),
-            memo: memo("SETTLE", shipment_id),
-        },
-        to: (finalize_shipment_result.carrier_id().0).0.into(),
-    };
-
-    // If transfer fails, return the error
-    if let Err(e) = transfer_out(transfer_args, get_transfer_fee()).await {
-        return Err(e.to_string());
-    }
-
-    // Modify the state
-    let res = STATE
-        .with_borrow_mut(|state| op.validate_and_apply(state))
-        .map_err(|e| e.to_string());
-
-    // At this stage there should be way to return error, but refund there is one
-    if let Err(_e) = res {
-        let refund_res = transfer_out(
-            TransferOutParams {
-                params: TransferParams {
-                    amount: NumTokens::from(amount),
-                    memo: memo("REFUND", shipment_id),
-                },
-                to: caller.0.into(),
-            },
-            get_transfer_fee(),
-        )
-        .await;
-
-        if let Err(refund_error) = refund_res {
-            ic_cdk::print(format!("Error refunding: {:?}", refund_error).as_str());
-            REFUND_LOG.with_borrow_mut(|log| {
-                log.append(
-                    amount,
-                    caller.0,
-                    format!(
-                        "ERROR FINALIZE SHIPMENT: {}, REFUND ERROR: {}",
-                        shipment_id, refund_error
-                    ),
-                )
-            })?;
-        } else {
-            REFUND_LOG.with_borrow_mut(|log| {
-                log.append(
-                    amount,
-                    caller.0,
-                    format!("FINALIZE SHIPMENT REFUNDED: {} DONE", shipment_id),
-                )
-            })?;
-        }
-    }
-
-    ic_cdk::print(format!("Shipment finalized: {:?}", shipment_id).as_str());
     Ok(())
 }
 
@@ -184,8 +196,6 @@ async fn buy_shipment(
     assert_whitelisted();
     let caller = CarrierKey(ActorId(ic_cdk::caller()));
     let shipment = ShipmentKey(shipment_id);
-
-    let op = BuyShipmentOp::new(caller, shipment, channel_key);
 
     let shipment_value = STATE
         .with_borrow_mut(|state| {
@@ -203,77 +213,22 @@ async fn buy_shipment(
             }
 
             // Validate the operation
-            op.validate(state)
+            BuyShipmentOp::new(caller, shipment, channel_key).apply(state)
         })
-        .unwrap();
+        .map_err(|e| e.to_string())?;
 
-    let transfer_args = TransferInParams {
-        params: TransferParams {
-            amount: NumTokens::from(shipment_value),
-            memo: memo("BUY", shipment_id),
-        },
-        from: caller.0 .0.into(),
-    };
+    BALANCES.with_borrow_mut(|balances| {
+        let caller_bytes = ic_cdk::caller().as_slice().to_vec();
+        let (balance, locked) = balances.get(&caller_bytes).unwrap_or((0, 0));
 
-    // If transfer fails, return the error
-    if let Err(e) = transfer_in(transfer_args).await {
-        return Err(e.to_string());
-    }
-
-    // Modify the state
-    let res = STATE.with_borrow_mut(|state| op.validate_and_apply(state));
-
-    // If the operation fails, refund the shipment value
-    if let Err(e) = res {
-        let refund_res = transfer_out(
-            TransferOutParams {
-                params: TransferParams {
-                    amount: NumTokens::from(shipment_value),
-                    memo: memo("REFUND", shipment_id),
-                },
-                to: caller.0 .0.into(),
-            },
-            get_transfer_fee(),
-        )
-        .await;
-
-        if let Err(refund_error) = refund_res {
-            ic_cdk::print(format!("Error refunding: {:?}", refund_error).as_str());
-            REFUND_LOG.with_borrow_mut(|log| {
-                log.append(
-                    shipment_value,
-                    caller.0 .0,
-                    format!(
-                        "ERROR BUY SHIPMENT: {}, REFUND ERROR: {}",
-                        shipment_id, refund_error
-                    ),
-                )
-            })?;
-        } else {
-            REFUND_LOG.with_borrow_mut(|log| {
-                log.append(
-                    shipment_value,
-                    caller.0 .0,
-                    format!("BUY SHIPMENT REFUNDED: {} DONE", shipment_id),
-                )
-            })?;
+        if balance < shipment_value {
+            ic_cdk::trap("Insufficient balance");
         }
-        return Err(e.to_string());
-    }
 
-    ic_cdk::print(format!("Shipment bought: {:?}", shipment_id).as_str());
+        balances.insert(caller_bytes, (balance - shipment_value, locked));
+    });
+
     Ok(())
-}
-
-#[query(name = "generateQr")]
-async fn generate_qr(link: String, size: usize) -> Result<Vec<u8>, String> {
-    generate(QrCodeOptions {
-        gradient: false,
-        link,
-        size,
-        transparent: false,
-    })
-    .map_err(|e| e.to_string())
 }
 
 #[update(name = "createShipment")]
@@ -287,96 +242,49 @@ async fn create_shipment(
     assert_whitelisted();
     let caller = ShipperKey(ActorId(ic_cdk::caller()));
     let price = shipment_info.price();
-    let created_at = ic_cdk::api::time();
 
-    // First register the shipper if needed
-    if let Some(customer_name) = &customer_name {
-        STATE
-            .with_borrow_mut(|state| {
-                RegisterActorOp::AddShipper {
+    let shipment_id = STATE
+        .with_borrow_mut(|state| {
+            // First register the shipper if needed
+            if let Some(customer_name) = &customer_name {
+                let register_op = RegisterActorOp::AddShipper {
                     id: caller.0,
                     name: customer_name.clone(),
+                };
+                if let Err(e) = register_op.apply(state) {
+                    return Err(e.to_string());
                 }
-                .apply(state)
-            })
-            .map_err(|e| e.to_string())?;
-    }
-
-    // Validate the shipment creation operation
-    let create_op = CreateShipmentOp::new(
-        caller,
-        hashed_secret,
-        channel_key,
-        &shipment_name,
-        &shipment_info,
-        created_at,
-    );
-
-    // Validate before doing any transfers
-    let expected_shipment_id = STATE
-        .with_borrow(|state| create_op.validate(state))
-        .map_err(|e| e.to_string())?;
-
-    // Do the transfer
-    let transfer_args = TransferInParams {
-        params: TransferParams {
-            amount: NumTokens::from(price),
-            memo: memo("CREATE", expected_shipment_id),
-        },
-        from: caller.0 .0.into(),
-    };
-
-    // If transfer fails, return the error
-    if let Err(e) = transfer_in(transfer_args).await {
-        return Err(e.to_string());
-    }
-
-    // Modify the state
-    let shipment_id = STATE.with_borrow_mut(|state| create_op.validate_and_apply(state));
-
-    // If the operation fails, refund the shipment value
-    let shipment_id = match shipment_id {
-        Ok(id) => id,
-        Err(e) => {
-            let refund_res = transfer_out(
-                TransferOutParams {
-                    params: TransferParams {
-                        amount: NumTokens::from(price),
-                        memo: memo("REFUND", expected_shipment_id),
-                    },
-                    to: caller.0 .0.into(),
-                },
-                get_transfer_fee(),
-            )
-            .await;
-
-            if let Err(refund_error) = refund_res {
-                ic_cdk::print(format!("Error refunding: {:?}", refund_error).as_str());
-
-                // TODO: handle error, there shouldn't be any error here, if it happens we're screwed
-                REFUND_LOG.with_borrow_mut(|log| {
-                    log.append(
-                        price,
-                        caller.0 .0,
-                        format!(
-                            "ERROR CREATE SHIPMENT: {}, REFUND ERROR: {}",
-                            expected_shipment_id, refund_error
-                        ),
-                    )
-                })?;
-            } else {
-                REFUND_LOG.with_borrow_mut(|log| {
-                    log.append(
-                        price,
-                        caller.0 .0,
-                        format!("CREATE SHIPMENT REFUNDED: {} DONE", expected_shipment_id),
-                    )
-                })?;
             }
 
-            return Err(e.to_string());
+            // Validate the shipment creation operation
+            let create_op = CreateShipmentOp::new(
+                caller,
+                hashed_secret,
+                channel_key,
+                &shipment_name,
+                &shipment_info,
+                ic_cdk::api::time(),
+            );
+
+            let shipment_id = match create_op.apply(state) {
+                Ok(shipment_id) => shipment_id,
+                Err(e) => ic_cdk::trap(&e.to_string()),
+            };
+
+            Ok(shipment_id)
+        })
+        .map_err(|e| e.to_string())?;
+
+    BALANCES.with_borrow_mut(|balances| {
+        let caller_bytes = ic_cdk::caller().as_slice().to_vec();
+        let (balance, locked) = balances.get(&caller_bytes).unwrap_or((0, 0));
+
+        if balance < price {
+            ic_cdk::trap("Insufficient balance");
         }
-    };
+
+        balances.insert(caller_bytes, (balance - price, locked));
+    });
 
     Ok(shipment_id)
 }
@@ -453,6 +361,17 @@ fn shipments() -> Vec<PrintableShipment> {
 #[query]
 fn shipment(shipment_id: u64) -> Option<PrintableShipment> {
     ShipmentKey(shipment_id).get().map(PrintableShipment::from)
+}
+
+#[query(name = "generateQr")]
+async fn generate_qr(link: String, size: usize) -> Result<Vec<u8>, String> {
+    generate(QrCodeOptions {
+        gradient: false,
+        link,
+        size,
+        transparent: false,
+    })
+    .map_err(|e| e.to_string())
 }
 
 #[update(name = "lockCanister")]

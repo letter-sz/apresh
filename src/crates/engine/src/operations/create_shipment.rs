@@ -4,7 +4,7 @@ use apresh_types::{
 
 use apresh_store::Record;
 
-use super::{CanisterState, StateOp, ValidatedStateOp};
+use super::{CanisterState, StateOp};
 
 #[derive(Debug)]
 pub struct CreateShipmentOp<'a> {
@@ -33,18 +33,6 @@ impl<'a> CreateShipmentOp<'a> {
             info,
             timestamp,
         }
-    }
-}
-
-impl ValidatedStateOp<ShipmentId> for CreateShipmentOp<'_> {
-    type ValidationResult = u64;
-
-    fn validate(&self, state: &CanisterState) -> Result<u64, Self::Error> {
-        if self.creator.get().is_none() {
-            return Err(crate::EngineError::ShipperNotFound);
-        }
-
-        Ok(0)
     }
 }
 

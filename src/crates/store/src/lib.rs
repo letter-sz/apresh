@@ -5,10 +5,14 @@ use ic_stable_structures::{
 use std::cell::RefCell;
 
 pub const DB_MEMORY_ID: MemoryId = MemoryId::new(7);
+pub const BALANCES_MEMORY_ID: MemoryId = MemoryId::new(6);
 
 pub fn get_memory(id: MemoryId) -> VirtualMemory<DefaultMemoryImpl> {
     MEMORY_MANAGER.with(|m| m.borrow().get(id))
 }
+
+pub type BalanceAndLocked = (u64, u64);
+
 thread_local! {
     pub static MEMORY_MANAGER: RefCell<MemoryManager<DefaultMemoryImpl>> = RefCell::new(
         MemoryManager::init(DefaultMemoryImpl::default())
@@ -16,6 +20,10 @@ thread_local! {
 
     pub(crate) static DB_MEMORY: RefCell<StableBTreeMap<Vec<u8>, Vec<u8>, VirtualMemory<DefaultMemoryImpl>>> = RefCell::new(
         StableBTreeMap::init(get_memory(DB_MEMORY_ID))
+    );
+
+    pub static BALANCES: RefCell<StableBTreeMap<Vec<u8>, BalanceAndLocked, VirtualMemory<DefaultMemoryImpl>>> = RefCell::new(
+        StableBTreeMap::init(get_memory(BALANCES_MEMORY_ID))
     );
 }
 

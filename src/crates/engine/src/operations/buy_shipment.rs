@@ -3,7 +3,7 @@ use apresh_types::{
     ActorId, Carrier, CarrierKey, ChannelKey, Shipment, ShipmentActions, ShipmentId, ShipmentKey,
 };
 
-use super::{StateOp, ValidatedStateOp};
+use super::StateOp;
 use crate::state::CanisterState;
 
 pub type Cost = u64;
@@ -25,24 +25,6 @@ impl BuyShipmentOp {
             shipment_key,
             channel_key,
         }
-    }
-}
-
-impl ValidatedStateOp<Cost> for BuyShipmentOp {
-    type ValidationResult = u64;
-
-    fn validate(&self, state: &CanisterState) -> Result<u64, Self::Error> {
-        if self.carrier_key.get().is_none() {
-            return Err(crate::EngineError::CarrierNotFound);
-        }
-
-        let shipment = self
-            .shipment_key
-            .get()
-            .ok_or(crate::EngineError::ShipmentNotFound)?;
-
-        let value = shipment.info().value();
-        Ok(value)
     }
 }
 

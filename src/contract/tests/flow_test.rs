@@ -63,7 +63,9 @@ fn test_create_shipment(test_shipment: TestEnvironmentWithShipment) {
 #[case(0_u64, 1_u64)]
 #[case(0_u64, 1_000_000_000_u64)]
 #[rstest]
-fn test_create_shipment_with_zero_funds(pic: PocketIc, #[case] value: u64, #[case] price: u64) {
+fn test_create_shipment_with_funds(pic: PocketIc, #[case] value: u64, #[case] price: u64) {
+    use common::POOR_PRINCIPAL;
+
     let customer_name = Some("Poor Customer".to_string());
     let shipment_name = "Unwanted Package".to_string();
     let secret = b"test_secret";
@@ -94,18 +96,16 @@ fn test_create_shipment_with_zero_funds(pic: PocketIc, #[case] value: u64, #[cas
         POOR_PRINCIPAL,
     );
 
-    // Decode the result and expect an error string
-    let create_result: Result<(Vec<u8>, u64), String> = decode_one(&result).unwrap();
     assert!(
-        create_result.is_err(),
+        result.is_err(),
         "Expected error due to insufficient funds, but got success: {:?}",
-        create_result
+        result
     );
 
-    let err = create_result.unwrap_err();
+    let err = result.unwrap_err();
     assert!(
-        err.contains("InsufficientAllowance"),
-        "Expected 'InsufficientAllowance' error, got: {}",
+        err.contains("Insufficient balance"),
+        "Expected 'Insufficient balance' error, got: {}",
         err
     );
 
