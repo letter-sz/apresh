@@ -114,6 +114,22 @@ impl From<&Shipment> for PrintableShipment {
     }
 }
 
+impl From<Shipment> for PrintableShipment {
+    fn from(shipment: Shipment) -> Self {
+        Self {
+            id: shipment.id,
+            name: shipment.name,
+            hashed_secret: shipment.hashed_secret,
+            info: shipment.info,
+            status: shipment.status,
+            channel: shipment.channel,
+            carrier: shipment.carrier.map(|id| id.to_string()),
+            shipper: shipment.shipper.to_string(),
+            created_at: shipment.created_at,
+        }
+    }
+}
+
 impl Shipment {
     pub fn new(
         timestamp: u64,

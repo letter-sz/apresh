@@ -1,6 +1,7 @@
+use apresh_store::Record;
 use apresh_types::{ActorId, Carrier, Shipper};
 
-use crate::state::{CanisterActors, CanisterState};
+use crate::state::CanisterState;
 
 use super::StateOp;
 
@@ -15,10 +16,10 @@ impl StateOp<()> for RegisterActorOp {
     fn apply(&self, state: &mut CanisterState) -> Result<(), Self::Error> {
         match self {
             RegisterActorOp::AddShipper { id, name } => {
-                state.create_shipper(Shipper::new(*id, name));
+                Shipper::new(*id, name).set();
             }
             RegisterActorOp::AddCarrier { id, name } => {
-                state.create_carrier(Carrier::new(*id, name));
+                Carrier::new(*id, name).set();
             }
         }
 

@@ -155,7 +155,7 @@ pub fn derive_key(input: TokenStream) -> TokenStream {
 
     // Generate the key() method implementation
     let key_impl = quote! {
-        #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+        #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
         pub struct #key_type(pub #first_field_type);
 
         impl #key_type {

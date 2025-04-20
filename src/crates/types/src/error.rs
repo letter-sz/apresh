@@ -1,7 +1,4 @@
-use std::result;
 use thiserror::Error;
-
-pub type Result<T> = result::Result<T, ShipmentError>;
 
 #[derive(Error, Debug)]
 pub enum ShipmentError {

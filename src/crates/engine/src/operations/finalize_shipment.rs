@@ -1,19 +1,19 @@
-use crate::state::{CanisterActors, CanisterShipments, CanisterState};
+use crate::state::CanisterState;
 
 use super::{buy_shipment::Cost, StateOp, ValidatedStateOp};
 use anyhow::anyhow;
 use apresh_store::Record;
-use apresh_types::{ActorId, Shipment, ShipmentActions, ShipmentId};
+use apresh_types::{ActorId, CarrierKey, Shipment, ShipmentActions, ShipmentId, ShipmentKey};
 
 #[derive(Debug, Clone)]
 pub struct FinalizeShipmentResult {
-    carrier_id: ActorId,
+    carrier_id: CarrierKey,
     value: u64,
     price: u64,
 }
 
 impl FinalizeShipmentResult {
-    pub fn carrier_id(&self) -> &ActorId {
+    pub fn carrier_id(&self) -> &CarrierKey {
         &self.carrier_id
     }
 
@@ -28,17 +28,17 @@ impl FinalizeShipmentResult {
 
 #[derive(Debug, Clone)]
 pub struct FinalizeShipmentOp {
-    caller: ActorId,
-    shipment_id: ShipmentId,
+    caller: CarrierKey,
+    shipment: ShipmentKey,
     secret_key: Option<String>,
 }
 
 impl FinalizeShipmentOp {
     pub fn new(shipment_id: ShipmentId, secret_key: Option<String>, caller: ActorId) -> Self {
         Self {
-            shipment_id,
+            shipment: ShipmentKey(shipment_id),
             secret_key,
-            caller,
+            caller: CarrierKey(caller),
         }
     }
 }
@@ -50,23 +50,27 @@ impl ValidatedStateOp<FinalizeShipmentResult> for FinalizeShipmentOp {
         &self,
         state: &CanisterState,
     ) -> Result<FinalizeShipmentResult, crate::EngineError> {
-        let shipment = state
-            .shipment(self.shipment_id)
+        let shipment = self
+            .shipment
+            .get()
             .ok_or(crate::errors::EngineError::ShipmentNotFound)?;
 
-        let carrier_id = shipment
-            .carrier_id()
-            .ok_or(crate::errors::EngineError::CarrierNotSet)?;
+        // TODO: store as [CarrierKey]
+        let carrier_id = CarrierKey(
+            shipment
+                .carrier_id()
+                .ok_or(crate::errors::EngineError::CarrierNotSet)?,
+        );
 
         let value = shipment.info().value();
         let price = shipment.info().price();
 
-        let carrier = state
-            .carrier(&carrier_id)
+        let carrier = carrier_id
+            .get()
             .ok_or(crate::errors::EngineError::CarrierNotFound)?;
 
         Ok(FinalizeShipmentResult {
-            carrier_id: carrier.id(),
+            carrier_id,
             value,
             price,
         })
@@ -80,8 +84,9 @@ impl StateOp<FinalizeShipmentResult> for FinalizeShipmentOp {
         &self,
         state: &mut CanisterState,
     ) -> Result<FinalizeShipmentResult, crate::EngineError> {
-        let mut shipment = state
-            .shipment(self.shipment_id)
+        let mut shipment = self
+            .shipment
+            .get()
             .ok_or(crate::errors::EngineError::ShipmentNotFound)?;
 
         let carrier_id = shipment
@@ -93,17 +98,18 @@ impl StateOp<FinalizeShipmentResult> for FinalizeShipmentOp {
 
         shipment.action(ShipmentActions::MarkDelivered {
             secret_key: self.secret_key.clone(),
-            caller: self.caller,
+            caller: self.caller.0,
         })?;
 
-        let carrier = state
-            .carrier(&carrier_id)
+        // TODO: store as [CarrierKey]
+        let carrier = CarrierKey(carrier_id)
+            .get()
             .ok_or(crate::errors::EngineError::CarrierNotFound)?;
 
-        Shipment::set(shipment);
+        shipment.set();
 
         Ok(FinalizeShipmentResult {
-            carrier_id: carrier.id(),
+            carrier_id: CarrierKey(carrier_id),
             value,
             price,
         })
@@ -162,7 +168,7 @@ mod tests {
             &info,
         );
 
-        state.create_shipment(shipment).unwrap();
+        Shipment::set(shipment);
         state
     }
 
@@ -242,7 +248,7 @@ mod tests {
         let result = op.apply(&mut state);
         assert!(result.is_ok());
 
-        let shipment = state.shipment(0).unwrap();
+        let shipment = ShipmentKey(0).get().unwrap();
         assert_eq!(shipment.status(), &ShipmentStatus::DeliveryCompleted);
     }
 
@@ -251,18 +257,21 @@ mod tests {
         let mut state = setup_bought_shipment_state();
         let op = FinalizeShipmentOp::new(0, Some(SECRET_KEY.to_string()), REGISTERED_CARRIER_ID);
 
-        let initial_shipment = state.shipment(0).unwrap();
+        let initial_shipment = ShipmentKey(0).get().unwrap();
         assert_eq!(initial_shipment.status(), &ShipmentStatus::InTransit);
 
         let result = op.apply(&mut state);
         assert!(result.is_ok());
 
         let finalize_result = result.unwrap();
-        assert_eq!(finalize_result.carrier_id(), &REGISTERED_CARRIER_ID);
+        assert_eq!(
+            finalize_result.carrier_id(),
+            &CarrierKey(REGISTERED_CARRIER_ID)
+        );
         assert_eq!(finalize_result.value(), 100);
         assert_eq!(finalize_result.price(), 10);
 
-        let shipment = state.shipment(0).unwrap();
+        let shipment = ShipmentKey(0).get().unwrap();
         assert_eq!(shipment.status(), &ShipmentStatus::DeliveryCompleted);
     }
 

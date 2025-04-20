@@ -1,23 +1,24 @@
 use apresh_store::Record;
-use apresh_types::{ActorId, Carrier, ChannelKey, Shipment, ShipmentActions, ShipmentId};
+use apresh_types::{
+    ActorId, Carrier, CarrierKey, ChannelKey, Shipment, ShipmentActions, ShipmentId, ShipmentKey,
+};
 
 use super::{StateOp, ValidatedStateOp};
 use crate::state::CanisterState;
-use crate::state::{CanisterActors, CanisterShipments};
 
 pub type Cost = u64;
 
 pub struct BuyShipmentOp {
-    carrier_id: ActorId,
-    shipment_id: ShipmentId,
+    carrier_id: CarrierKey,
+    shipment_id: ShipmentKey,
     channel_key: ChannelKey,
 }
 
 impl BuyShipmentOp {
     pub fn new(carrier_id: ActorId, shipment_id: ShipmentId, channel_key: ChannelKey) -> Self {
         Self {
-            carrier_id,
-            shipment_id,
+            carrier_id: CarrierKey(carrier_id),
+            shipment_id: ShipmentKey(shipment_id),
             channel_key,
         }
     }
@@ -27,12 +28,12 @@ impl ValidatedStateOp<Cost> for BuyShipmentOp {
     type ValidationResult = u64;
 
     fn validate(&self, state: &CanisterState) -> Result<u64, Self::Error> {
-        if state.carrier(&self.carrier_id).is_none() {
+        if (self.carrier_id).get().is_none() {
             return Err(crate::EngineError::CarrierNotFound);
         }
 
-        let shipment = state
-            .shipment(self.shipment_id)
+        let shipment = (self.shipment_id)
+            .get()
             .ok_or(crate::EngineError::ShipmentNotFound)?;
 
         let value = shipment.info().value();
@@ -44,16 +45,16 @@ impl StateOp<Cost> for BuyShipmentOp {
     type Error = crate::EngineError;
 
     fn apply(&self, state: &mut CanisterState) -> crate::Result<Cost> {
-        if state.carrier(&self.carrier_id).is_none() {
+        if (self.carrier_id).get().is_none() {
             return Err(crate::EngineError::CarrierNotFound);
         }
 
         let value = {
-            let mut shipment = state
-                .shipment(self.shipment_id)
+            let mut shipment = (self.shipment_id)
+                .get()
                 .ok_or(crate::EngineError::ShipmentNotFound)?;
 
-            shipment.action(ShipmentActions::Buy(self.carrier_id))?;
+            shipment.action(ShipmentActions::Buy(self.carrier_id.0))?;
             shipment.add_guest_to_channel(self.channel_key.clone());
             let value = shipment.info().value();
             Shipment::set(shipment);
@@ -61,9 +62,9 @@ impl StateOp<Cost> for BuyShipmentOp {
             value
         };
 
-        let mut carrier = state.carrier(&self.carrier_id).unwrap();
-        carrier.add_shipment(self.shipment_id);
-        Carrier::set(carrier);
+        let mut carrier = (self.carrier_id).get().unwrap();
+        carrier.add_shipment(self.shipment_id.0);
+        carrier.set();
 
         Ok(value)
     }
@@ -120,7 +121,7 @@ mod tests {
             &info,
         );
 
-        state.create_shipment(shipment).unwrap();
+        shipment.set();
         state
     }
 
@@ -164,7 +165,7 @@ mod tests {
         let shipment_id = 0;
         let op = BuyShipmentOp::new(REGISTERED_CARRIER_ID, shipment_id, CHANNEL_KEY.to_vec());
 
-        let initial_carrier = state.carrier(&REGISTERED_CARRIER_ID).unwrap();
+        let initial_carrier = CarrierKey(REGISTERED_CARRIER_ID).get().unwrap();
         assert!(!initial_carrier
             .get_active_shipments()
             .contains(&shipment_id));
@@ -173,8 +174,8 @@ mod tests {
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), 100);
 
-        let carrier = state.carrier(&REGISTERED_CARRIER_ID).unwrap();
-        let shipment = state.shipment(shipment_id).unwrap();
+        let carrier = CarrierKey(REGISTERED_CARRIER_ID).get().unwrap();
+        let shipment = ShipmentKey(shipment_id).get().unwrap();
 
         assert!(carrier.get_active_shipments().contains(&shipment_id));
         assert_eq!(shipment.status(), &ShipmentStatus::InTransit);
@@ -202,7 +203,7 @@ mod tests {
             &info,
         );
 
-        state.create_shipment(new_shipment).unwrap();
+        new_shipment.set();
 
         let shipment_id = 1;
         let op = CancelShipmentOp::new(REGISTERED_SHIPPER_ID, shipment_id);

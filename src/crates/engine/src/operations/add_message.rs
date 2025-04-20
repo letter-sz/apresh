@@ -1,7 +1,7 @@
 use apresh_store::Record;
-use apresh_types::{ActorId, Message, Shipment};
+use apresh_types::{ActorId, Message, Shipment, ShipmentKey};
 
-use crate::state::{CanisterShipments, CanisterState};
+use crate::state::CanisterState;
 
 use super::StateOp;
 use anyhow::anyhow;
@@ -33,8 +33,8 @@ impl StateOp<()> for AddMessageOp {
             return Err(crate::EngineError::MessageTooLong);
         }
 
-        let mut shipment = state
-            .shipment(self.shipment_id)
+        let mut shipment = ShipmentKey(self.shipment_id)
+            .get()
             .ok_or(crate::EngineError::ShipmentNotFound)?;
 
         let is_carrier = shipment

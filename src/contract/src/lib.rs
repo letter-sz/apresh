@@ -3,7 +3,8 @@ mod transfer;
 mod utils;
 
 use apresh_types::{
-    ActorId, Carrier, Channel, ChannelKey, PrintableShipment, ShipmentInfo, ShipmentStatus,
+    ActorId, Carrier, CarrierKey, Channel, ChannelKey, PrintableShipment, Shipment, ShipmentInfo,
+    ShipmentKey, ShipmentStatus, ShipperKey,
 };
 pub use transfer::consts;
 
@@ -17,9 +18,10 @@ use apresh_engine::{
         AddMessageOp, BuyShipmentOp, CancelShipmentOp, CreateShipmentOp, FinalizeShipmentOp,
         ReadMessageOp, RegisterActorOp, StateOp, ValidatedStateOp,
     },
-    state::{CanisterActors, CanisterShipments, CanisterState},
+    state::CanisterState,
 };
 use apresh_qr_code::{generate, QrCodeOptions};
+use apresh_store::Record;
 use candid::Principal;
 use ic_cdk::{init, query, update};
 use icrc_ledger_types::icrc1::transfer::NumTokens;
@@ -119,7 +121,7 @@ async fn finalize_shipment(shipment_id: u64, secret_key: Option<String>) -> Resu
             amount: NumTokens::from(amount),
             memo: memo("SETTLE", shipment_id),
         },
-        to: (finalize_shipment_result.carrier_id().0).into(),
+        to: (finalize_shipment_result.carrier_id().0).0.into(),
     };
 
     // If transfer fails, return the error
@@ -392,75 +394,62 @@ fn cancel_shipment(shipment_id: u64) -> Result<(), String> {
 
 #[query(name = "listPendingShipments")]
 fn get_pending_shipments() -> Vec<PrintableShipment> {
-    STATE.with_borrow(|state| {
-        state
-            .shipments()
-            .iter()
-            .filter(|shipment| *shipment.status() == ShipmentStatus::Pending)
-            .map(PrintableShipment::from)
-            .collect()
-    })
+    Shipment::range_scan(None, None)
+        .into_iter()
+        .filter_map(Shipment::get)
+        .filter(|shipment| *shipment.status() == ShipmentStatus::Pending)
+        .map(PrintableShipment::from)
+        .collect()
 }
 
 #[query]
 fn shipper_shipments() -> Vec<PrintableShipment> {
     let customer_id = ActorId(ic_cdk::caller());
-
-    STATE.with_borrow(|state| {
-        state
-            .shipments()
-            .iter()
-            .filter(|shipment| shipment.shipper_id() == customer_id)
-            .filter(|shipment| !shipment.status().is_finished())
-            .map(PrintableShipment::from)
-            .collect()
-    })
+    Shipment::range_scan(None, None)
+        .into_iter()
+        .filter_map(Shipment::get)
+        .filter(|shipment| *shipment.status() == ShipmentStatus::Pending)
+        .filter(|shipment| shipment.shipper_id() == customer_id)
+        .filter(|shipment| !shipment.status().is_finished())
+        .map(PrintableShipment::from)
+        .collect()
 }
 
 #[query]
 fn carrier_shipments() -> Vec<PrintableShipment> {
     let customer_id = ActorId(ic_cdk::caller());
 
-    STATE.with_borrow(|state| {
-        state
-            .shipments()
-            .iter()
-            .filter(|shipment| shipment.carrier_id() == Some(customer_id))
-            .filter(|shipment| !shipment.status().is_finished())
-            .map(PrintableShipment::from)
-            .collect()
-    })
+    Shipment::range_scan(None, None)
+        .into_iter()
+        .filter_map(Shipment::get)
+        .filter(|shipment| shipment.carrier_id() == Some(customer_id))
+        .filter(|shipment| !shipment.status().is_finished())
+        .map(PrintableShipment::from)
+        .collect()
 }
 
 #[query]
 fn roles() -> (bool, bool) {
     let caller = ic_cdk::caller();
 
-    let carrier = STATE.with_borrow(|state| state.carrier(&caller.into()).is_some());
-    let shipper = STATE.with_borrow(|state| state.shipper(&caller.into()).is_some());
+    let carrier = (CarrierKey(caller.into()).get()).is_some();
+    let shipper = (ShipperKey(caller.into()).get()).is_some();
 
     (carrier, shipper)
 }
 
 #[query]
 fn shipments() -> Vec<PrintableShipment> {
-    STATE.with_borrow(|state| {
-        state
-            .shipments()
-            .iter()
-            .map(PrintableShipment::from)
-            .collect()
-    })
+    Shipment::range_scan(None, None)
+        .into_iter()
+        .filter_map(Shipment::get)
+        .map(PrintableShipment::from)
+        .collect()
 }
 
 #[query]
 fn shipment(shipment_id: u64) -> Option<PrintableShipment> {
-    STATE.with_borrow(|state| {
-        state
-            .shipment(shipment_id)
-            .as_ref()
-            .map(PrintableShipment::from)
-    })
+    ShipmentKey(shipment_id).get().map(PrintableShipment::from)
 }
 
 #[update(name = "lockCanister")]

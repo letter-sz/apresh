@@ -1,8 +1,6 @@
 use anyhow::anyhow;
 use apresh_store::Record;
-use apresh_types::{ActorId, Shipment, ShipmentActions, ShipmentId};
-
-use crate::state::{CanisterActors, CanisterShipments};
+use apresh_types::{ActorId, Shipment, ShipmentActions, ShipmentId, ShipmentKey, ShipperKey};
 
 use super::StateOp;
 use crate::state::CanisterState;
@@ -27,12 +25,12 @@ impl StateOp<Cost> for CancelShipmentOp {
     type Error = crate::EngineError;
 
     fn apply(&self, state: &mut CanisterState) -> crate::Result<Cost> {
-        let shipper = state
-            .shipper(&self.shipper)
+        let shipper = ShipperKey(self.shipper)
+            .get()
             .ok_or(crate::EngineError::ShipperNotFound)?;
 
-        let mut shipment = state
-            .shipment(self.shipment_id)
+        let mut shipment = ShipmentKey(self.shipment_id)
+            .get()
             .ok_or(crate::EngineError::ShipmentNotFound)?;
 
         shipment.action(ShipmentActions::Cancel {
@@ -96,7 +94,7 @@ mod tests {
             &info,
         );
 
-        state.create_shipment(shipment).unwrap();
+        shipment.set();
         state
     }
 
@@ -162,14 +160,14 @@ mod tests {
         let shipment_id = 0;
         let op = CancelShipmentOp::new(REGISTERED_SHIPPER_ID, shipment_id);
 
-        let initial_shipment = state.shipment(shipment_id).unwrap();
+        let initial_shipment = ShipmentKey(shipment_id).get().unwrap();
         assert_eq!(initial_shipment.status(), &ShipmentStatus::Pending);
 
         let result = op.apply(&mut state);
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), 100);
 
-        let shipment = state.shipment(shipment_id).unwrap();
+        let shipment = ShipmentKey(shipment_id).get().unwrap();
         assert_eq!(shipment.status(), &ShipmentStatus::Cancelled);
     }
 
