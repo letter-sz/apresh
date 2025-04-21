@@ -73,7 +73,10 @@ async fn deposit(amount: u64) {
     BALANCES.with_borrow_mut(|balances| {
         let caller_bytes = ic_cdk::caller().as_slice().to_vec();
         let (balance, locked) = balances.get(&caller_bytes).unwrap_or((0, 0));
-        balances.insert(caller_bytes, (balance + amount, locked));
+        let Some(new_balance) = balance.checked_add(amount) else {
+            ic_cdk::trap("Insufficient balance");
+        };
+        balances.insert(caller_bytes, (new_balance, locked));
     });
 }
 
@@ -91,11 +94,11 @@ async fn withdraw(amount: u64) {
         let caller_bytes = ic_cdk::caller().as_slice().to_vec();
         let (balance, locked) = balances.get(&caller_bytes).unwrap_or((0, 0));
 
-        if balance < amount {
+        let Some(new_balance) = balance.checked_sub(amount) else {
             ic_cdk::trap("Insufficient balance");
-        }
+        };
 
-        balances.insert(caller_bytes, (balance - amount, locked));
+        balances.insert(caller_bytes, (new_balance, locked));
     });
 
     let transfer_args = TransferOutParams {
@@ -184,7 +187,11 @@ async fn finalize_shipment(shipment_id: u64, secret_key: Option<String>) -> Resu
     BALANCES.with_borrow_mut(|balances| {
         let caller_bytes = ic_cdk::caller().as_slice().to_vec();
         let (balance, locked) = balances.get(&caller_bytes).unwrap_or((0, 0));
-        balances.insert(caller_bytes, (balance + amount, locked));
+        let Some(new_balance) = balance.checked_add(amount) else {
+            shipment.revert();
+            ic_cdk::trap("Insufficient balance");
+        };
+        balances.insert(caller_bytes, (new_balance, locked));
     });
 
     Ok(())
@@ -197,15 +204,16 @@ async fn buy_shipment(
     channel_key: ChannelKey,
 ) -> Result<(), String> {
     assert_whitelisted();
-    let caller = CarrierKey(ActorId(ic_cdk::caller()));
+    let caller = ActorId(ic_cdk::caller());
 
     let mut shipment = ShipmentKey(shipment_id).get().unwrap();
+    let mut carrier = CarrierKey(caller).get().unwrap();
 
     let shipment_value = STATE
         .with_borrow_mut(|state| {
             // Register carrier if carrier name is provided
             if let Some(carrier_name) = carrier_name {
-                let carrier = Carrier::new(caller.0, carrier_name.as_str());
+                let carrier = Carrier::new(caller, carrier_name.as_str());
 
                 RegisterActorOp::AddCarrier {
                     id: carrier.id(),
@@ -216,7 +224,6 @@ async fn buy_shipment(
                 .unwrap();
             }
 
-            let mut carrier = <Carrier as Record>::get_guard(caller).unwrap();
             BuyShipmentOp::new(&mut carrier, &mut shipment, channel_key).apply(state)
         })
         .map_err(|e| e.to_string())?;
@@ -225,11 +232,13 @@ async fn buy_shipment(
         let caller_bytes = ic_cdk::caller().as_slice().to_vec();
         let (balance, locked) = balances.get(&caller_bytes).unwrap_or((0, 0));
 
-        if balance < shipment_value {
+        let Some(new_balance) = balance.checked_sub(shipment_value) else {
+            carrier.revert();
+            shipment.revert();
             ic_cdk::trap("Insufficient balance");
-        }
+        };
 
-        balances.insert(caller_bytes, (balance - shipment_value, locked));
+        balances.insert(caller_bytes, (new_balance, locked));
     });
 
     Ok(())
@@ -247,6 +256,8 @@ async fn create_shipment(
     let caller = ShipperKey(ActorId(ic_cdk::caller()));
     let price = shipment_info.price();
 
+    let mut shipper = caller.get().unwrap();
+
     let shipment_id = STATE
         .with_borrow_mut(|state| {
             // First register the shipper if needed
@@ -260,7 +271,6 @@ async fn create_shipment(
                 }
             }
 
-            let mut shipper = caller.get().unwrap();
             let create_op = CreateShipmentOp::new(
                 &mut shipper,
                 hashed_secret,
@@ -283,11 +293,12 @@ async fn create_shipment(
         let caller_bytes = ic_cdk::caller().as_slice().to_vec();
         let (balance, locked) = balances.get(&caller_bytes).unwrap_or((0, 0));
 
-        if balance < price {
+        let Some(new_balance) = balance.checked_sub(price) else {
+            shipper.revert();
             ic_cdk::trap("Insufficient balance");
-        }
+        };
 
-        balances.insert(caller_bytes, (balance - price, locked));
+        balances.insert(caller_bytes, (new_balance, locked));
     });
 
     Ok(shipment_id)
