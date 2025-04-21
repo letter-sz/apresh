@@ -1,45 +1,38 @@
 use anyhow::anyhow;
 use apresh_store::Record;
-use apresh_types::{ActorId, Shipment, ShipmentActions, ShipmentId, ShipmentKey, ShipperKey};
+use apresh_types::{
+    ActorId, Shipment, ShipmentActions, ShipmentId, ShipmentKey, Shipper, ShipperKey,
+};
 
 use super::StateOp;
 use crate::state::CanisterState;
 
 pub type Cost = u64;
 
-pub struct CancelShipmentOp {
-    shipper: ShipperKey,
-    shipment: ShipmentKey,
+pub struct CancelShipmentOp<'a> {
+    shipper: &'a Shipper,
+    shipment: &'a mut Shipment,
 }
 
-impl CancelShipmentOp {
-    pub fn new(shipper: ShipperKey, shipment: ShipmentKey) -> Self {
+impl<'a> CancelShipmentOp<'a> {
+    pub fn new(shipper: &'a Shipper, shipment: &'a mut Shipment) -> Self {
         Self { shipper, shipment }
     }
 }
 
-impl StateOp<Cost> for CancelShipmentOp {
+impl StateOp<Cost> for CancelShipmentOp<'_> {
     type Error = crate::EngineError;
 
-    fn apply(&self, state: &mut CanisterState) -> crate::Result<Cost> {
-        let shipper = self
-            .shipper
-            .get()
-            .ok_or(crate::EngineError::ShipperNotFound)?;
+    fn apply(self, state: &mut CanisterState) -> crate::Result<Cost> {
+        if self.shipment.shipper_id() != self.shipper.id() {
+            return Err(crate::EngineError::NotAuthorizedAsShipper);
+        }
 
-        let mut shipment = self
-            .shipment
-            .get()
-            .ok_or(crate::EngineError::ShipmentNotFound)?;
-
-        shipment.action(ShipmentActions::Cancel {
-            shipper: self.shipper.0,
+        self.shipment.action(ShipmentActions::Cancel {
+            shipper: self.shipper.id(),
         })?;
 
-        let value = shipment.info().value();
-        Shipment::set(shipment);
-
-        Ok(value)
+        Ok(self.shipment.info().value())
     }
 }
 
@@ -52,7 +45,8 @@ mod tests {
     };
     use apresh_crypto::hash_secret;
     use apresh_types::{
-        CarrierKey, ShipmentError, ShipmentInfo, ShipmentLocation, ShipmentStatus, SizeCategory,
+        Carrier, CarrierKey, ShipmentError, ShipmentInfo, ShipmentLocation, ShipmentStatus,
+        SizeCategory,
     };
     use candid::Principal;
 
@@ -104,19 +98,18 @@ mod tests {
     #[test]
     fn test_cancel_shipment_unregistered_shipper() {
         let mut state = setup_test_state();
-        let op = CancelShipmentOp::new(UNREGISTERED_SHIPPER_ID, ShipmentKey(0));
-
-        let result = op.apply(&mut state);
-        assert!(matches!(result, Err(EngineError::ShipperNotFound)));
+        let mut shipper = UNREGISTERED_SHIPPER_ID
+            .get()
+            .ok_or(EngineError::ShipperNotFound);
+        assert!(matches!(shipper, Err(EngineError::ShipperNotFound)));
     }
 
     #[test]
     fn test_cancel_shipment_nonexistent_shipment() {
         let mut state = setup_test_state();
-        let op = CancelShipmentOp::new(REGISTERED_SHIPPER_ID, ShipmentKey(999));
-
-        let result = op.apply(&mut state);
-        assert!(matches!(result, Err(EngineError::ShipmentNotFound)));
+        let mut shipper = REGISTERED_SHIPPER_ID.get().unwrap();
+        let mut shipment = ShipmentKey(999).get().ok_or(EngineError::ShipmentNotFound);
+        assert!(matches!(shipment, Err(EngineError::ShipmentNotFound)));
     }
 
     #[test]
@@ -130,26 +123,28 @@ mod tests {
         };
         register_other_shipper.apply(&mut state);
 
-        let op = CancelShipmentOp::new(ShipperKey(other_shipper_id), ShipmentKey(0));
+        let mut shipper = ShipperKey(other_shipper_id).get().unwrap();
+        let mut shipment = ShipmentKey(0).get().unwrap();
+        let op = CancelShipmentOp::new(&shipper, &mut shipment);
         let result = op.apply(&mut state);
-        assert!(matches!(
-            result,
-            Err(EngineError::ShipmentError(
-                ShipmentError::NotAuthorizedAsShipper
-            ))
-        ));
+        assert_eq!(result, Err(EngineError::NotAuthorizedAsShipper));
     }
 
     #[test]
     fn test_cancel_shipment_already_bought() {
         let mut state = setup_test_state();
 
-        let buy_op =
-            BuyShipmentOp::new(REGISTERED_CARRIER_ID, ShipmentKey(0), CHANNEL_KEY.to_vec());
+        let mut shipment = ShipmentKey(0).get().unwrap();
+        let mut carrier = REGISTERED_CARRIER_ID.get().unwrap();
+        let buy_op = BuyShipmentOp::new(&mut carrier, &mut shipment, CHANNEL_KEY.to_vec());
         buy_op.apply(&mut state).unwrap();
 
-        let cancel_op = CancelShipmentOp::new(REGISTERED_SHIPPER_ID, ShipmentKey(0));
-        let result = cancel_op.apply(&mut state);
+        shipment.consume();
+
+        let mut shipper = REGISTERED_SHIPPER_ID.get().unwrap();
+        let mut shipment = ShipmentKey(0).get().unwrap();
+        let op = CancelShipmentOp::new(&shipper, &mut shipment);
+        let result = op.apply(&mut state);
         assert!(matches!(
             result,
             Err(EngineError::ShipmentError(
@@ -162,7 +157,9 @@ mod tests {
     fn test_cancel_shipment_success() {
         let mut state = setup_test_state();
         let shipment_id = 0;
-        let op = CancelShipmentOp::new(REGISTERED_SHIPPER_ID, ShipmentKey(shipment_id));
+        let mut shipper = REGISTERED_SHIPPER_ID.get().unwrap();
+        let mut shipment = ShipmentKey(shipment_id).get().unwrap();
+        let op = CancelShipmentOp::new(&shipper, &mut shipment);
 
         let initial_shipment = ShipmentKey(shipment_id).get().unwrap();
         assert_eq!(initial_shipment.status(), &ShipmentStatus::Pending);
@@ -170,6 +167,8 @@ mod tests {
         let result = op.apply(&mut state);
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), 100);
+
+        shipment.consume();
 
         let shipment = ShipmentKey(shipment_id).get().unwrap();
         assert_eq!(shipment.status(), &ShipmentStatus::Cancelled);
@@ -187,14 +186,16 @@ mod tests {
         };
         register_carrier.apply(&mut state);
 
-        let buy_op = BuyShipmentOp::new(
-            REGISTERED_CARRIER_ID,
-            ShipmentKey(shipment_id),
-            CHANNEL_KEY.to_vec(),
-        );
+        let mut shipment = ShipmentKey(shipment_id).get().unwrap();
+        let mut carrier = REGISTERED_CARRIER_ID.get().unwrap();
+        let buy_op = BuyShipmentOp::new(&mut carrier, &mut shipment, CHANNEL_KEY.to_vec());
         buy_op.apply(&mut state).unwrap();
 
-        let op = CancelShipmentOp::new(REGISTERED_SHIPPER_ID, ShipmentKey(shipment_id));
+        shipment.consume();
+
+        let mut shipper = REGISTERED_SHIPPER_ID.get().unwrap();
+        let mut shipment = ShipmentKey(shipment_id).get().unwrap();
+        let op = CancelShipmentOp::new(&shipper, &mut shipment);
         let result = op.apply(&mut state);
 
         assert_eq!(

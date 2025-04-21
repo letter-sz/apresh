@@ -9,45 +9,41 @@ use candid::Principal;
 
 const MAX_MESSAGE_LENGTH: usize = 4096;
 
-pub struct AddMessageOp {
-    pub shipment_id: u64,
+pub struct AddMessageOp<'a> {
+    pub shipment: &'a mut Shipment,
     pub message: Message,
     pub caller: ActorId,
 }
 
-impl AddMessageOp {
-    pub fn new(shipment_id: u64, message: Message, caller: ActorId) -> Self {
+impl<'a> AddMessageOp<'a> {
+    pub fn new(shipment: &'a mut Shipment, message: Message, caller: ActorId) -> Self {
         Self {
-            shipment_id,
+            shipment,
             message,
             caller,
         }
     }
 }
 
-impl StateOp<()> for AddMessageOp {
+impl StateOp<()> for AddMessageOp<'_> {
     type Error = crate::EngineError;
 
-    fn apply(&self, state: &mut CanisterState) -> Result<(), Self::Error> {
+    fn apply(self, state: &mut CanisterState) -> Result<(), Self::Error> {
         if self.message.len() > MAX_MESSAGE_LENGTH {
             return Err(crate::EngineError::MessageTooLong);
         }
 
-        let mut shipment = ShipmentKey(self.shipment_id)
-            .get()
-            .ok_or(crate::EngineError::ShipmentNotFound)?;
-
-        let is_carrier = shipment
+        let is_carrier = self
+            .shipment
             .carrier_id()
             .map(|id| id == self.caller)
             .unwrap_or(false);
 
-        if shipment.shipper_id() != self.caller && !is_carrier {
+        if self.shipment.shipper_id() != self.caller && !is_carrier {
             return Err(crate::EngineError::NotAuthorizedAsNeitherCarrierNorShipper);
         }
 
-        shipment.attach_message(self.message.clone());
-        Shipment::set(shipment);
+        self.shipment.attach_message(self.message.clone());
 
         Ok(())
     }

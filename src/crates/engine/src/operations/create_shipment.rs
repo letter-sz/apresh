@@ -8,7 +8,7 @@ use super::{CanisterState, StateOp};
 
 #[derive(Debug)]
 pub struct CreateShipmentOp<'a> {
-    creator: ShipperKey,
+    creator: &'a mut Shipper,
     hashed_secret: Vec<u8>,
     channel_key: ChannelKey,
     shipment_name: &'a str,
@@ -18,7 +18,7 @@ pub struct CreateShipmentOp<'a> {
 
 impl<'a> CreateShipmentOp<'a> {
     pub fn new(
-        creator: ShipperKey,
+        creator: &'a mut Shipper,
         hashed_secret: Vec<u8>,
         channel_key: ChannelKey,
         shipment_name: &'a str,
@@ -39,21 +39,16 @@ impl<'a> CreateShipmentOp<'a> {
 impl StateOp<ShipmentId> for CreateShipmentOp<'_> {
     type Error = crate::errors::EngineError;
 
-    fn apply(&self, state: &mut CanisterState) -> crate::Result<ShipmentId> {
+    fn apply(self, state: &mut CanisterState) -> crate::Result<ShipmentId> {
         let new_shipment_id = state.get_new_shipment_id();
 
         if new_shipment_id == u64::MAX {
             return Err(crate::EngineError::ShipmentLimitReached);
         }
 
-        let mut shipper = self
-            .creator
-            .get()
-            .ok_or(crate::EngineError::ShipperNotFound)?;
-
         let mut shipment = Shipment::new(
             self.timestamp,
-            shipper.id(),
+            self.creator.id(),
             new_shipment_id,
             self.hashed_secret.clone(),
             self.channel_key.clone(),
@@ -61,10 +56,8 @@ impl StateOp<ShipmentId> for CreateShipmentOp<'_> {
             self.info,
         );
 
-        shipper.add_shipment(new_shipment_id);
-
+        self.creator.add_shipment(new_shipment_id);
         shipment.set();
-        shipper.set();
 
         Ok(new_shipment_id)
     }
@@ -117,8 +110,9 @@ mod tests {
 
         state.set_shipment_counter(u64::MAX - 2);
 
+        let mut shipper = REGISTERED_SHIPPER_ACTOR_ID.get().unwrap();
         let op1 = CreateShipmentOp::new(
-            REGISTERED_SHIPPER_ACTOR_ID,
+            &mut shipper,
             hashed_secret.clone(),
             CHANNEL_KEY.to_vec(),
             "Last Valid Shipment",
@@ -128,8 +122,9 @@ mod tests {
 
         assert_eq!(op1.apply(&mut state), Ok(u64::MAX - 1));
 
+        let mut shipper = REGISTERED_SHIPPER_ACTOR_ID.get().unwrap();
         let op2 = CreateShipmentOp::new(
-            REGISTERED_SHIPPER_ACTOR_ID,
+            &mut shipper,
             hashed_secret,
             CHANNEL_KEY.to_vec(),
             "Should Fail",
@@ -149,17 +144,10 @@ mod tests {
         let hashed_secret = hash_secret(b"secret_key_123");
         let info = default_shipper_info();
 
-        let op = CreateShipmentOp::new(
-            UNREGISTERED_SHIPPER_ACTOR_ID,
-            hashed_secret,
-            CHANNEL_KEY.to_vec(),
-            "Test Shipment",
-            &info,
-            1234567890,
-        );
-
-        let result = op.apply(&mut state);
-        assert!(matches!(result, Err(EngineError::ShipperNotFound)));
+        let mut shipper = UNREGISTERED_SHIPPER_ACTOR_ID
+            .get()
+            .ok_or(EngineError::ShipperNotFound);
+        assert!(matches!(shipper, Err(EngineError::ShipperNotFound)));
     }
 
     #[test]
@@ -178,8 +166,9 @@ mod tests {
             .get_active_shipments()
             .len();
 
+        let mut shipper = REGISTERED_SHIPPER_ACTOR_ID.get().unwrap();
         let op = CreateShipmentOp::new(
-            REGISTERED_SHIPPER_ACTOR_ID,
+            &mut shipper,
             hashed_secret.clone(),
             CHANNEL_KEY.to_vec(),
             shipment_name,
@@ -199,6 +188,8 @@ mod tests {
 
         let result = op.apply(&mut state);
         assert_eq!(result, Ok(expected_shipment_id));
+
+        shipper.consume();
 
         let shipment_id = result.unwrap();
         let shipper = (REGISTERED_SHIPPER_ACTOR_ID).get().unwrap();

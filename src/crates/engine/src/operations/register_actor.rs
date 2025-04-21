@@ -13,13 +13,13 @@ pub enum RegisterActorOp {
 impl StateOp<()> for RegisterActorOp {
     type Error = crate::EngineError;
 
-    fn apply(&self, state: &mut CanisterState) -> Result<(), Self::Error> {
+    fn apply(self, state: &mut CanisterState) -> Result<(), Self::Error> {
         match self {
             RegisterActorOp::AddShipper { id, name } => {
-                Shipper::new(*id, name).set();
+                Shipper::new(id, name.as_str()).set();
             }
             RegisterActorOp::AddCarrier { id, name } => {
-                Carrier::new(*id, name).set();
+                Carrier::new(id, name.as_str()).set();
             }
         }
 
