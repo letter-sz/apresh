@@ -1,8 +1,11 @@
+pub use guard::*;
 use ic_stable_structures::{
     memory_manager::{MemoryId, MemoryManager, VirtualMemory},
     DefaultMemoryImpl, StableBTreeMap,
 };
 use std::cell::RefCell;
+
+mod guard;
 
 pub const DB_MEMORY_ID: MemoryId = MemoryId::new(7);
 pub const BALANCES_MEMORY_ID: MemoryId = MemoryId::new(6);
@@ -49,6 +52,16 @@ pub trait Record: serde::Serialize + serde::de::DeserializeOwned {
         })
     }
 
+    fn set_by_ref(&mut self) {
+        let key = self.key();
+        let mut key = bcs::to_bytes(&key).unwrap();
+        key.insert(0, Self::SCOPE);
+        DB_MEMORY.with_borrow_mut(|db| {
+            let value = bcs::to_bytes(self).unwrap();
+            db.insert(key, value);
+        })
+    }
+
     fn get(key: Self::Key) -> Option<Self> {
         let mut key = bcs::to_bytes(&key).unwrap();
         key.insert(0, Self::SCOPE);
@@ -58,6 +71,10 @@ pub trait Record: serde::Serialize + serde::de::DeserializeOwned {
             let value = bcs::from_bytes::<Self>(&record_vec).unwrap();
             Some(value)
         })
+    }
+
+    fn get_guard(key: Self::Key) -> Option<Guard<Self>> {
+        Self::get(key).map(|value| Guard::new(value))
     }
 
     fn delete(key: Self::Key) {

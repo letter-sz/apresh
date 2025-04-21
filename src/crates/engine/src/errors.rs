@@ -20,4 +20,6 @@ pub enum EngineError {
     MessageTooLong,
     #[error("Shipment limit reached")]
     ShipmentLimitReached,
+    #[error("Not authorized as shipper")]
+    NotAuthorizedAsShipper,
 }
