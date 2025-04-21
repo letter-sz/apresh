@@ -159,8 +159,8 @@ pub fn derive_key(input: TokenStream) -> TokenStream {
         pub struct #key_type(pub #first_field_type);
 
         impl #key_type {
-            pub fn get(self) -> Option<#name #ty_generics #where_clause> {
-                <#name as apresh_store::Record>::get(self)
+            pub fn get(self) -> Option<apresh_store::Guard<#name #ty_generics #where_clause>> {
+                <#name as apresh_store::Record>::get_guard(self)
             }
         }
 

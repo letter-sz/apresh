@@ -2,12 +2,6 @@ mod refund_log;
 mod transfer;
 mod utils;
 
-use apresh_types::{
-    ActorId, Carrier, CarrierKey, Channel, ChannelKey, PrintableShipment, Shipment, ShipmentInfo,
-    ShipmentKey, ShipmentStatus, ShipperKey,
-};
-pub use transfer::consts;
-
 #[cfg(not(feature = "no-mocks"))]
 mod mock_data;
 
@@ -22,10 +16,15 @@ use apresh_engine::{
 };
 use apresh_qr_code::{generate, QrCodeOptions};
 use apresh_store::{Record, BALANCES};
+use apresh_types::{
+    ActorId, Carrier, CarrierKey, Channel, ChannelKey, PrintableShipment, Shipment, ShipmentInfo,
+    ShipmentKey, ShipmentStatus, ShipperKey,
+};
 use candid::Principal;
 use ic_cdk::{init, query, update};
 use icrc_ledger_types::icrc1::transfer::NumTokens;
 use refund_log::RefundLog;
+pub use transfer::consts;
 use transfer::{transfer_in, transfer_out, TransferInParams, TransferOutParams, TransferParams};
 use utils::{assert_admin, assert_whitelisted, memo};
 
@@ -151,18 +150,20 @@ async fn add_message(message: Vec<u8>, shipment_id: u64) -> Result<(), String> {
     assert_whitelisted();
 
     let caller = ActorId(ic_cdk::caller());
+    let mut shipment = ShipmentKey(shipment_id).get().unwrap();
 
     STATE
-        .with_borrow_mut(|state| AddMessageOp::new(shipment_id, message, caller).apply(state))
+        .with_borrow_mut(|state| AddMessageOp::new(&mut shipment, message, caller).apply(state))
         .map_err(|e| e.to_string())
 }
 
 #[query]
 async fn read_channel(shipment_id: u64) -> Result<Channel, String> {
     let caller = ActorId(ic_cdk::caller());
+    let shipment = ShipmentKey(shipment_id).get().unwrap();
 
     STATE
-        .with_borrow(|state| ReadMessageOp::new(shipment_id, caller).read(state))
+        .with_borrow(|state| ReadMessageOp::new(&shipment, caller).read(state))
         .map_err(|e| e.to_string())
 }
 
@@ -170,9 +171,11 @@ async fn read_channel(shipment_id: u64) -> Result<Channel, String> {
 async fn finalize_shipment(shipment_id: u64, secret_key: Option<String>) -> Result<(), String> {
     let caller = ActorId(ic_cdk::caller());
 
+    let mut shipment = ShipmentKey(shipment_id).get().unwrap();
+
     let finalize_shipment_result = STATE
         .with_borrow_mut(|state| {
-            FinalizeShipmentOp::new(shipment_id, secret_key, caller).apply(state)
+            FinalizeShipmentOp::new(&mut shipment, secret_key, caller).apply(state)
         })
         .map_err(|e| e.to_string())?;
 
@@ -195,7 +198,8 @@ async fn buy_shipment(
 ) -> Result<(), String> {
     assert_whitelisted();
     let caller = CarrierKey(ActorId(ic_cdk::caller()));
-    let shipment = ShipmentKey(shipment_id);
+
+    let mut shipment = ShipmentKey(shipment_id).get().unwrap();
 
     let shipment_value = STATE
         .with_borrow_mut(|state| {
@@ -212,8 +216,8 @@ async fn buy_shipment(
                 .unwrap();
             }
 
-            // Validate the operation
-            BuyShipmentOp::new(caller, shipment, channel_key).apply(state)
+            let mut carrier = <Carrier as Record>::get_guard(caller).unwrap();
+            BuyShipmentOp::new(&mut carrier, &mut shipment, channel_key).apply(state)
         })
         .map_err(|e| e.to_string())?;
 
@@ -256,9 +260,9 @@ async fn create_shipment(
                 }
             }
 
-            // Validate the shipment creation operation
+            let mut shipper = caller.get().unwrap();
             let create_op = CreateShipmentOp::new(
-                caller,
+                &mut shipper,
                 hashed_secret,
                 channel_key,
                 &shipment_name,
@@ -294,10 +298,11 @@ fn cancel_shipment(shipment_id: u64) -> Result<(), String> {
     assert_whitelisted();
     let caller = ShipperKey(ActorId(ic_cdk::caller()));
 
+    let mut shipment = ShipmentKey(shipment_id).get().unwrap();
+    let shipper = caller.get().unwrap();
+
     STATE
-        .with_borrow_mut(|state| {
-            CancelShipmentOp::new(caller, ShipmentKey(shipment_id)).apply(state)
-        })
+        .with_borrow_mut(|state| CancelShipmentOp::new(&shipper, &mut shipment).apply(state))
         .map_err(|e| e.to_string())?;
 
     Ok(())
@@ -360,7 +365,9 @@ fn shipments() -> Vec<PrintableShipment> {
 
 #[query]
 fn shipment(shipment_id: u64) -> Option<PrintableShipment> {
-    ShipmentKey(shipment_id).get().map(PrintableShipment::from)
+    ShipmentKey(shipment_id)
+        .get()
+        .map(|s| PrintableShipment::from(&*s))
 }
 
 #[query(name = "generateQr")]

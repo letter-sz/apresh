@@ -18,10 +18,10 @@ pub use finalize_shipment::FinalizeShipmentOp;
 pub use read_message::ReadMessageOp;
 pub use register_actor::RegisterActorOp;
 
-pub trait StateOp<R> {
+pub trait StateOp<R>: Sized {
     type Error;
 
-    fn apply(&self, state: &mut CanisterState) -> Result<R, Self::Error> {
+    fn apply(self, state: &mut CanisterState) -> Result<R, Self::Error> {
         unimplemented!()
     }
 

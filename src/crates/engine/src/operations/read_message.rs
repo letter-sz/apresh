@@ -1,37 +1,29 @@
-use apresh_types::{ActorId, Channel, Message, ShipmentId, ShipmentKey};
+use apresh_types::{ActorId, Channel, Message, Shipment, ShipmentId, ShipmentKey};
 
 use super::StateOp;
 use crate::state::CanisterState;
 
-pub struct ReadMessageOp {
-    pub shipment: ShipmentKey,
+pub struct ReadMessageOp<'a> {
+    pub shipment: &'a Shipment,
     pub caller: ActorId,
 }
 
-impl ReadMessageOp {
-    pub fn new(shipment_id: ShipmentId, caller: ActorId) -> Self {
-        Self {
-            shipment: ShipmentKey(shipment_id),
-            caller,
-        }
+impl<'a> ReadMessageOp<'a> {
+    pub fn new(shipment: &'a Shipment, caller: ActorId) -> Self {
+        Self { shipment, caller }
     }
 }
 
-impl StateOp<Channel> for ReadMessageOp {
+impl StateOp<Channel> for ReadMessageOp<'_> {
     type Error = crate::EngineError;
     fn read(&self, state: &CanisterState) -> crate::Result<Channel> {
-        let shipment = self
-            .shipment
-            .get()
-            .ok_or(crate::EngineError::ShipmentNotFound)?;
-
-        let is_shipper = shipment.shipper_id() == self.caller;
-        let is_carrier = shipment.carrier_id() == Some(self.caller);
+        let is_shipper = self.shipment.shipper_id() == self.caller;
+        let is_carrier = self.shipment.carrier_id() == Some(self.caller);
 
         if !is_shipper && !is_carrier {
             return Err(crate::EngineError::NotAuthorizedAsNeitherCarrierNorShipper);
         }
 
-        Ok(shipment.channel().clone())
+        Ok(self.shipment.channel().clone())
     }
 }
