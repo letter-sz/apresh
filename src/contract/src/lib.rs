@@ -256,38 +256,44 @@ async fn create_shipment(
     let caller = ShipperKey(ActorId(ic_cdk::caller()));
     let price = shipment_info.price();
 
-    let mut shipper = caller.get().unwrap();
-
-    let shipment_id = STATE
-        .with_borrow_mut(|state| {
-            // First register the shipper if needed
-            if let Some(customer_name) = &customer_name {
-                let register_op = RegisterActorOp::AddShipper {
+    let mut shipper = STATE.with_borrow_mut(|state| {
+        // First register the shipper if needed
+        let shipper = match (caller.get(), customer_name) {
+            (Some(shipper), _) => shipper,
+            (None, Some(customer_name)) => {
+                RegisterActorOp::AddShipper {
                     id: caller.0,
                     name: customer_name.clone(),
-                };
-                if let Err(e) = register_op.apply(state) {
-                    return Err(e.to_string());
                 }
+                .apply(state)
+                .map_err(|e| e.to_string())?;
+                caller.get().ok_or("Shipper could not be registered")?
             }
+            (None, None) => {
+                ic_cdk::trap("Shipper does not exist and no name was provided");
+            }
+        };
 
-            let create_op = CreateShipmentOp::new(
-                &mut shipper,
-                hashed_secret,
-                channel_key,
-                &shipment_name,
-                &shipment_info,
-                ic_cdk::api::time(),
-            );
+        Result::<_, String>::Ok(shipper)
+    })?;
 
-            let shipment_id = match create_op.apply(state) {
-                Ok(shipment_id) => shipment_id,
-                Err(e) => ic_cdk::trap(&e.to_string()),
-            };
+    let shipment_id = STATE.with_borrow_mut(|state| {
+        let create_op = CreateShipmentOp::new(
+            &mut shipper,
+            hashed_secret,
+            channel_key,
+            &shipment_name,
+            &shipment_info,
+            ic_cdk::api::time(),
+        );
 
-            Ok(shipment_id)
-        })
-        .map_err(|e| e.to_string())?;
+        let shipment_id = match create_op.apply(state) {
+            Ok(shipment_id) => shipment_id,
+            Err(e) => ic_cdk::trap(&e.to_string()),
+        };
+
+        Result::<_, String>::Ok(shipment_id)
+    })?;
 
     BALANCES.with_borrow_mut(|balances| {
         let caller_bytes = ic_cdk::caller().as_slice().to_vec();
