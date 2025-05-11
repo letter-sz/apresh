@@ -7,7 +7,7 @@ members = [
     "src/crates/wasm",
     "src/crates/engine",
     "src/crates/types",
-    "src/crates/store",
+    "src/crates/store", "src/crates/entrypoint",
 ]
 resolver = "2"
 
