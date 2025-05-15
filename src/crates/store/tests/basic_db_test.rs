@@ -1,5 +1,5 @@
 use apresh_derive::DeriveKey;
-use apresh_store::Record;
+use apresh_store::{DatabaseKeyable, Record, Writable};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
@@ -8,8 +8,10 @@ struct TestRecord {
     name: String,
 }
 
-impl Record for TestRecord {
-    const SCOPE: u8 = 0;
+impl Writable for TestRecord {}
+impl Record for TestRecord {}
+impl DatabaseKeyable for TestRecord {
+    const SCOPE: u8 = 8;
     type Key = u64;
 
     fn key(&self) -> Self::Key {

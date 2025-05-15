@@ -1,4 +1,5 @@
 use apresh_derive::DeriveKey;
+use apresh_store::DatabaseKeyable;
 use apresh_store::Record;
 use serde::{Deserialize, Serialize};
 

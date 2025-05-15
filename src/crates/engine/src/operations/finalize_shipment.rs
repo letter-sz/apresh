@@ -136,6 +136,8 @@ mod tests {
         let mut carrier = REGISTERED_CARRIER_ID.get().unwrap();
         let buy_op = BuyShipmentOp::new(&mut carrier, &mut shipment, CHANNEL_KEY.to_vec());
         buy_op.apply(&mut state).unwrap();
+        shipment.commit();
+        carrier.commit();
         state
     }
 
@@ -159,6 +161,8 @@ mod tests {
 
         let result = op.apply(&mut state);
         assert!(matches!(result, Err(EngineError::CarrierNotSet)));
+
+        shipment.revert();
     }
 
     #[test]
@@ -178,6 +182,8 @@ mod tests {
                 ShipmentError::SecretKeyIsInvalid
             ))
         ));
+
+        shipment.revert();
     }
 
     #[test]
@@ -193,6 +199,7 @@ mod tests {
                 ShipmentError::SecretKeyNotPresent
             ))
         ));
+        shipment.revert();
     }
 
     #[test]
@@ -208,6 +215,7 @@ mod tests {
                 ShipmentError::SecretKeyNotPresent
             ))
         ));
+        shipment.revert();
     }
 
     #[test]
@@ -219,7 +227,7 @@ mod tests {
         let result = op.apply(&mut state);
         assert!(result.is_ok());
 
-        shipment.consume();
+        shipment.commit();
 
         let shipment = ShipmentKey(0).get().unwrap();
         assert_eq!(shipment.status(), &ShipmentStatus::DeliveryCompleted);
@@ -246,7 +254,7 @@ mod tests {
         assert_eq!(finalize_result.value(), 100);
         assert_eq!(finalize_result.price(), 10);
 
-        shipment.consume();
+        shipment.commit();
 
         let shipment = ShipmentKey(0).get().unwrap();
         assert_eq!(shipment.status(), &ShipmentStatus::DeliveryCompleted);
@@ -271,7 +279,7 @@ mod tests {
             })
         );
 
-        shipment.consume();
+        shipment.commit();
 
         let mut shipment = ShipmentKey(0).get().unwrap();
         let op = FinalizeShipmentOp::new(
@@ -286,5 +294,7 @@ mod tests {
                 ShipmentError::ShipmentNotReadyToBeFinalized
             ))
         ));
+
+        shipment.revert();
     }
 }

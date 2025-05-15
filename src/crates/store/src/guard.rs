@@ -3,56 +3,85 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
-use crate::Record;
+use crate::{DatabaseKeyable, Writable};
 
 #[must_use]
-pub struct Guard<T: Record>(T, bool);
+pub struct Guard<T: Writable> {
+    key: Vec<u8>,
+    value: Option<T>,
+    unchanged: bool,
+}
 
-impl<T: Record> Guard<T> {
-    pub fn new(value: T) -> Self {
-        Self(value, false)
+impl<T: Writable> Guard<T> {
+    pub fn new_with_key(key: Vec<u8>, value: T) -> Self {
+        Self {
+            key,
+            value: Some(value),
+            unchanged: true,
+        }
     }
 
-    pub fn consume(self) {}
+    pub fn new(value: T) -> Self
+    where
+        T: DatabaseKeyable,
+    {
+        Self {
+            key: value.raw_key(),
+            value: Some(value),
+            unchanged: true,
+        }
+    }
+
+    pub fn commit(mut self) {
+        self.unchanged = true;
+        // TODO: committing can be skipped if the value wasn't ever mutably borrowed
+        self.value.take().unwrap().commit(self.key.clone());
+    }
 
     pub fn revert(mut self) {
-        self.1 = false;
+        self.unchanged = true;
     }
 }
 
-impl<T: Record> Deref for Guard<T> {
+impl<T: Writable> Deref for Guard<T> {
     type Target = T;
 
     fn deref(&self) -> &Self::Target {
-        &self.0
+        let Some(value) = &self.value else {
+            unreachable!("Guarded value is always some, until right before drop");
+        };
+        value
     }
 }
 
-impl<T: Record> DerefMut for Guard<T> {
+impl<T: Writable> DerefMut for Guard<T> {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        self.1 = true;
-        &mut self.0
+        self.unchanged = false;
+        let Some(value) = &mut self.value else {
+            unreachable!("Guarded value is always some, until right before drop");
+        };
+        value
     }
 }
 
-impl<T: Record> Drop for Guard<T> {
+impl<T: Writable> Drop for Guard<T> {
     fn drop(&mut self) {
-        if self.1 {
-            self.0.set_by_ref();
+        if !self.unchanged {
+            panic!("Guard was neither committed nor reverted");
         }
     }
 }
 
-impl<T: Record + PartialEq> PartialEq for Guard<T> {
+impl<T: Writable + PartialEq> PartialEq for Guard<T> {
     fn eq(&self, other: &Self) -> bool {
-        self.0 == other.0
+        self.value == other.value
     }
 }
 
-impl<T: Record + Eq> Eq for Guard<T> {}
+impl<T: Writable + Eq> Eq for Guard<T> {}
 
-impl<T: Record + Debug> Debug for Guard<T> {
+impl<T: Writable + Debug> Debug for Guard<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.0.fmt(f)
+        self.value.fmt(f)
     }
 }

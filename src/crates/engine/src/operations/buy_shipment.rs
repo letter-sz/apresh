@@ -108,6 +108,7 @@ mod tests {
             .get()
             .ok_or(EngineError::CarrierNotFound);
         assert_eq!(carrier, Err(EngineError::CarrierNotFound));
+        shipment.revert();
     }
 
     #[test]
@@ -135,6 +136,9 @@ mod tests {
                 ShipmentError::ShipmentCannotBeBought
             ))
         );
+
+        carrier.revert();
+        shipment.revert();
     }
 
     #[test]
@@ -154,8 +158,8 @@ mod tests {
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), 100);
 
-        shipment.consume();
-        carrier.consume();
+        shipment.commit();
+        carrier.commit();
 
         let shipment = ShipmentKey(shipment_id).get().unwrap();
         let carrier = REGISTERED_CARRIER_ID.get().unwrap();
@@ -192,9 +196,8 @@ mod tests {
         let mut shipment = shipment_id.get().unwrap();
         let op = CancelShipmentOp::new(&shipper, &mut shipment);
         op.apply(&mut state).unwrap();
-
-        shipment.consume();
-        shipper.consume();
+        shipment.commit();
+        shipper.commit();
 
         let mut shipment = ShipmentKey(1).get().unwrap();
         let mut carrier = REGISTERED_CARRIER_ID.get().unwrap();
@@ -206,5 +209,8 @@ mod tests {
                 ShipmentError::ShipmentCannotBeBought
             ))
         ));
+
+        carrier.revert();
+        shipment.revert();
     }
 }

@@ -1,3 +1,4 @@
+use balances::Balances;
 pub use guard::*;
 use ic_stable_structures::{
     memory_manager::{MemoryId, MemoryManager, VirtualMemory},
@@ -5,6 +6,7 @@ use ic_stable_structures::{
 };
 use std::cell::RefCell;
 
+pub mod balances;
 mod guard;
 
 pub const DB_MEMORY_ID: MemoryId = MemoryId::new(7);
@@ -13,8 +15,6 @@ pub const BALANCES_MEMORY_ID: MemoryId = MemoryId::new(6);
 pub fn get_memory(id: MemoryId) -> VirtualMemory<DefaultMemoryImpl> {
     MEMORY_MANAGER.with(|m| m.borrow().get(id))
 }
-
-pub type BalanceAndLocked = (u64, u64);
 
 thread_local! {
     pub static MEMORY_MANAGER: RefCell<MemoryManager<DefaultMemoryImpl>> = RefCell::new(
@@ -25,7 +25,7 @@ thread_local! {
         StableBTreeMap::init(get_memory(DB_MEMORY_ID))
     );
 
-    pub static BALANCES: RefCell<StableBTreeMap<Vec<u8>, BalanceAndLocked, VirtualMemory<DefaultMemoryImpl>>> = RefCell::new(
+    static BALANCES: RefCell<StableBTreeMap<Vec<u8>, Balances, VirtualMemory<DefaultMemoryImpl>>> = RefCell::new(
         StableBTreeMap::init(get_memory(BALANCES_MEMORY_ID))
     );
 }
@@ -36,30 +36,31 @@ pub enum StoreError {
     Other(String),
 }
 
-pub trait Record: serde::Serialize + serde::de::DeserializeOwned {
-    const SCOPE: u8;
-    type Key: serde::Serialize + serde::de::DeserializeOwned;
-
-    fn key(&self) -> Self::Key;
-
-    fn set(self) {
-        let key = self.key();
-        let mut key = bcs::to_bytes(&key).unwrap();
-        key.insert(0, Self::SCOPE);
+pub trait Writable: serde::Serialize + serde::de::DeserializeOwned {
+    fn commit(self, key: Vec<u8>) {
         DB_MEMORY.with_borrow_mut(|db| {
             let value = bcs::to_bytes(&self).unwrap();
             db.insert(key, value);
         })
     }
+}
 
-    fn set_by_ref(&mut self) {
-        let key = self.key();
-        let mut key = bcs::to_bytes(&key).unwrap();
+pub trait DatabaseKeyable: Writable {
+    const SCOPE: u8;
+    type Key: serde::Serialize + serde::de::DeserializeOwned + Clone;
+
+    fn key(&self) -> Self::Key;
+    fn raw_key(&self) -> Vec<u8> {
+        let mut key = bcs::to_bytes(&self.key()).unwrap();
         key.insert(0, Self::SCOPE);
-        DB_MEMORY.with_borrow_mut(|db| {
-            let value = bcs::to_bytes(self).unwrap();
-            db.insert(key, value);
-        })
+        key
+    }
+}
+
+pub trait Record: DatabaseKeyable {
+    fn set(self) {
+        let key = self.raw_key();
+        self.commit(key);
     }
 
     fn get(key: Self::Key) -> Option<Self> {
@@ -74,7 +75,7 @@ pub trait Record: serde::Serialize + serde::de::DeserializeOwned {
     }
 
     fn get_guard(key: Self::Key) -> Option<Guard<Self>> {
-        Self::get(key).map(|value| Guard::new(value))
+        Self::get(key.clone()).map(|value| Guard::new(value))
     }
 
     fn delete(key: Self::Key) {

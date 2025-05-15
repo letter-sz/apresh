@@ -163,8 +163,8 @@ pub fn derive_key(input: TokenStream) -> TokenStream {
                 <#name as apresh_store::Record>::get_guard(self)
             }
         }
-
-        impl #impl_generics apresh_store::Record for #name #ty_generics #where_clause {
+        impl #impl_generics apresh_store::Writable for #name #ty_generics #where_clause {}
+        impl #impl_generics apresh_store::DatabaseKeyable for #name #ty_generics #where_clause {
             const SCOPE: u8 = #table_value;
             type Key = #key_type;
 
@@ -172,6 +172,8 @@ pub fn derive_key(input: TokenStream) -> TokenStream {
                 #key_type(self.#first_field.clone())
             }
         }
+
+        impl #impl_generics apresh_store::Record for #name #ty_generics #where_clause {}
     };
 
     // Return the generated impl

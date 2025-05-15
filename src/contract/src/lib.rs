@@ -15,18 +15,18 @@ use apresh_engine::{
     state::CanisterState,
 };
 use apresh_qr_code::{generate, QrCodeOptions};
-use apresh_store::{Record, BALANCES};
+use apresh_store::{balances::BalanceAndLockedError, Record};
 use apresh_types::{
     ActorId, Carrier, CarrierKey, Channel, ChannelKey, PrintableShipment, Shipment, ShipmentInfo,
     ShipmentKey, ShipmentStatus, ShipperKey,
 };
 use candid::Principal;
-use ic_cdk::{init, query, update};
+use ic_cdk::{init, query, trap, update};
 use icrc_ledger_types::icrc1::transfer::NumTokens;
 use refund_log::RefundLog;
 pub use transfer::consts;
 use transfer::{transfer_in, transfer_out, TransferInParams, TransferOutParams, TransferParams};
-use utils::{assert_admin, assert_whitelisted, memo};
+use utils::{assert_admin, assert_whitelisted, balances_of, callers_balances, memo};
 
 thread_local! {
     pub static STATE: RefCell<CanisterState> = RefCell::new(CanisterState::default());
@@ -47,15 +47,12 @@ fn init() {
 
 #[query]
 fn balance() -> (u64, u64) {
-    BALANCES.with_borrow(|balances| {
-        let caller_bytes = ic_cdk::caller().as_slice().to_vec();
-        let (balance, locked) = balances.get(&caller_bytes).unwrap_or((0, 0));
-        (balance, locked)
-    })
+    let balances = callers_balances();
+    (balances.balance(), balances.locked())
 }
 
 #[update]
-async fn deposit(amount: u64) {
+async fn deposit(amount: u64) -> Result<(), String> {
     assert_whitelisted();
 
     if let Err(e) = transfer_in(TransferInParams {
@@ -70,18 +67,15 @@ async fn deposit(amount: u64) {
         ic_cdk::trap(&e.to_string());
     }
 
-    BALANCES.with_borrow_mut(|balances| {
-        let caller_bytes = ic_cdk::caller().as_slice().to_vec();
-        let (balance, locked) = balances.get(&caller_bytes).unwrap_or((0, 0));
-        let Some(new_balance) = balance.checked_add(amount) else {
-            ic_cdk::trap("Insufficient balance");
-        };
-        balances.insert(caller_bytes, (new_balance, locked));
-    });
+    let mut balances = callers_balances();
+    balances.deposit(amount).map_err(|e| e.to_string())?;
+    balances.commit();
+
+    Ok(())
 }
 
 #[update]
-async fn withdraw(amount: u64) {
+async fn withdraw(amount: u64) -> Result<(), String> {
     assert_whitelisted();
 
     // If the amount is smaller than the fee, nothing happens
@@ -90,16 +84,8 @@ async fn withdraw(amount: u64) {
         ic_cdk::trap("Insufficient balance");
     }
 
-    BALANCES.with_borrow_mut(|balances| {
-        let caller_bytes = ic_cdk::caller().as_slice().to_vec();
-        let (balance, locked) = balances.get(&caller_bytes).unwrap_or((0, 0));
-
-        let Some(new_balance) = balance.checked_sub(amount) else {
-            ic_cdk::trap("Insufficient balance");
-        };
-
-        balances.insert(caller_bytes, (new_balance, locked));
-    });
+    let mut balances = callers_balances();
+    balances.withdraw(amount).map_err(|e| e.to_string())?;
 
     let transfer_args = TransferOutParams {
         params: TransferParams {
@@ -122,6 +108,10 @@ async fn withdraw(amount: u64) {
 
         ic_cdk::trap(&format!("Error while withdrawing, {}", e));
     }
+
+    balances.commit();
+
+    Ok(())
 }
 
 #[query]
@@ -176,25 +166,39 @@ async fn finalize_shipment(shipment_id: u64, secret_key: Option<String>) -> Resu
 
     let mut shipment = ShipmentKey(shipment_id).get().unwrap();
 
-    let finalize_shipment_result = STATE
-        .with_borrow_mut(|state| {
-            FinalizeShipmentOp::new(&mut shipment, secret_key, caller).apply(state)
-        })
-        .map_err(|e| e.to_string())?;
-
-    let amount = finalize_shipment_result.value() + finalize_shipment_result.price();
-
-    BALANCES.with_borrow_mut(|balances| {
-        let caller_bytes = ic_cdk::caller().as_slice().to_vec();
-        let (balance, locked) = balances.get(&caller_bytes).unwrap_or((0, 0));
-        let Some(new_balance) = balance.checked_add(amount) else {
-            shipment.revert();
-            ic_cdk::trap("Insufficient balance");
-        };
-        balances.insert(caller_bytes, (new_balance, locked));
+    let result = STATE.with_borrow_mut(|state| {
+        FinalizeShipmentOp::new(&mut shipment, secret_key, caller).apply(state)
     });
 
-    Ok(())
+    let result = match result {
+        Ok(result) => result,
+        Err(e) => {
+            shipment.revert();
+            return Err(e.to_string());
+        }
+    };
+
+    let mut shipper_balances = balances_of(shipment.shipper_id().into());
+    let mut carrier_balances = balances_of(result.carrier_id().0);
+
+    let transfer_result = carrier_balances.transfer_from(&mut shipper_balances, result.price());
+    let unlock_result = carrier_balances.unlock(result.value());
+
+    match (transfer_result, unlock_result) {
+        (Ok(_), Ok(_)) => {
+            shipment.commit();
+            shipper_balances.commit();
+            carrier_balances.commit();
+            Ok(())
+        }
+        (err1, err2) => {
+            shipment.revert();
+            shipper_balances.revert();
+            carrier_balances.revert();
+            err1.map_err(|e| e.to_string())?;
+            err2.map_err(|e| e.to_string())
+        }
+    }
 }
 
 #[update(name = "buyShipment")]
@@ -209,39 +213,46 @@ async fn buy_shipment(
     let mut shipment = ShipmentKey(shipment_id).get().unwrap();
     let mut carrier = CarrierKey(caller).get().unwrap();
 
-    let shipment_value = STATE
-        .with_borrow_mut(|state| {
-            // Register carrier if carrier name is provided
-            if let Some(carrier_name) = carrier_name {
-                let carrier = Carrier::new(caller, carrier_name.as_str());
+    let result = STATE.with_borrow_mut(|state| {
+        // Register carrier if carrier name is provided
+        if let Some(carrier_name) = carrier_name {
+            let carrier = Carrier::new(caller, carrier_name.as_str());
 
-                RegisterActorOp::AddCarrier {
-                    id: carrier.id(),
-                    name: carrier_name,
-                }
-                .apply(state)
-                .map_err(|e| e.to_string())
-                .unwrap();
+            RegisterActorOp::AddCarrier {
+                id: carrier.id(),
+                name: carrier_name,
             }
+            .apply(state)
+            .map_err(|e| e.to_string())
+            .unwrap();
+        }
 
-            BuyShipmentOp::new(&mut carrier, &mut shipment, channel_key).apply(state)
-        })
-        .map_err(|e| e.to_string())?;
-
-    BALANCES.with_borrow_mut(|balances| {
-        let caller_bytes = ic_cdk::caller().as_slice().to_vec();
-        let (balance, locked) = balances.get(&caller_bytes).unwrap_or((0, 0));
-
-        let Some(new_balance) = balance.checked_sub(shipment_value) else {
-            carrier.revert();
-            shipment.revert();
-            ic_cdk::trap("Insufficient balance");
-        };
-
-        balances.insert(caller_bytes, (new_balance, locked));
+        BuyShipmentOp::new(&mut carrier, &mut shipment, channel_key).apply(state)
     });
 
-    Ok(())
+    let shipment_value = match result {
+        Ok(shipment_value) => shipment_value,
+        Err(e) => {
+            carrier.revert();
+            return Err(e.to_string());
+        }
+    };
+
+    let mut balances = callers_balances();
+    match balances.lock(shipment_value) {
+        Ok(_) => {
+            carrier.commit();
+            shipment.commit();
+            balances.commit();
+            Ok(())
+        }
+        Err(e) => {
+            carrier.revert();
+            shipment.revert();
+            balances.revert();
+            Err(e.to_string())
+        }
+    }
 }
 
 #[update(name = "createShipment")]
@@ -256,28 +267,30 @@ async fn create_shipment(
     let caller = ShipperKey(ActorId(ic_cdk::caller()));
     let price = shipment_info.price();
 
-    let mut shipper = STATE.with_borrow_mut(|state| {
-        // First register the shipper if needed
-        let shipper = match (caller.get(), customer_name) {
-            (Some(shipper), _) => shipper,
-            (None, Some(customer_name)) => {
-                RegisterActorOp::AddShipper {
-                    id: caller.0,
-                    name: customer_name.clone(),
+    let mut shipper = STATE
+        .with_borrow_mut(|state| {
+            // First register the shipper if needed
+            let shipper = match (caller.get(), customer_name) {
+                (Some(shipper), _) => shipper,
+                (None, Some(customer_name)) => {
+                    RegisterActorOp::AddShipper {
+                        id: caller.0,
+                        name: customer_name.clone(),
+                    }
+                    .apply(state)
+                    .map_err(|e| e.to_string())?;
+                    caller.get().ok_or("Shipper could not be registered")?
                 }
-                .apply(state)
-                .map_err(|e| e.to_string())?;
-                caller.get().ok_or("Shipper could not be registered")?
-            }
-            (None, None) => {
-                ic_cdk::trap("Shipper does not exist and no name was provided");
-            }
-        };
+                (None, None) => {
+                    ic_cdk::trap("Shipper does not exist and no name was provided");
+                }
+            };
 
-        Result::<_, String>::Ok(shipper)
-    })?;
+            Result::<_, String>::Ok(shipper)
+        })
+        .map_err(|e| e.to_string())?;
 
-    let shipment_id = STATE.with_borrow_mut(|state| {
+    let result = STATE.with_borrow_mut(|state| {
         let create_op = CreateShipmentOp::new(
             &mut shipper,
             hashed_secret,
@@ -287,27 +300,37 @@ async fn create_shipment(
             ic_cdk::api::time(),
         );
 
-        let shipment_id = match create_op.apply(state) {
-            Ok(shipment_id) => shipment_id,
+        let shipment = match create_op.apply(state) {
+            Ok(shipment) => shipment,
             Err(e) => ic_cdk::trap(&e.to_string()),
         };
 
-        Result::<_, String>::Ok(shipment_id)
-    })?;
-
-    BALANCES.with_borrow_mut(|balances| {
-        let caller_bytes = ic_cdk::caller().as_slice().to_vec();
-        let (balance, locked) = balances.get(&caller_bytes).unwrap_or((0, 0));
-
-        let Some(new_balance) = balance.checked_sub(price) else {
-            shipper.revert();
-            ic_cdk::trap("Insufficient balance");
-        };
-
-        balances.insert(caller_bytes, (new_balance, locked));
+        Result::<_, String>::Ok(shipment)
     });
 
-    Ok(shipment_id)
+    let shipment = match result {
+        Ok(shipment) => shipment,
+        Err(e) => {
+            shipper.revert();
+            return Err(e);
+        }
+    };
+
+    let mut balances = callers_balances();
+    match balances.lock(price) {
+        Ok(_) => {
+            balances.commit();
+            shipper.commit();
+            let shipment_id = shipment.id();
+            shipment.set();
+            Ok(shipment_id)
+        }
+        Err(e) => {
+            shipper.revert();
+            balances.revert();
+            Err(e.to_string())
+        }
+    }
 }
 
 #[update]
@@ -366,7 +389,7 @@ fn roles() -> (bool, bool) {
     let caller = ic_cdk::caller();
 
     let carrier = (CarrierKey(caller.into()).get()).is_some();
-    let shipper = (ShipperKey(caller.into()).get()).is_some();
+    let shipper: bool = (ShipperKey(caller.into()).get()).is_some();
 
     (carrier, shipper)
 }

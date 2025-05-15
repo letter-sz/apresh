@@ -128,6 +128,9 @@ mod tests {
         let op = CancelShipmentOp::new(&shipper, &mut shipment);
         let result = op.apply(&mut state);
         assert_eq!(result, Err(EngineError::NotAuthorizedAsShipper));
+
+        shipper.revert();
+        shipment.revert();
     }
 
     #[test]
@@ -139,8 +142,8 @@ mod tests {
         let buy_op = BuyShipmentOp::new(&mut carrier, &mut shipment, CHANNEL_KEY.to_vec());
         buy_op.apply(&mut state).unwrap();
 
-        shipment.consume();
-
+        shipment.commit();
+        carrier.commit();
         let mut shipper = REGISTERED_SHIPPER_ID.get().unwrap();
         let mut shipment = ShipmentKey(0).get().unwrap();
         let op = CancelShipmentOp::new(&shipper, &mut shipment);
@@ -151,6 +154,9 @@ mod tests {
                 ShipmentError::ShipmentNotReadyToBeCanceled
             ))
         ));
+
+        shipper.revert();
+        shipment.revert();
     }
 
     #[test]
@@ -168,7 +174,7 @@ mod tests {
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), 100);
 
-        shipment.consume();
+        shipment.commit();
 
         let shipment = ShipmentKey(shipment_id).get().unwrap();
         assert_eq!(shipment.status(), &ShipmentStatus::Cancelled);
@@ -190,8 +196,8 @@ mod tests {
         let mut carrier = REGISTERED_CARRIER_ID.get().unwrap();
         let buy_op = BuyShipmentOp::new(&mut carrier, &mut shipment, CHANNEL_KEY.to_vec());
         buy_op.apply(&mut state).unwrap();
-
-        shipment.consume();
+        shipment.commit();
+        carrier.commit();
 
         let mut shipper = REGISTERED_SHIPPER_ID.get().unwrap();
         let mut shipment = ShipmentKey(shipment_id).get().unwrap();
@@ -204,5 +210,8 @@ mod tests {
                 ShipmentError::ShipmentNotReadyToBeCanceled
             ))
         );
+
+        shipper.revert();
+        shipment.revert();
     }
 }

@@ -2,7 +2,7 @@ use apresh_types::{
     Actor, ActorId, ChannelKey, Shipment, ShipmentId, ShipmentInfo, Shipper, ShipperKey,
 };
 
-use apresh_store::Record;
+use apresh_store::{Guard, Record};
 
 use super::{CanisterState, StateOp};
 
@@ -36,10 +36,10 @@ impl<'a> CreateShipmentOp<'a> {
     }
 }
 
-impl StateOp<ShipmentId> for CreateShipmentOp<'_> {
+impl StateOp<Shipment> for CreateShipmentOp<'_> {
     type Error = crate::errors::EngineError;
 
-    fn apply(self, state: &mut CanisterState) -> crate::Result<ShipmentId> {
+    fn apply(self, state: &mut CanisterState) -> crate::Result<Shipment> {
         let new_shipment_id = state.get_new_shipment_id();
 
         if new_shipment_id == u64::MAX {
@@ -57,9 +57,7 @@ impl StateOp<ShipmentId> for CreateShipmentOp<'_> {
         );
 
         self.creator.add_shipment(new_shipment_id);
-        shipment.set();
-
-        Ok(new_shipment_id)
+        Ok(shipment)
     }
 }
 
@@ -120,7 +118,10 @@ mod tests {
             1234567890,
         );
 
-        assert_eq!(op1.apply(&mut state), Ok(u64::MAX - 1));
+        let new_shipment = op1.apply(&mut state).unwrap();
+        assert_eq!(new_shipment.id(), u64::MAX - 1);
+        new_shipment.set();
+        shipper.commit();
 
         let mut shipper = REGISTERED_SHIPPER_ACTOR_ID.get().unwrap();
         let op2 = CreateShipmentOp::new(
@@ -136,6 +137,8 @@ mod tests {
             op2.apply(&mut state),
             Err(EngineError::ShipmentLimitReached)
         );
+
+        shipper.revert();
     }
 
     #[test]
@@ -186,12 +189,12 @@ mod tests {
             &info,
         );
 
-        let result = op.apply(&mut state);
-        assert_eq!(result, Ok(expected_shipment_id));
+        let new_shipment = op.apply(&mut state).unwrap();
+        let shipment_id = new_shipment.id();
+        assert_eq!(shipment_id, expected_shipment_id);
+        new_shipment.set();
+        shipper.commit();
 
-        shipper.consume();
-
-        let shipment_id = result.unwrap();
         let shipper = (REGISTERED_SHIPPER_ACTOR_ID).get().unwrap();
         let state_shipment_id = state.shipment_counter();
         let state_shipment = ShipmentKey(expected_shipment_id).get();
