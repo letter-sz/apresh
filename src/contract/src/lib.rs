@@ -201,16 +201,18 @@ async fn finalize_shipment(shipment_id: u64, secret_key: Option<String>) -> Resu
     }
 }
 
+use entrypoint::entrypoint;
+
+#[entrypoint]
 #[update(name = "buyShipment")]
 async fn buy_shipment(
     carrier_name: Option<String>,
-    shipment_id: u64,
+    #[key] shipment: Shipment,
     channel_key: ChannelKey,
 ) -> Result<(), String> {
     assert_whitelisted();
     let caller = ActorId(ic_cdk::caller());
 
-    let mut shipment = ShipmentKey(shipment_id).get().unwrap();
     let mut carrier = CarrierKey(caller).get().unwrap();
 
     let result = STATE.with_borrow_mut(|state| {
@@ -227,7 +229,7 @@ async fn buy_shipment(
             .unwrap();
         }
 
-        BuyShipmentOp::new(&mut carrier, &mut shipment, channel_key).apply(state)
+        BuyShipmentOp::new(&mut carrier, shipment, channel_key).apply(state)
     });
 
     let shipment_value = match result {
@@ -242,13 +244,13 @@ async fn buy_shipment(
     match balances.lock(shipment_value) {
         Ok(_) => {
             carrier.commit();
-            shipment.commit();
+            // shipment.commit();
             balances.commit();
             Ok(())
         }
         Err(e) => {
             carrier.revert();
-            shipment.revert();
+            // shipment.revert();
             balances.revert();
             Err(e.to_string())
         }

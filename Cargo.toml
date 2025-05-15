@@ -7,7 +7,8 @@ members = [
     "src/crates/wasm",
     "src/crates/engine",
     "src/crates/types",
-    "src/crates/store", "src/crates/entrypoint",
+    "src/crates/store",
+    "src/crates/entrypoint",
 ]
 resolver = "2"
 
@@ -18,6 +19,8 @@ apresh-qr-code = { path = "src/crates/qr-code" }
 apresh-crypto = { path = "src/crates/crypto" }
 apresh-types = { path = "src/crates/types" }
 apresh-store = { path = "src/crates/store" }
+entrypoint = { path = "src/crates/entrypoint" }
+
 wasm-bindgen = { version = "0.2.84" }
 web-sys = { version = "0.3.63", features = ["Crypto", "Window"] }
 aes-gcm = { version = "0.10.3", default-features = false, features = [

@@ -389,6 +389,7 @@ dependencies = [
  "candid",
  "colorgrad",
  "derive_deref",
+ "entrypoint",
  "hex",
  "ic-cdk",
  "ic-stable-structures",
