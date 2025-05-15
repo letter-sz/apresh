@@ -32,7 +32,7 @@ pub fn entrypoint(_attr: TokenStream, item: TokenStream) -> TokenStream {
                     db_args.push(pat_ident.ident.clone());
                     if let FnArg::Typed(pat_type) = arg {
                         let t = pat_type.ty.clone();
-                        pat_type.ty = syn::parse_quote!(<#t as Record>::Key);
+                        pat_type.ty = syn::parse_quote!(<#t as apresh_store::DatabaseKeyable>::Key);
                     }
                 }
             }
@@ -77,7 +77,16 @@ pub fn entrypoint(_attr: TokenStream, item: TokenStream) -> TokenStream {
             }
 
             #(let mut #db_args = #db_args.get().unwrap();)*
-            #inner_fn_name(#(#record_references_args),*)
+            let r = #inner_fn_name(#(#record_references_args),*);
+            match &r {
+                Ok(_) => {
+                    #(#db_args.commit();)*
+                },
+                Err(_) => {
+                    #(#db_args.revert();)*
+                }
+            }
+            r
         }
     };
 

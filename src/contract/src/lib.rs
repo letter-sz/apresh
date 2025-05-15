@@ -15,13 +15,13 @@ use apresh_engine::{
     state::CanisterState,
 };
 use apresh_qr_code::{generate, QrCodeOptions};
-use apresh_store::{balances::BalanceAndLockedError, Record};
+use apresh_store::Record;
 use apresh_types::{
     ActorId, Carrier, CarrierKey, Channel, ChannelKey, PrintableShipment, Shipment, ShipmentInfo,
     ShipmentKey, ShipmentStatus, ShipperKey,
 };
 use candid::Principal;
-use ic_cdk::{init, query, trap, update};
+use ic_cdk::{init, query, update};
 use icrc_ledger_types::icrc1::transfer::NumTokens;
 use refund_log::RefundLog;
 pub use transfer::consts;
