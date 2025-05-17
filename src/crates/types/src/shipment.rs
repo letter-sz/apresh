@@ -1,7 +1,10 @@
 use crate::{ActorId, Channel, ChannelKey, Message, Result, ShipmentError};
 use apresh_crypto::hash_secret;
 use apresh_derive::DeriveKey;
+use apresh_store::Guard;
+use balances::{balances, Balances};
 use candid::CandidType;
+use derive_getters::Getters;
 use serde::{Deserialize, Serialize};
 
 pub type ShipmentId = u64;
@@ -58,7 +61,7 @@ pub enum ShipmentVersion {
 // Shipment, but without principals, so JSON-able
 #[cfg(feature = "icp")]
 #[derive(CandidType)] //
-#[derive(DeriveKey, Deserialize, Serialize, Debug, Clone, PartialEq, Eq)]
+#[derive(DeriveKey, Deserialize, Serialize, Debug, Clone, PartialEq, Eq, Getters)]
 #[table(1)]
 pub struct Shipment {
     /// Unique id for the shipment
@@ -76,8 +79,10 @@ pub struct Shipment {
     /// Encrypted message from shipper to carrier, could be used to send contact information
     channel: Channel,
     /// Carrier id
+    #[getter(rename = "carrier_id")]
     carrier: Option<ActorId>, // TODO: I think we should use some internal id instead of principal here
     /// Shipper id
+    #[getter(rename = "shipper_id")]
     shipper: ActorId,
     /// Shipment creation timestamp
     created_at: u64,
@@ -154,6 +159,23 @@ impl Shipment {
         }
     }
 
+    pub fn both_balances(&self) -> Result<(Guard<Balances>, Guard<Balances>)> {
+        let carrier_id = self.carrier.ok_or(ShipmentError::CarrierNotSet)?;
+        Ok((
+            balances(carrier_id.0.as_slice().to_vec()),
+            balances(self.shipper.0.as_slice().to_vec()),
+        ))
+    }
+
+    pub fn carrier_balance(&self) -> Result<Guard<Balances>> {
+        let carrier_id = self.carrier.ok_or(ShipmentError::CarrierNotSet)?;
+        Ok(balances(carrier_id.0.as_slice().to_vec()))
+    }
+
+    pub fn shipper_balance(&self) -> Result<Guard<Balances>> {
+        Ok(balances(self.shipper.0.as_slice().to_vec()))
+    }
+
     pub fn attach_message(&mut self, message: Message) {
         self.channel.push(message);
     }
@@ -162,36 +184,6 @@ impl Shipment {
         self.channel.add_guest(guest_key);
     }
 
-    pub fn channel(&self) -> &Channel {
-        &self.channel
-    }
-
-    pub fn status(&self) -> &ShipmentStatus {
-        &self.status
-    }
-
-    pub fn shipper_id(&self) -> ActorId {
-        self.shipper
-    }
-
-    pub fn carrier_id(&self) -> Option<ActorId> {
-        self.carrier
-    }
-
-    pub fn id(&self) -> ShipmentId {
-        self.id
-    }
-
-    pub fn _name(&self) -> &str {
-        &self.name
-    }
-
-    pub fn info(&self) -> &ShipmentInfo {
-        &self.info
-    }
-}
-
-impl Shipment {
     pub fn action(&mut self, op: ShipmentActions<ActorId>) -> Result<()> {
         match op {
             ShipmentActions::Buy(carrier_id) => self.buy(carrier_id),

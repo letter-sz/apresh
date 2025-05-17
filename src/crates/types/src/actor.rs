@@ -2,6 +2,7 @@ use crate::ShipmentId;
 use apresh_derive::{DeriveKey, IsActor};
 use candid::{CandidType, Principal};
 use derive_deref::{Deref, DerefMut};
+use derive_getters::Getters;
 use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "icp")]
@@ -25,7 +26,7 @@ impl From<ActorId> for Principal {
 
 #[cfg(feature = "icp")]
 #[derive(CandidType)] //
-#[derive(DeriveKey, Debug, Clone, Deserialize, Serialize, IsActor, Eq, PartialEq)]
+#[derive(DeriveKey, Debug, Clone, Deserialize, Serialize, IsActor, Eq, PartialEq, Getters)]
 #[table(11)]
 pub struct Shipper {
     id: ActorId,
@@ -38,10 +39,6 @@ impl Shipper {
             id,
             base: ActorBase::new(id.0, name.to_string()),
         }
-    }
-
-    pub fn id(&self) -> ActorId {
-        self.base.id()
     }
 }
 

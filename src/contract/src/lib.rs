@@ -18,7 +18,7 @@ use apresh_qr_code::{generate, QrCodeOptions};
 use apresh_store::Record;
 use apresh_types::{
     ActorId, Carrier, CarrierKey, Channel, ChannelKey, PrintableShipment, Shipment, ShipmentInfo,
-    ShipmentKey, ShipmentStatus, ShipperKey,
+    ShipmentStatus, ShipperKey,
 };
 use candid::Principal;
 use entrypoint::entrypoint;
@@ -27,14 +27,14 @@ use icrc_ledger_types::icrc1::transfer::NumTokens;
 use refund_log::RefundLog;
 pub use transfer::consts;
 use transfer::{transfer_in, transfer_out, TransferInParams, TransferOutParams, TransferParams};
-use utils::{assert_admin, assert_whitelisted, balances_of, callers_balances, memo};
+use utils::{assert_admin, assert_whitelisted, callers_balances, memo};
 
 type ContractResult<T> = Result<T, String>;
 
 thread_local! {
     pub static STATE: RefCell<CanisterState> = RefCell::new(CanisterState::default());
     pub static TRANSFER_FEE: RefCell<u64> = const { RefCell::new(10_000) };
-    pub static ADMIN: RefCell<Principal> = const{ RefCell::new(Principal::anonymous()) };
+    pub static ADMIN: RefCell<Principal> = const { RefCell::new(Principal::anonymous()) };
     pub static WHITELIST: RefCell<Vec<Principal>> = RefCell::default();
     pub static REFUND_LOG: RefCell<RefundLog> = RefCell::new(RefundLog::default());
     pub static CANISTER_LOCKED: RefCell<bool> = const { RefCell::new(false) };
@@ -141,65 +141,59 @@ fn get_transfer_fee() -> u64 {
     TRANSFER_FEE.with_borrow(|fee| *fee)
 }
 
+#[entrypoint]
 #[update]
-async fn add_message(message: Vec<u8>, shipment_id: u64) -> ContractResult<()> {
+async fn add_message(message: Vec<u8>, #[key] shipment: Shipment) -> ContractResult<()> {
     assert_whitelisted();
-
     let caller = ActorId(ic_cdk::caller());
-    let mut shipment = ShipmentKey(shipment_id).get().unwrap();
 
     STATE
-        .with_borrow_mut(|state| AddMessageOp::new(&mut shipment, message, caller).apply(state))
+        .with_borrow_mut(|state| AddMessageOp::new(shipment, message, caller).apply(state))
         .map_err(|e| e.to_string())
 }
 
+#[entrypoint]
 #[query]
-async fn read_channel(shipment_id: u64) -> ContractResult<Channel> {
+async fn read_channel(#[key] shipment: Shipment) -> ContractResult<Channel> {
     let caller = ActorId(ic_cdk::caller());
-    let shipment = ShipmentKey(shipment_id).get().unwrap();
 
     STATE
         .with_borrow(|state| ReadMessageOp::new(&shipment, caller).read(state))
         .map_err(|e| e.to_string())
 }
 
+#[entrypoint]
 #[update(name = "finalizeShipment")]
-async fn finalize_shipment(shipment_id: u64, secret_key: Option<String>) -> Result<(), String> {
+async fn finalize_shipment(
+    #[key] shipment: Shipment,
+    secret_key: Option<String>,
+) -> ContractResult<()> {
     let caller = ActorId(ic_cdk::caller());
 
-    let mut shipment = ShipmentKey(shipment_id).get().unwrap();
+    let result = STATE
+        .with_borrow_mut(|state| FinalizeShipmentOp::new(shipment, secret_key, caller).apply(state))
+        .map_err(|e| e.to_string())?;
 
-    let result = STATE.with_borrow_mut(|state| {
-        FinalizeShipmentOp::new(&mut shipment, secret_key, caller).apply(state)
-    });
+    let (mut shipper_balances, mut carrier_balances) =
+        shipment.both_balances().map_err(|e| e.to_string())?;
 
-    let result = match result {
-        Ok(result) => result,
-        Err(e) => {
-            shipment.revert();
-            return Err(e.to_string());
+    let transfer_result = carrier_balances.transfer_from_and_unlock(
+        &mut shipper_balances,
+        result.price(),
+        result.value(),
+    );
+
+    match &transfer_result {
+        Ok(_) => {
+            carrier_balances.commit();
+            shipper_balances.commit();
+        }
+        Err(_e) => {
+            carrier_balances.revert();
+            shipper_balances.revert();
         }
     };
-
-    let mut shipper_balances = balances_of(shipment.shipper_id().into());
-    let mut carrier_balances = balances_of(result.carrier_id().0);
-
-    let transfer_result = carrier_balances.transfer_from(&mut shipper_balances, result.price());
-    let unlock_result = carrier_balances.unlock(result.value());
-
-    match (transfer_result, unlock_result) {
-        (Ok(_), Ok(_)) => {
-            shipper_balances.commit();
-            carrier_balances.commit();
-            Ok(())
-        }
-        (err1, err2) => {
-            shipper_balances.revert();
-            carrier_balances.revert();
-            err1.map_err(|e| e.to_string())?;
-            err2.map_err(|e| e.to_string())
-        }
-    }
+    transfer_result.map_err(|e| e.to_string())
 }
 
 #[entrypoint]
@@ -243,13 +237,11 @@ async fn buy_shipment(
     match balances.lock(shipment_value) {
         Ok(_) => {
             carrier.commit();
-            // shipment.commit();
             balances.commit();
             Ok(())
         }
         Err(e) => {
             carrier.revert();
-            // shipment.revert();
             balances.revert();
             Err(e.to_string())
         }
@@ -322,7 +314,7 @@ async fn create_shipment(
         Ok(_) => {
             balances.commit();
             shipper.commit();
-            let shipment_id = shipment.id();
+            let shipment_id = *shipment.id();
             shipment.set();
             Ok(shipment_id)
         }
@@ -334,16 +326,15 @@ async fn create_shipment(
     }
 }
 
-#[update]
-fn cancel_shipment(shipment_id: u64) -> ContractResult<()> {
+#[entrypoint]
+#[update(name = "cancelShipment")]
+fn cancel_shipment(#[key] shipment: Shipment) -> ContractResult<()> {
     assert_whitelisted();
     let caller = ShipperKey(ActorId(ic_cdk::caller()));
-
-    let mut shipment = ShipmentKey(shipment_id).get().unwrap();
     let shipper = caller.get().unwrap();
 
     STATE
-        .with_borrow_mut(|state| CancelShipmentOp::new(&shipper, &mut shipment).apply(state))
+        .with_borrow_mut(|state| CancelShipmentOp::new(&shipper, shipment).apply(state))
         .map_err(|e| e.to_string())?;
 
     Ok(())
@@ -366,7 +357,7 @@ fn shipper_shipments() -> Vec<PrintableShipment> {
         .into_iter()
         .filter_map(Shipment::get)
         .filter(|shipment| *shipment.status() == ShipmentStatus::Pending)
-        .filter(|shipment| shipment.shipper_id() == customer_id)
+        .filter(|shipment| *shipment.shipper_id() == customer_id)
         .filter(|shipment| !shipment.status().is_finished())
         .map(PrintableShipment::from)
         .collect()
@@ -379,7 +370,7 @@ fn carrier_shipments() -> Vec<PrintableShipment> {
     Shipment::range_scan(None, None)
         .into_iter()
         .filter_map(Shipment::get)
-        .filter(|shipment| shipment.carrier_id() == Some(customer_id))
+        .filter(|shipment| shipment.carrier_id() == &Some(customer_id))
         .filter(|shipment| !shipment.status().is_finished())
         .map(PrintableShipment::from)
         .collect()
@@ -404,11 +395,10 @@ fn shipments() -> Vec<PrintableShipment> {
         .collect()
 }
 
+#[entrypoint]
 #[query]
-fn shipment(shipment_id: u64) -> Option<PrintableShipment> {
-    ShipmentKey(shipment_id)
-        .get()
-        .map(|s| PrintableShipment::from(&*s))
+fn shipment(#[key] shipment: Shipment) -> ContractResult<PrintableShipment> {
+    Ok(PrintableShipment::from(&*shipment))
 }
 
 #[query(name = "generateQr")]

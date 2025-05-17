@@ -17,8 +17,8 @@ impl<'a> ReadMessageOp<'a> {
 impl StateOp<Channel> for ReadMessageOp<'_> {
     type Error = crate::EngineError;
     fn read(&self, state: &CanisterState) -> crate::Result<Channel> {
-        let is_shipper = self.shipment.shipper_id() == self.caller;
-        let is_carrier = self.shipment.carrier_id() == Some(self.caller);
+        let is_shipper = self.shipment.shipper_id() == &self.caller;
+        let is_carrier = self.shipment.carrier_id() == &Some(self.caller);
 
         if !is_shipper && !is_carrier {
             return Err(crate::EngineError::NotAuthorizedAsNeitherCarrierNorShipper);

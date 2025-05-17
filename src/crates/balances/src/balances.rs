@@ -116,6 +116,27 @@ impl Balances {
 
         other.deposit(amount)
     }
+
+    /// Typical use case
+    /// Party `self` performed the agreement, and has it's stake unlocked and receives the payment.
+    pub fn transfer_from_and_unlock(
+        &mut self,
+        other: &mut Self,
+        to_transfer: u64,
+        to_unlock: u64,
+    ) -> Result<()> {
+        if self.regular.locked > to_transfer {
+            self.regular.transfer_locked_out(to_transfer)?;
+        } else {
+            self.prepaid
+                .transfer_locked_out(to_transfer - self.regular.locked)?;
+            self.regular.transfer_locked_out(self.regular.locked)?;
+        }
+
+        self.unlock(to_unlock)?;
+
+        other.deposit(to_transfer)
+    }
 }
 
 impl BalanceAndLocked {

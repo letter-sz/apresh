@@ -48,7 +48,7 @@ impl StateOp<Shipment> for CreateShipmentOp<'_> {
 
         let mut shipment = Shipment::new(
             self.timestamp,
-            self.creator.id(),
+            *self.creator.id(),
             new_shipment_id,
             self.hashed_secret.clone(),
             self.channel_key.clone(),
@@ -119,7 +119,7 @@ mod tests {
         );
 
         let new_shipment = op1.apply(&mut state).unwrap();
-        assert_eq!(new_shipment.id(), u64::MAX - 1);
+        assert_eq!(*new_shipment.id(), u64::MAX - 1);
         new_shipment.set();
         shipper.commit();
 
@@ -190,7 +190,7 @@ mod tests {
         );
 
         let new_shipment = op.apply(&mut state).unwrap();
-        let shipment_id = new_shipment.id();
+        let shipment_id = *new_shipment.id();
         assert_eq!(shipment_id, expected_shipment_id);
         new_shipment.set();
         shipper.commit();
@@ -208,10 +208,10 @@ mod tests {
         assert!(ShipmentKey(state_shipment_id + 1).get().is_none());
 
         let shipment = state_shipment.unwrap();
-        assert_eq!(shipment.shipper_id(), REGISTERED_SHIPPER_ACTOR_ID.0);
-        assert_eq!(shipment._name(), shipment_name);
+        assert_eq!(*shipment.shipper_id(), REGISTERED_SHIPPER_ACTOR_ID.0);
+        assert_eq!(shipment.name(), shipment_name);
         assert_eq!(shipment.info(), &info);
         assert_eq!(shipment.status(), &ShipmentStatus::Pending);
-        assert_eq!(shipment.id(), expected_shipment_id);
+        assert_eq!(*shipment.id(), expected_shipment_id);
     }
 }

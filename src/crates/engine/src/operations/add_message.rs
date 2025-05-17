@@ -39,7 +39,7 @@ impl StateOp<()> for AddMessageOp<'_> {
             .map(|id| id == self.caller)
             .unwrap_or(false);
 
-        if self.shipment.shipper_id() != self.caller && !is_carrier {
+        if self.shipment.shipper_id() != &self.caller && !is_carrier {
             return Err(crate::EngineError::NotAuthorizedAsNeitherCarrierNorShipper);
         }
 

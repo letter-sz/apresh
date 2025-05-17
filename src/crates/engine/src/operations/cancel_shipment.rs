@@ -29,7 +29,7 @@ impl StateOp<Cost> for CancelShipmentOp<'_> {
         }
 
         self.shipment.action(ShipmentActions::Cancel {
-            shipper: self.shipper.id(),
+            shipper: *self.shipper.id(),
         })?;
 
         Ok(self.shipment.info().value())

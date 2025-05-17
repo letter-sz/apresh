@@ -12,6 +12,8 @@ derive_deref = { workspace = true }
 apresh-crypto = { workspace = true }
 thiserror = { workspace = true }
 apresh-store = { workspace = true }
+derive-getters = { workspace = true }
+balances = { workspace = true }
 
 [features]
 # Shouldn't be default feature to minimize binary size

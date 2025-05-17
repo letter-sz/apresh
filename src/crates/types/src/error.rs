@@ -4,6 +4,8 @@ use thiserror::Error;
 pub enum ShipmentError {
     #[error("Carrier already set")]
     CarrierAlreadySet,
+    #[error("Carrier not set")]
+    CarrierNotSet,
     #[error("Shipment already bought")]
     ShipmentNotReadyToBeCanceled,
     #[error("Shipment not ready to be finalized")]

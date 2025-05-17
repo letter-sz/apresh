@@ -35,8 +35,7 @@ impl StateOp<Cost> for BuyShipmentOp<'_> {
         self.shipment
             .action(ShipmentActions::Buy(self.carrier.id()))?;
         self.shipment.add_guest_to_channel(self.channel_key.clone());
-        self.carrier.add_shipment(self.shipment.id());
-
+        self.carrier.add_shipment(*self.shipment.id());
         Ok(self.shipment.info().value())
     }
 }
@@ -165,7 +164,7 @@ mod tests {
         let carrier = REGISTERED_CARRIER_ID.get().unwrap();
         assert!(carrier.get_active_shipments().contains(&shipment_id));
         assert_eq!(shipment.status(), &ShipmentStatus::InTransit);
-        assert_eq!(shipment.carrier_id(), Some(REGISTERED_CARRIER_ID.0));
+        assert_eq!(*shipment.carrier_id(), Some(REGISTERED_CARRIER_ID.0));
     }
 
     #[test]

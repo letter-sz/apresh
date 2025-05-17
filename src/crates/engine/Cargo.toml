@@ -17,6 +17,7 @@ ic-stable-structures = { workspace = true }
 apresh-types = { workspace = true }
 apresh-store = { workspace = true }
 apresh-crypto = { workspace = true }
+balances = { workspace = true }
 
 [features]
 # icp = ["dep:ic-stable-structures"]
