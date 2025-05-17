@@ -21,12 +21,15 @@ use apresh_types::{
     ShipmentKey, ShipmentStatus, ShipperKey,
 };
 use candid::Principal;
+use entrypoint::entrypoint;
 use ic_cdk::{init, query, update};
 use icrc_ledger_types::icrc1::transfer::NumTokens;
 use refund_log::RefundLog;
 pub use transfer::consts;
 use transfer::{transfer_in, transfer_out, TransferInParams, TransferOutParams, TransferParams};
 use utils::{assert_admin, assert_whitelisted, balances_of, callers_balances, memo};
+
+type ContractResult<T> = Result<T, String>;
 
 thread_local! {
     pub static STATE: RefCell<CanisterState> = RefCell::new(CanisterState::default());
@@ -52,7 +55,7 @@ fn balance() -> (u64, u64) {
 }
 
 #[update]
-async fn deposit(amount: u64) -> Result<(), String> {
+async fn deposit(amount: u64) -> ContractResult<()> {
     assert_whitelisted();
 
     if let Err(e) = transfer_in(TransferInParams {
@@ -75,7 +78,7 @@ async fn deposit(amount: u64) -> Result<(), String> {
 }
 
 #[update]
-async fn withdraw(amount: u64) -> Result<(), String> {
+async fn withdraw(amount: u64) -> ContractResult<()> {
     assert_whitelisted();
 
     // If the amount is smaller than the fee, nothing happens
@@ -139,7 +142,7 @@ fn get_transfer_fee() -> u64 {
 }
 
 #[update]
-async fn add_message(message: Vec<u8>, shipment_id: u64) -> Result<(), String> {
+async fn add_message(message: Vec<u8>, shipment_id: u64) -> ContractResult<()> {
     assert_whitelisted();
 
     let caller = ActorId(ic_cdk::caller());
@@ -151,7 +154,7 @@ async fn add_message(message: Vec<u8>, shipment_id: u64) -> Result<(), String> {
 }
 
 #[query]
-async fn read_channel(shipment_id: u64) -> Result<Channel, String> {
+async fn read_channel(shipment_id: u64) -> ContractResult<Channel> {
     let caller = ActorId(ic_cdk::caller());
     let shipment = ShipmentKey(shipment_id).get().unwrap();
 
@@ -186,13 +189,11 @@ async fn finalize_shipment(shipment_id: u64, secret_key: Option<String>) -> Resu
 
     match (transfer_result, unlock_result) {
         (Ok(_), Ok(_)) => {
-            shipment.commit();
             shipper_balances.commit();
             carrier_balances.commit();
             Ok(())
         }
         (err1, err2) => {
-            shipment.revert();
             shipper_balances.revert();
             carrier_balances.revert();
             err1.map_err(|e| e.to_string())?;
@@ -201,15 +202,13 @@ async fn finalize_shipment(shipment_id: u64, secret_key: Option<String>) -> Resu
     }
 }
 
-use entrypoint::entrypoint;
-
 #[entrypoint]
 #[update(name = "buyShipment")]
 async fn buy_shipment(
     carrier_name: Option<String>,
     #[key] shipment: Shipment,
     channel_key: ChannelKey,
-) -> Result<(), String> {
+) -> ContractResult<()> {
     assert_whitelisted();
     let caller = ActorId(ic_cdk::caller());
 
@@ -264,7 +263,7 @@ async fn create_shipment(
     hashed_secret: Vec<u8>,
     channel_key: ChannelKey,
     shipment_info: ShipmentInfo,
-) -> Result<u64, String> {
+) -> ContractResult<u64> {
     assert_whitelisted();
     let caller = ShipperKey(ActorId(ic_cdk::caller()));
     let price = shipment_info.price();
@@ -288,7 +287,7 @@ async fn create_shipment(
                 }
             };
 
-            Result::<_, String>::Ok(shipper)
+            ContractResult::Ok(shipper)
         })
         .map_err(|e| e.to_string())?;
 
@@ -307,7 +306,7 @@ async fn create_shipment(
             Err(e) => ic_cdk::trap(&e.to_string()),
         };
 
-        Result::<_, String>::Ok(shipment)
+        ContractResult::Ok(shipment)
     });
 
     let shipment = match result {
@@ -336,7 +335,7 @@ async fn create_shipment(
 }
 
 #[update]
-fn cancel_shipment(shipment_id: u64) -> Result<(), String> {
+fn cancel_shipment(shipment_id: u64) -> ContractResult<()> {
     assert_whitelisted();
     let caller = ShipperKey(ActorId(ic_cdk::caller()));
 
@@ -413,7 +412,7 @@ fn shipment(shipment_id: u64) -> Option<PrintableShipment> {
 }
 
 #[query(name = "generateQr")]
-async fn generate_qr(link: String, size: usize) -> Result<Vec<u8>, String> {
+async fn generate_qr(link: String, size: usize) -> ContractResult<Vec<u8>> {
     generate(QrCodeOptions {
         gradient: false,
         link,

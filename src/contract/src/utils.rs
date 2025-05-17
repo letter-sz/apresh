@@ -1,7 +1,5 @@
-use apresh_store::{
-    balances::{balances, Balances},
-    Guard,
-};
+use apresh_store::Guard;
+use balances::{balances, Balances};
 use candid::Principal;
 use icrc_ledger_types::icrc1::transfer::Memo;
 

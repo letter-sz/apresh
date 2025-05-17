@@ -1,4 +1,4 @@
-use apresh_store::balances::{BalanceAndLockedError, Balances};
+use balances::{BalanceAndLockedError, Balances};
 
 #[test]
 fn balances() {

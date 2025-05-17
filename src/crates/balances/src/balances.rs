@@ -1,14 +1,8 @@
-use ic_stable_structures::{storable::Bound, Storable};
+use apresh_store::Writable;
+use ic_stable_structures::{Storable, storable::Bound};
 use serde::{Deserialize, Serialize};
 
-use crate::{Guard, Writable, BALANCES};
-
-pub fn balances(caller_bytes: Vec<u8>) -> Guard<Balances> {
-    BALANCES.with_borrow_mut(|balances| {
-        let balances = balances.get(&caller_bytes).unwrap_or_default();
-        Guard::new_with_key(caller_bytes, balances)
-    })
-}
+use crate::BALANCES;
 
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct Balances {
