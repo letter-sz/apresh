@@ -9,9 +9,6 @@ pub use candid_types::*;
 pub use queries::*;
 pub use test_data::*;
 
-#[cfg(test)]
-pub use pocket::*;
-
 pub const INIT_CYCLES: u128 = 2_000_000_000_000;
 pub const ADMIN_PRINCIPAL: Principal = Principal::from_slice(&[9, 9, 9, 9]);
 pub const TEST_PRINCIPAL: Principal = Principal::from_slice(&[1, 2, 3, 4]);

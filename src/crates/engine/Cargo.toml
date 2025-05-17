@@ -1,5 +1,5 @@
 [package]
-name = "engine"
+name = "apresh-engine"
 version = "0.1.0"
 edition = "2021"
 
@@ -14,8 +14,12 @@ anyhow = { workspace = true }
 sha2 = { workspace = true }
 hex = { workspace = true }
 ic-stable-structures = { workspace = true }
+apresh-types = { workspace = true }
+apresh-store = { workspace = true }
+apresh-crypto = { workspace = true }
+balances = { workspace = true }
 
 [features]
 # icp = ["dep:ic-stable-structures"]
-icp = []
+icp = ["apresh-types/icp"]
 default = []

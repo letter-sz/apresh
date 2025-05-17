@@ -1,40 +1,29 @@
-use candid::Principal;
+use apresh_types::{ActorId, Channel, Message, Shipment, ShipmentId, ShipmentKey};
 
 use super::StateOp;
-use crate::{
-    models::shipment::{Channel, Message, ShipmentId},
-    state::{CanisterShipments, CanisterState},
-    ActorId,
-};
+use crate::state::CanisterState;
 
-pub struct ReadMessageOp {
-    pub shipment_id: ShipmentId,
+pub struct ReadMessageOp<'a> {
+    pub shipment: &'a Shipment,
     pub caller: ActorId,
 }
 
-impl ReadMessageOp {
-    pub fn new(shipment_id: ShipmentId, caller: ActorId) -> Self {
-        Self {
-            shipment_id,
-            caller,
-        }
+impl<'a> ReadMessageOp<'a> {
+    pub fn new(shipment: &'a Shipment, caller: ActorId) -> Self {
+        Self { shipment, caller }
     }
 }
 
-impl StateOp<Channel> for ReadMessageOp {
-    type Error = crate::Error;
+impl StateOp<Channel> for ReadMessageOp<'_> {
+    type Error = crate::EngineError;
     fn read(&self, state: &CanisterState) -> crate::Result<Channel> {
-        let shipment = state
-            .shipment(self.shipment_id)
-            .ok_or(crate::Error::ShipmentNotFound)?;
-
-        let is_shipper = shipment.shipper_id() == self.caller;
-        let is_carrier = shipment.carrier_id() == Some(self.caller);
+        let is_shipper = self.shipment.shipper_id() == &self.caller;
+        let is_carrier = self.shipment.carrier_id() == &Some(self.caller);
 
         if !is_shipper && !is_carrier {
-            return Err(crate::Error::NotAuthorizedAsNeitherCarrierNorShipper);
+            return Err(crate::EngineError::NotAuthorizedAsNeitherCarrierNorShipper);
         }
 
-        Ok(shipment.channel().clone())
+        Ok(self.shipment.channel().clone())
     }
 }

@@ -35,7 +35,7 @@
 		"maplibre-gl": "^5.1.0",
 		"svelte-i18n": "^4.0.1",
 		"svelte-maplibre": "^0.9.14",
-		"wasm": "file:../crates/apresh-wasm/pkg"
+		"wasm": "file:../crates/wasm/pkg"
 	},
 	"devDependencies": {
 		"@chromatic-com/storybook": "3.2.2",

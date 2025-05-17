@@ -12,10 +12,12 @@
     "dev": "npm start --workspaces --if-present",
     "test": "npm test --workspaces --if-present",
     "storybook": "cd src/app && bun run storybook",
-    "wasm": "wasm-pack build --target bundler src/crates/apresh-wasm --out-dir ./pkg",
-    "test:wasm": "wasm-pack test --headless --chrome src/crates/apresh-wasm",
+    "wasm": "wasm-pack build --target bundler src/crates/wasm --out-dir ./pkg",
+    "contract-bin": "cargo build -r --target wasm32-unknown-unknown -p contract",
+    "test:wasm": "wasm-pack test --headless --chrome src/crates/wasm",
     "contract": "dfx canister stop contract && dfx canister delete contract && dfx deploy contract",
-    "initial": "bash scripts/initial_deploy.sh"
+    "initial": "bash scripts/initial_deploy.sh",
+    "e2e": "bun run contract-bin && cargo nextest run --all --all-targets --no-fail-fast"
   },
   "type": "module",
   "workspaces": [

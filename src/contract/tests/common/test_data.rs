@@ -1,7 +1,7 @@
+use apresh_crypto::hash_secret;
+use apresh_types::{ShipmentInfo, ShipmentLocation, SizeCategory};
 use candid::{decode_one, Encode, Principal};
 use contract::consts::THIS_CANISTER_ID;
-use engine::models::shipment::{ShipmentInfo, ShipmentLocation, SizeCategory};
-use engine::utils::hash_secret;
 use pocket_ic::PocketIc;
 use rstest::fixture;
 
@@ -33,6 +33,15 @@ pub fn test_shipment(
         SizeCategory::Envelope,
     );
 
+    update_canister(
+        &pic,
+        Principal::from_text(THIS_CANISTER_ID).unwrap(),
+        "deposit",
+        Encode!(&100_000_000_u64).unwrap(),
+        TEST_PRINCIPAL,
+    )
+    .unwrap();
+
     let result = update_canister(
         &pic,
         Principal::from_text(THIS_CANISTER_ID).unwrap(),
@@ -46,7 +55,8 @@ pub fn test_shipment(
         )
         .unwrap(),
         TEST_PRINCIPAL,
-    );
+    )
+    .unwrap();
 
     let res: Result<u64, String> = decode_one(&result).unwrap();
     TestEnvironmentWithShipment {

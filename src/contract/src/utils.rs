@@ -1,3 +1,6 @@
+use apresh_store::Guard;
+use balances::{balances, Balances};
+use candid::Principal;
 use icrc_ledger_types::icrc1::transfer::Memo;
 
 use crate::{ADMIN, CANISTER_LOCKED};
@@ -28,14 +31,14 @@ pub fn assert_whitelisted() {
     }
 }
 
-pub fn memo(purpose: &str, shipment_id: u64) -> Option<Memo> {
+pub fn memo(purpose: &str, amount: u64) -> Option<Memo> {
     if purpose.len() > 10 {
         // Memo has a limit of 32 bytes.
         // With constrained size it should allow for up to a million shipments.
         unreachable!("Memo purpose is longer than expected");
     }
 
-    let memo = format!("Apresh: {} for {}", purpose, shipment_id)
+    let memo = format!("Apresh: {} of {}", purpose, amount)
         .as_bytes()
         .to_vec();
 
@@ -44,4 +47,13 @@ pub fn memo(purpose: &str, shipment_id: u64) -> Option<Memo> {
     }
 
     Some(Memo::from(memo))
+}
+
+pub fn callers_balances() -> Guard<Balances> {
+    balances_of(ic_cdk::caller())
+}
+
+pub fn balances_of(principal: Principal) -> Guard<Balances> {
+    let caller_bytes = principal.as_slice().to_vec();
+    balances(caller_bytes)
 }

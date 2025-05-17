@@ -1,27 +1,33 @@
 [workspace]
 members = [
-    "src/contract",
-    "src/crates/apresh-derive",
-    "src/crates/apresh-crypto",
-    "src/crates/apresh-qr",
-    "src/crates/apresh-wasm",
-    "src/crates/engine",
-    "src/crates/state",
+  "src/contract",
+  "src/crates/derive",
+  "src/crates/crypto",
+  "src/crates/qr-code",
+  "src/crates/wasm",
+  "src/crates/engine",
+  "src/crates/types",
+  "src/crates/store",
+  "src/crates/entrypoint",
+  "src/crates/balances",
 ]
 resolver = "2"
 
 [workspace.dependencies]
-apresh-derive = { path = "src/crates/apresh-derive" }
-engine = { path = "src/crates/engine" }
-apresh-qr = { path = "src/crates/apresh-qr" }
-apresh-crypto = { path = "src/crates/apresh-crypto" }
-state = { path = "src/crates/state" }
+apresh-derive = { path = "src/crates/derive" }
+apresh-engine = { path = "src/crates/engine" }
+apresh-qr-code = { path = "src/crates/qr-code" }
+apresh-crypto = { path = "src/crates/crypto" }
+apresh-types = { path = "src/crates/types" }
+apresh-store = { path = "src/crates/store" }
+entrypoint = { path = "src/crates/entrypoint" }
+balances = { path = "src/crates/balances" }
 
 wasm-bindgen = { version = "0.2.84" }
 web-sys = { version = "0.3.63", features = ["Crypto", "Window"] }
 aes-gcm = { version = "0.10.3", default-features = false, features = [
-    "aes",
-    "alloc",
+  "aes",
+  "alloc",
 ] }
 candid = "0.10.12"
 derive_deref = "1.1.1"
@@ -35,10 +41,10 @@ image = { version = "0.24", features = ["png"], default-features = false }
 thiserror = "2.0.11"
 qrcode-generator = "4.1"
 x25519-dalek = { version = "2.0.1", default-features = false, features = [
-    "alloc",
-    "precomputed-tables",
-    "static_secrets",
-    "serde",
+  "alloc",
+  "precomputed-tables",
+  "static_secrets",
+  "serde",
 ] }
 colorgrad = "0.6"
 sha2 = "0.10.8"
@@ -46,3 +52,4 @@ hex-literal = "0.4.1"
 hex = "0.4.3"
 bincode = { version = "1.3.3" }
 bcs = "0.1.6"
+derive-getters = "0.5.0"

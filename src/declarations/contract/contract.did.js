@@ -1,5 +1,14 @@
 export const idlFactory = ({ IDL }) => {
   const Result = IDL.Variant({ 'Ok' : IDL.Null, 'Err' : IDL.Text });
+  const ActorVersion = IDL.Variant({ 'V1' : IDL.Null, 'Invalid' : IDL.Null });
+  const ActorBase = IDL.Record({
+    'id' : IDL.Principal,
+    'active_shipments' : IDL.Vec(IDL.Nat64),
+    'name' : IDL.Text,
+    'version' : ActorVersion,
+    'shipments_history' : IDL.Vec(IDL.Nat64),
+  });
+  const Shipper = IDL.Record({ 'id' : IDL.Principal, 'base' : ActorBase });
   const ShipmentStatus = IDL.Variant({
     'InTransit' : IDL.Null,
     'DeliveryScheduled' : IDL.Null,
@@ -11,8 +20,8 @@ export const idlFactory = ({ IDL }) => {
     'Pending' : IDL.Null,
   });
   const ShipmentLocation = IDL.Record({
-    'lat' : IDL.Float64,
-    'lng' : IDL.Float64,
+    'lat' : IDL.Int32,
+    'lng' : IDL.Int32,
     'street' : IDL.Text,
   });
   const SizeCategory = IDL.Variant({
@@ -35,6 +44,18 @@ export const idlFactory = ({ IDL }) => {
     'host_key' : IDL.Vec(IDL.Nat8),
     'guest_keys' : IDL.Vec(IDL.Vec(IDL.Nat8)),
   });
+  const Shipment = IDL.Record({
+    'id' : IDL.Nat64,
+    'shipper' : IDL.Principal,
+    'status' : ShipmentStatus,
+    'info' : ShipmentInfo,
+    'name' : IDL.Text,
+    'created_at' : IDL.Nat64,
+    'version' : ActorVersion,
+    'hashed_secret' : IDL.Vec(IDL.Nat8),
+    'carrier' : IDL.Opt(IDL.Principal),
+    'channel' : Channel,
+  });
   const PrintableShipment = IDL.Record({
     'id' : IDL.Nat64,
     'shipper' : IDL.Text,
@@ -52,6 +73,11 @@ export const idlFactory = ({ IDL }) => {
   return IDL.Service({
     'addWhitelisted' : IDL.Func([IDL.Principal], [], []),
     'add_message' : IDL.Func([IDL.Vec(IDL.Nat8), IDL.Nat64], [Result], []),
+    'admin_migrate_out' : IDL.Func(
+        [],
+        [IDL.Vec(Shipper), IDL.Vec(Shipper), IDL.Vec(Shipment), IDL.Nat64],
+        ['query'],
+      ),
     'buyShipment' : IDL.Func(
         [IDL.Opt(IDL.Text), IDL.Nat64, IDL.Vec(IDL.Nat8)],
         [Result],

@@ -1,8 +1,7 @@
-use crate::{
-    actors::{carrier::Carrier, shipper::Shipper},
-    state::{CanisterActors, CanisterState},
-    ActorId,
-};
+use apresh_store::Record;
+use apresh_types::{ActorId, Carrier, Shipper};
+
+use crate::state::CanisterState;
 
 use super::StateOp;
 
@@ -12,15 +11,15 @@ pub enum RegisterActorOp {
 }
 
 impl StateOp<()> for RegisterActorOp {
-    type Error = crate::Error;
+    type Error = crate::EngineError;
 
-    fn apply(&self, state: &mut CanisterState) -> Result<(), Self::Error> {
+    fn apply(self, state: &mut CanisterState) -> Result<(), Self::Error> {
         match self {
             RegisterActorOp::AddShipper { id, name } => {
-                state.create_shipper(Shipper::new(*id, name));
+                Shipper::new(id, name.as_str()).set();
             }
             RegisterActorOp::AddCarrier { id, name } => {
-                state.create_carrier(Carrier::new(*id, name));
+                Carrier::new(id, name.as_str()).set();
             }
         }
 

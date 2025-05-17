@@ -3,11 +3,10 @@ use contract::consts::*;
 use pocket_ic::{PocketIc, PocketIcBuilder};
 use rstest::fixture;
 
-use crate::{Account, ApproveArgs, INIT_CYCLES, MINTER_PRINCIPAL, TEST_PRINCIPAL};
-
 use super::{
-    update_canister, ArchiveOptions, FeatureFlags, InitArgs, LedgerArg, ADMIN_PRINCIPAL,
-    CONTRACT_WASM, LEDGER_WASM, POOR_PRINCIPAL,
+    update_canister, Account, ApproveArgs, ArchiveOptions, FeatureFlags, InitArgs, LedgerArg,
+    ADMIN_PRINCIPAL, CONTRACT_WASM, INIT_CYCLES, LEDGER_WASM, MINTER_PRINCIPAL, POOR_PRINCIPAL,
+    TEST_PRINCIPAL,
 };
 
 #[fixture]
@@ -36,7 +35,8 @@ pub fn pic() -> PocketIc {
             "addWhitelisted",
             encode_one(whitelisted).unwrap(),
             ADMIN_PRINCIPAL,
-        );
+        )
+        .unwrap();
     }
 
     init_ledger(&pic, contract_id);

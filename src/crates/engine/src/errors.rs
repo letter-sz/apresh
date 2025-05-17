@@ -1,7 +1,11 @@
-pub type Result<T> = std::result::Result<T, Error>;
+pub type Result<T> = std::result::Result<T, EngineError>;
 
-#[derive(thiserror::Error, Debug)]
-pub enum Error {
+#[derive(thiserror::Error, Debug, Eq, PartialEq)]
+pub enum EngineError {
+    #[error("Store error: {0}")]
+    StoreError(#[from] apresh_store::StoreError),
+    #[error("Shipment error: {0}")]
+    ShipmentError(#[from] apresh_types::ShipmentError),
     #[error("Shipment not found")]
     ShipmentNotFound,
     #[error("Carrier not found")]
@@ -10,28 +14,12 @@ pub enum Error {
     CarrierNotSet,
     #[error("Shipper not found")]
     ShipperNotFound,
-    #[error("Carrier already set")]
-    CarrierAlreadySet,
-    #[error("Shipment already bought")]
-    ShipmentNotReadyToBeCanceled,
-    #[error("Shipment not ready to be finalized")]
-    ShipmentNotReadyToBeFinalized,
-    #[error("Not authorized to finalize shipment")]
-    NotAuthorizedToFinalizeShipment,
-    #[error("Secret key is invalid")]
-    SecretKeyIsInvalid,
-    #[error("Secret key not present")]
-    SecretKeyNotPresent,
-    #[error("Not authorized as carrier")]
-    NotAuthorizedAsCarrier,
-    #[error("Not authorized as shipper")]
-    NotAuthorizedAsShipper,
     #[error("Not authorized as neither carrier nor shipper")]
     NotAuthorizedAsNeitherCarrierNorShipper,
     #[error("Message too long")]
     MessageTooLong,
     #[error("Shipment limit reached")]
     ShipmentLimitReached,
-    #[error("Shipment cannot be bought")]
-    ShipmentCannotBeBought,
+    #[error("Not authorized as shipper")]
+    NotAuthorizedAsShipper,
 }

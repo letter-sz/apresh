@@ -2,6 +2,15 @@ import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 import type { IDL } from '@dfinity/candid';
 
+export interface ActorBase {
+  'id' : Principal,
+  'active_shipments' : BigUint64Array | bigint[],
+  'name' : string,
+  'version' : ActorVersion,
+  'shipments_history' : BigUint64Array | bigint[],
+}
+export type ActorVersion = { 'V1' : null } |
+  { 'Invalid' : null };
 export interface Channel {
   'messages' : Array<Uint8Array | number[]>,
   'host_key' : Uint8Array | number[],
@@ -26,6 +35,18 @@ export type Result_2 = { 'Ok' : Uint8Array | number[] } |
   { 'Err' : string };
 export type Result_3 = { 'Ok' : Channel } |
   { 'Err' : string };
+export interface Shipment {
+  'id' : bigint,
+  'shipper' : Principal,
+  'status' : ShipmentStatus,
+  'info' : ShipmentInfo,
+  'name' : string,
+  'created_at' : bigint,
+  'version' : ActorVersion,
+  'hashed_secret' : Uint8Array | number[],
+  'carrier' : [] | [Principal],
+  'channel' : Channel,
+}
 export interface ShipmentInfo {
   'destination' : ShipmentLocation,
   'value' : bigint,
@@ -46,6 +67,7 @@ export type ShipmentStatus = { 'InTransit' : null } |
   { 'Cancelled' : null } |
   { 'PickupCompleted' : null } |
   { 'Pending' : null };
+export interface Shipper { 'id' : Principal, 'base' : ActorBase }
 export type SizeCategory = {
     'Parcel' : {
       'max_height' : bigint,
@@ -57,6 +79,10 @@ export type SizeCategory = {
 export interface _SERVICE {
   'addWhitelisted' : ActorMethod<[Principal], undefined>,
   'add_message' : ActorMethod<[Uint8Array | number[], bigint], Result>,
+  'admin_migrate_out' : ActorMethod<
+    [],
+    [Array<Shipper>, Array<Shipper>, Array<Shipment>, bigint]
+  >,
   'buyShipment' : ActorMethod<
     [[] | [string], bigint, Uint8Array | number[]],
     Result

@@ -1,3 +1,11 @@
+type ActorBase = record {
+  id : principal;
+  active_shipments : vec nat64;
+  name : text;
+  version : ActorVersion;
+  shipments_history : vec nat64;
+};
+type ActorVersion = variant { V1; Invalid };
 type Channel = record {
   messages : vec blob;
   host_key : blob;
@@ -18,6 +26,18 @@ type Result = variant { Ok; Err : text };
 type Result_1 = variant { Ok : nat64; Err : text };
 type Result_2 = variant { Ok : blob; Err : text };
 type Result_3 = variant { Ok : Channel; Err : text };
+type Shipment = record {
+  id : nat64;
+  shipper : principal;
+  status : ShipmentStatus;
+  info : ShipmentInfo;
+  name : text;
+  created_at : nat64;
+  version : ActorVersion;
+  hashed_secret : blob;
+  carrier : opt principal;
+  channel : Channel;
+};
 type ShipmentInfo = record {
   destination : ShipmentLocation;
   value : nat64;
@@ -25,7 +45,7 @@ type ShipmentInfo = record {
   size_category : SizeCategory;
   price : nat64;
 };
-type ShipmentLocation = record { lat : float64; lng : float64; street : text };
+type ShipmentLocation = record { lat : int32; lng : int32; street : text };
 type ShipmentStatus = variant {
   InTransit;
   DeliveryScheduled;
@@ -36,6 +56,7 @@ type ShipmentStatus = variant {
   PickupCompleted;
   Pending;
 };
+type Shipper = record { id : principal; base : ActorBase };
 type SizeCategory = variant {
   Parcel : record { max_height : nat64; max_width : nat64; max_depth : nat64 };
   Envelope;
@@ -43,6 +64,12 @@ type SizeCategory = variant {
 service : () -> {
   addWhitelisted : (principal) -> ();
   add_message : (blob, nat64) -> (Result);
+  admin_migrate_out : () -> (
+      vec Shipper,
+      vec Shipper,
+      vec Shipment,
+      nat64,
+    ) query;
   buyShipment : (opt text, nat64, blob) -> (Result);
   cancel_shipment : (nat64) -> (Result);
   carrier_shipments : () -> (vec PrintableShipment) query;

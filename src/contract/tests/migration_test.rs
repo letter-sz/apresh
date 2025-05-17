@@ -1,9 +1,9 @@
 use candid::{decode_one, encode_one, Principal};
 use contract::consts::THIS_CANISTER_ID;
-use engine::models::shipment::PrintableShipment;
 use pocket_ic::PocketIc;
 use rstest::rstest;
 
+use apresh_types::PrintableShipment;
 use common::*;
 
 mod common;
@@ -11,39 +11,44 @@ mod common;
 fn migrate_sequence(pic: &PocketIc) {
     // Verify shipment was created
     update_canister(
-        &pic,
+        pic,
         Principal::from_text(THIS_CANISTER_ID).unwrap(),
         "lockCanister",
         encode_one(()).unwrap(),
         ADMIN_PRINCIPAL,
-    );
+    )
+    .unwrap();
 
     update_canister(
-        &pic,
+        pic,
         Principal::from_text(THIS_CANISTER_ID).unwrap(),
         "migrateShippers",
         encode_one(()).unwrap(),
         ADMIN_PRINCIPAL,
-    );
+    )
+    .unwrap();
 
     update_canister(
-        &pic,
+        pic,
         Principal::from_text(THIS_CANISTER_ID).unwrap(),
         "migrateCarriers",
         encode_one(()).unwrap(),
         ADMIN_PRINCIPAL,
-    );
+    )
+    .unwrap();
 
     update_canister(
-        &pic,
+        pic,
         Principal::from_text(THIS_CANISTER_ID).unwrap(),
         "migrateShipments",
         encode_one(()).unwrap(),
         ADMIN_PRINCIPAL,
-    );
+    )
+    .unwrap();
 }
 
 #[rstest]
+#[ignore] // Migration is not needed anymore
 fn test_create_shipment(test_shipment: TestEnvironmentWithShipment) {
     let TestEnvironmentWithShipment { pic, shipment_id } = test_shipment;
 

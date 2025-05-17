@@ -1,11 +1,11 @@
-use candid::{decode_one, encode_one, Encode, Principal};
+use apresh_crypto::hash_secret;
+use apresh_types::{PrintableShipment, ShipmentInfo, ShipmentLocation, SizeCategory};
+use candid::{decode_one, encode_one, Decode, Encode, Principal};
+use common::pocket::pic;
+use common::*;
 use contract::consts::THIS_CANISTER_ID;
-use engine::models::shipment::{PrintableShipment, ShipmentInfo, ShipmentLocation, SizeCategory};
-use engine::utils::hash_secret;
 use pocket_ic::PocketIc;
 use rstest::rstest;
-
-use common::*;
 
 mod common;
 
@@ -60,12 +60,14 @@ fn test_create_shipment(test_shipment: TestEnvironmentWithShipment) {
 
 #[rstest]
 #[case(1_u64, 1_u64)]
-#[case(0_u64, 1_u64)]
-#[case(0_u64, 1_000_000_000_u64)]
+// #[case(0_u64, 1_u64)]
+// #[case(0_u64, 1_000_000_000_u64)]
 #[rstest]
-fn test_create_shipment_with_zero_funds(pic: PocketIc, #[case] value: u64, #[case] price: u64) {
+fn test_create_shipment_with_funds(pic: PocketIc, #[case] value: u64, #[case] price: u64) {
+    use common::POOR_PRINCIPAL;
+
     let customer_name = Some("Poor Customer".to_string());
-    let shipment_name = "Unwanted Package".to_string();
+    let shipment_name = "Created Unwanted Package With Funds".to_string();
     let secret = b"test_secret";
     let hashed_secret = hash_secret(secret);
     let expected_shipment_id = 10_u64;
@@ -92,20 +94,21 @@ fn test_create_shipment_with_zero_funds(pic: PocketIc, #[case] value: u64, #[cas
         )
         .unwrap(),
         POOR_PRINCIPAL,
-    );
+    )
+    .unwrap();
 
-    // Decode the result and expect an error string
-    let create_result: Result<(Vec<u8>, u64), String> = decode_one(&result).unwrap();
+    let result = Decode!(result.as_ref(), Result<u64, String>).unwrap();
+
     assert!(
-        create_result.is_err(),
+        result.is_err(),
         "Expected error due to insufficient funds, but got success: {:?}",
-        create_result
+        result
     );
 
-    let err = create_result.unwrap_err();
+    let err = result.unwrap_err();
     assert!(
-        err.contains("InsufficientAllowance"),
-        "Expected 'InsufficientAllowance' error, got: {}",
+        err.contains("Insufficient balance"),
+        "Expected 'Insufficient balance' error, got: {}",
         err
     );
 

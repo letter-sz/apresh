@@ -25,4 +25,4 @@ dist/
 # environment variables
 .env
 
-src/crates/apresh-wasm/pkg/
+src/crates/wasm/pkg/
