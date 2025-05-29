@@ -1,9 +1,12 @@
+use core::panic;
+
 use apresh_crypto::hash_secret;
-use apresh_types::{PrintableShipment, ShipmentInfo, ShipmentLocation, SizeCategory};
-use candid::{decode_one, encode_one, Decode, Encode, Principal};
+use apresh_types::{PrintableShipment, ShipmentInfo, ShipmentKey, ShipmentLocation, SizeCategory};
+use candid::{decode_one, encode_one, Decode, Principal};
 use common::pocket::pic;
 use common::*;
 use contract::consts::THIS_CANISTER_ID;
+use contract::{encode_create_shipment_args, encode_get_shipment_args};
 use pocket_ic::PocketIc;
 use rstest::rstest;
 
@@ -43,17 +46,24 @@ mod common;
 fn test_create_shipment(test_shipment: TestEnvironmentWithShipment) {
     let TestEnvironmentWithShipment { pic, shipment_id } = test_shipment;
 
+    assert_eq!(shipment_id, 1_u64);
+
     // Verify shipment was created
     let result = query_canister(
         &pic,
         Principal::from_text(THIS_CANISTER_ID).unwrap(),
         "shipment",
-        encode_one(shipment_id).unwrap(),
+        encode_one(ShipmentKey(shipment_id)).unwrap(),
         TEST_PRINCIPAL,
-    );
+    )
+    .unwrap();
 
-    let shipment = decode_one::<Option<PrintableShipment>>(&result).unwrap();
-    assert!(shipment.is_some());
+    let shipment = decode_one::<Result<PrintableShipment, String>>(&result).unwrap();
+    assert!(
+        shipment.is_ok(),
+        "Failed to retrieve shipment: {:?}",
+        shipment
+    );
     let shipment = shipment.unwrap();
     assert_eq!(shipment.name, "Test Package");
 }
@@ -85,14 +95,13 @@ fn test_create_shipment_with_funds(pic: PocketIc, #[case] value: u64, #[case] pr
         &pic,
         Principal::from_text(THIS_CANISTER_ID).unwrap(),
         "createShipment",
-        Encode!(
-            &customer_name,
-            &shipment_name,
-            &hashed_secret,
-            &channel_key,
-            &shipment_info
-        )
-        .unwrap(),
+        encode_create_shipment_args(
+            customer_name.clone(),
+            shipment_name.clone(),
+            hashed_secret.clone(),
+            channel_key.clone(),
+            shipment_info.clone(),
+        ),
         POOR_PRINCIPAL,
     )
     .unwrap();
@@ -119,7 +128,8 @@ fn test_create_shipment_with_funds(pic: PocketIc, #[case] value: u64, #[case] pr
         "shipments",
         encode_one(()).unwrap(),
         POOR_PRINCIPAL,
-    );
+    )
+    .unwrap();
 
     let shipments = decode_one::<Vec<PrintableShipment>>(&result).unwrap();
     assert!(
@@ -133,13 +143,14 @@ fn test_create_shipment_with_funds(pic: PocketIc, #[case] value: u64, #[case] pr
         &pic,
         Principal::from_text(THIS_CANISTER_ID).unwrap(),
         "shipment",
-        encode_one(expected_shipment_id).unwrap(),
+        encode_get_shipment_args(ShipmentKey(expected_shipment_id)),
         POOR_PRINCIPAL,
-    );
+    )
+    .unwrap();
 
-    let shipment = decode_one::<Option<PrintableShipment>>(&result).unwrap();
+    let shipment = decode_one::<Result<PrintableShipment, String>>(&result).unwrap();
     assert!(
-        shipment.is_none() || shipment.unwrap().name != shipment_name,
+        shipment.is_err() || shipment.unwrap().name != shipment_name,
         "Found shipment when it should not exist"
     );
 }

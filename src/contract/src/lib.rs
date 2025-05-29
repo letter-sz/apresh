@@ -158,7 +158,7 @@ async fn read_channel(#[key] shipment: Shipment) -> ContractResult<Channel> {
     let caller = ActorId(ic_cdk::caller());
 
     STATE
-        .with_borrow(|state| ReadMessageOp::new(&shipment, caller).read(state))
+        .with_borrow(|state| ReadMessageOp::new(shipment, caller).read(state))
         .map_err(|e| e.to_string())
 }
 
@@ -248,6 +248,7 @@ async fn buy_shipment(
     }
 }
 
+#[entrypoint]
 #[update(name = "createShipment")]
 async fn create_shipment(
     customer_name: Option<String>,
@@ -396,8 +397,8 @@ fn shipments() -> Vec<PrintableShipment> {
 }
 
 #[entrypoint]
-#[query]
-fn shipment(#[key] shipment: Shipment) -> ContractResult<PrintableShipment> {
+#[query(name = "shipment")]
+fn get_shipment(#[key] shipment: Shipment) -> ContractResult<PrintableShipment> {
     Ok(PrintableShipment::from(&*shipment))
 }
 

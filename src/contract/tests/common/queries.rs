@@ -7,11 +7,10 @@ pub fn query_canister(
     method: &str,
     args: Vec<u8>,
     principal: Principal,
-) -> Vec<u8> {
-    let result = pic
-        .query_call(contract_id, principal, method, args)
-        .unwrap();
-    get_reply_bytes(result)
+) -> Result<Vec<u8>, String> {
+    pic.query_call(contract_id, principal, method, args)
+        .map(get_reply_bytes)
+        .map_err(|e| e.to_string())
 }
 
 pub fn update_canister(

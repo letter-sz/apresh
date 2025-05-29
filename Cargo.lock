@@ -131,6 +131,7 @@ version = "0.1.0"
 dependencies = [
  "apresh-derive",
  "bcs",
+ "candid",
  "ic-stable-structures",
  "serde",
  "thiserror 2.0.11",
@@ -597,6 +598,7 @@ version = "0.1.0"
 dependencies = [
  "apresh-derive",
  "apresh-store",
+ "candid",
  "proc-macro2",
  "quote",
  "serde",

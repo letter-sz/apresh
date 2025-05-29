@@ -69,7 +69,8 @@ fn test_create_shipment(test_shipment: TestEnvironmentWithShipment) {
         "shipment",
         encode_one(shipment_id).unwrap(),
         TEST_PRINCIPAL,
-    );
+    )
+    .unwrap();
 
     let shipment = decode_one::<Option<PrintableShipment>>(&result).unwrap();
     assert!(shipment.is_some());

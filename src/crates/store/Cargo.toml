@@ -12,3 +12,4 @@ thiserror = { workspace = true }
 
 [dev-dependencies]
 apresh-derive = { workspace = true }
+candid ={ workspace = true }

@@ -59,6 +59,7 @@ pub fn test_shipment(
     .unwrap();
 
     let res: Result<u64, String> = decode_one(&result).unwrap();
+
     TestEnvironmentWithShipment {
         pic,
         shipment_id: res.unwrap(),

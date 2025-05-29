@@ -33,6 +33,8 @@ thread_local! {
 pub enum StoreError {
     #[error("Store error: {0}")]
     Other(String),
+    #[error("Key not found: {0} {1:?}")]
+    KeyNotFound(String, String),
 }
 
 #[test]

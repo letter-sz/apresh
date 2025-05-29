@@ -16,3 +16,4 @@ serde = { workspace = true }
 
 [dev-dependencies]
 trybuild = "1.0"
+candid = { workspace = true }
