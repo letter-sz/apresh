@@ -4,7 +4,8 @@
 			"nav": {
 				"about": "About",
 				"contact": "Contact"
-			}
+			},
+			"language": "Change language to:"
 		},
 		"welcome-section": {
 			"title": "Find a carrier for your shipment",

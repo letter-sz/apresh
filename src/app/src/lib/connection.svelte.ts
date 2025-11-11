@@ -1,14 +1,18 @@
-import { type ActorSubclass, type Identity } from '@dfinity/agent';
+import { invalidateAll } from '$app/navigation';
 import { type _SERVICE } from '$declarations/contract/contract.did.js';
 import type { _SERVICE as _ICRC1_SERVICE } from '$declarations/icrc1_ledger_canister/icrc1_ledger_canister.did';
-import { connect, type IConnection } from './canisters';
-import { invalidateAll } from '$app/navigation';
+import { type ActorSubclass } from '@dfinity/agent';
 import type { Principal } from '@dfinity/principal';
+import { connect, type IConnection } from './canisters';
+import { WhitelistService } from './services/whitelistService';
 
 export class Connection {
 	identity: Principal | null = $state(null);
 	actor: ActorSubclass<_SERVICE> | null = $state(null);
 	tokenActor: ActorSubclass<_ICRC1_SERVICE> | null = $state(null);
+
+	#whitelistService: WhitelistService = new WhitelistService();
+	#isWhitelisted: boolean = $state(false);
 
 	// Connects to the backend if not already connected
 	async ensureConnected(): Promise<IConnection> {
@@ -29,9 +33,19 @@ export class Connection {
 		this.actor = connection.actor;
 		this.tokenActor = connection.tokenActor;
 
+		// this.#isWhitelisted = this.#whitelistService.isIdentityWhitelisted(this.identity);
+
 		await invalidateAll();
 
 		return connection;
+	}
+
+	async disconnect(): Promise<void> {
+		this.identity = null;
+		this.actor = null;
+		this.tokenActor = null;
+
+		await invalidateAll();
 	}
 
 	async getConnection(): Promise<IConnection> {
@@ -56,6 +70,16 @@ export class Connection {
 
 	isConnected(): boolean {
 		return this.identity !== null;
+	}
+
+	isWhitelisted(): boolean {
+		return this.#isWhitelisted;
+	}
+
+	async linkIdentityWithEmail(): Promise<void> {
+		if (this.identity) this.#whitelistService.linkIdentityWithEmail(this.identity, '');
+
+		await invalidateAll();
 	}
 }
 

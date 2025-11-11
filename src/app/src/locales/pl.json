@@ -4,7 +4,8 @@
 			"nav": {
 				"about": "O nas",
 				"contact": "Kontakt"
-			}
+			},
+			"language": "Zmień język na:"
 		},
 		"welcome-section": {
 			"title": "Znajdź przewoźnika dla swojej przesyłki",

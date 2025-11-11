@@ -36,12 +36,14 @@
 		hoverColor
 	]}
 >
-	<Icon size={65} class={titleColor} />
+	<div>
+		<Icon size={65} class={titleColor} />
+	</div>
 	<div class="">
-		<h2 class={['mb-2 text-xl font-bold', titleColor]}>
+		<h2 class={['mb-2 text-lg font-bold md:text-xl', titleColor]}>
 			{title}
 		</h2>
-		<p class={[textColor, 'text-sm']}>
+		<p class={[textColor, 'text-xs md:text-sm']}>
 			{@render children()}
 		</p>
 	</div>

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import o1Small from '$assets/o1-small.jpg';
 	import o1 from '$assets/o1.jpg';
 	import o2 from '$assets/o2.jpg';
 	import o4 from '$assets/o4.jpg';
@@ -80,7 +81,10 @@
 <main class={['transition-all duration-300', `bg-${roleToColor(selectedCard)}-50`]}>
 	<Header />
 
-	<section class="relative -mt-24 flex w-full items-center justify-between">
+	<section
+		id="desktop-intro"
+		class="relative -mt-24 hidden w-full items-center justify-between lg:flex"
+	>
 		<div
 			class={[
 				'clip-diagonal z-20 flex h-screen w-[65%] flex-col justify-center',
@@ -109,22 +113,51 @@
 				</div>
 			</div>
 		</div>
+
 		<img src={o1} class="absolute right-0 top-0 h-screen" alt="" />
+	</section>
+
+	<section id="mobile-intro" class="flex h-screen flex-col justify-end bg-white lg:hidden">
+		<img src={o1Small} class="absolute left-0 top-0 z-0 h-full w-full" alt="" />
+
+		<div class="z-10 bg-white/85 p-8">
+			<h1 class="text-2xl font-bold md:text-3xl">
+				{$_('landing.welcome-section.title')}
+			</h1>
+			<p class="mt-6 text-sm text-neutral-600 md:text-base lg:text-lg">
+				{$_('landing.welcome-section.description')}
+			</p>
+
+			<button
+				class={[
+					'mt-8 cursor-pointer rounded-lg px-8 py-3 text-xs font-medium uppercase text-white shadow-lg',
+					selectedCard ? `bg-${roleToColor(selectedCard)}-500` : ''
+				]}
+				onclick={() => {
+					const optionSection = document.getElementById('select-role-section');
+					optionSection?.scrollIntoView({ behavior: 'smooth' });
+				}}
+			>
+				{$_('landing.welcome-section.button')}
+			</button>
+		</div>
 	</section>
 
 	<section
 		id="select-role-section"
-		class="relative flex h-screen w-full flex-col items-center justify-center"
+		class="relative z-10 flex h-screen w-full flex-col items-center justify-center"
 	>
-		<div class="flex flex-col items-center justify-center space-y-6">
-			<h1 class="text-center text-4xl font-bold">{$_('landing.select-role-section.title')}</h1>
-			<p class="text-center text-lg text-neutral-500">
+		<div class="flex flex-col items-center justify-center space-y-3 px-7 lg:space-y-6 lg:px-0">
+			<h1 class="text-center text-2xl font-bold md:text-3xl lg:text-4xl">
+				{$_('landing.select-role-section.title')}
+			</h1>
+			<p class="text-center text-sm text-neutral-500 md:text-base lg:text-lg">
 				{$_('landing.select-role-section.description')}
 			</p>
 		</div>
 
-		<div class="mt-20 flex w-[70%] justify-center">
-			<div class="flex flex-1 flex-col space-y-6 px-40">
+		<div class="mt-14 flex justify-center lg:mt-20 lg:w-[70%]">
+			<div class="flex flex-1 flex-col space-y-6 px-6 lg:px-40">
 				{#each cardData as { title, role, description, icon }, i}
 					<Card
 						onMouseEnter={() => {
@@ -143,7 +176,7 @@
 				{/each}
 			</div>
 
-			<div class="relative flex flex-1 items-center justify-center">
+			<div class="relative hidden flex-1 items-center justify-center lg:flex">
 				{#if selectedCard === 'shipper'}
 					<div
 						class="absolute h-full w-full rounded-xl bg-orange-400 p-2"
@@ -173,27 +206,31 @@
 		</div>
 	</section>
 
-	<section class="bg-white py-32">
+	<section class="bg-white py-16 lg:py-32">
 		<div class="flex flex-col items-center justify-center">
-			<div class="flex flex-col items-center justify-center space-y-10">
-				<h1 class="text-4xl font-bold">{$_('landing.dotted-map-section.title')}</h1>
-				<p class="w-3/5 text-center text-lg text-neutral-500">
+			<div
+				class="flex flex-col items-center justify-center space-y-3 px-7 text-center lg:space-y-6 lg:px-0"
+			>
+				<h1 class="text-2xl font-bold md:text-3xl lg:text-4xl">
+					{$_('landing.dotted-map-section.title')}
+				</h1>
+				<p class="w-4/5 text-sm text-neutral-500 md:text-base lg:w-3/5 lg:text-lg">
 					{$_('landing.dotted-map-section.description')}
 				</p>
 			</div>
 
-			<div class="relative mt-16">
+			<div class="relative mt-5 px-7 lg:mt-16">
 				<img
 					src={`data:image/svg+xml;utf8,${encodeURIComponent(svgMap)}`}
 					alt=""
-					class="h-[450px]"
+					class="h-[250px] lg:h-[450px]"
 				/>
 			</div>
 		</div>
 	</section>
 
-	<section id="benefits-section" class="container mx-auto h-screen px-52">
-		<div class="flex h-full flex-col items-center justify-center space-y-6">
+	<section id="benefits-section" class="container mx-auto px-5 lg:h-screen lg:px-52">
+		<div class="hidden h-full flex-col items-center justify-center space-y-6 lg:flex">
 			<h1 class="mb-10 text-center text-3xl font-bold">{$_('landing.benefits-section.title')}</h1>
 
 			<div
@@ -306,87 +343,162 @@
 				</div>
 			</div>
 		</div>
+
+		<div class="flex flex-col items-center justify-center py-10 lg:hidden">
+			<h1 class="mt-10 px-7 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
+				{$_('landing.benefits-section.title')}
+			</h1>
+
+			<div class="mt-12 flex max-w-[500px] flex-col space-y-8 px-5">
+				<div class={['flex flex-col items-center justify-center rounded-xl shadow-lg']}>
+					<img src={o7} alt="" class="w-full rounded-t-xl" />
+
+					<div
+						class={['space-y-3 rounded-b-xl px-3 py-4', `bg-${roleToColor(selectedCard)}-500/90`]}
+					>
+						<h1 class="text-center text-base font-bold text-white">
+							{$_('landing.benefits-section.card-3.title')}
+						</h1>
+						<p class={['pb-3 text-center text-sm text-white']}>
+							{$_('landing.benefits-section.card-3.description')}
+						</p>
+					</div>
+				</div>
+
+				<div class={['flex flex-col items-center justify-center rounded-xl shadow-lg']}>
+					<img src={o5} alt="" class="w-full rounded-t-xl" />
+
+					<div
+						class={['space-y-3 rounded-b-xl px-3 py-4', `bg-${roleToColor(selectedCard)}-500/90`]}
+					>
+						<h1 class="text-center text-base font-bold text-white">
+							{$_('landing.benefits-section.card-1.title')}
+						</h1>
+						<p class={['pb-3 text-center text-sm text-white']}>
+							{$_('landing.benefits-section.card-1.description')}
+						</p>
+					</div>
+				</div>
+
+				<div class={['flex flex-col items-center justify-center rounded-xl shadow-lg']}>
+					<img src={o6} alt="" class="w-full rounded-t-xl" />
+
+					<div
+						class={['space-y-3 rounded-b-xl px-3 py-4', `bg-${roleToColor(selectedCard)}-500/90`]}
+					>
+						<h1 class="text-center text-base font-bold text-white">
+							{$_('landing.benefits-section.card-2.title')}
+						</h1>
+						<p class={['pb-3 text-center text-sm text-white']}>
+							{$_('landing.benefits-section.card-2.description')}
+						</p>
+					</div>
+				</div>
+			</div>
+		</div>
 	</section>
 
 	<section class="flex justify-center bg-white py-24">
 		<div class="container mx-auto flex justify-center">
-			<h1 class="text-3xl font-bold">Partners</h1>
+			<h1 class="px-7 text-center text-2xl font-bold md:text-3xl lg:text-4xl">Partners</h1>
 		</div>
 	</section>
 
-	<footer class="container mx-auto flex items-center py-10">
+	<footer class="container relative z-10 mx-auto flex flex-col items-center py-10 lg:flex-row">
 		<div class="flex-1 space-y-5">
-			<h2 class="uppercase">Apresh</h2>
+			<h2 class="text-sm uppercase lg:text-base">Apresh</h2>
 
-			<p class="w-3/4 text-sm text-neutral-500">
+			<p class="w-full text-xs text-neutral-500 lg:w-3/4 lg:text-sm">
 				{$_('landing.footer.description')}
 			</p>
 
-			<p class="text-sm text-neutral-500">© 2025 Apresh. {$_('landing.footer.copyright')}</p>
+			<p class="text-xs text-neutral-500 lg:text-sm">
+				© 2025 Apresh. {$_('landing.footer.copyright')}
+			</p>
 		</div>
 
-		<div class="flex flex-1 justify-end">
+		<div class="mt-10 flex w-full flex-1 justify-between lg:mt-0 lg:w-fit lg:justify-end">
 			<div class="flex flex-col space-y-4">
-				<h2 class="uppercase">Hot links</h2>
+				<h2 class="text-sm uppercase lg:text-base">Hot links</h2>
 
 				<ul class="flex flex-col space-y-2 text-neutral-700">
 					<li>
-						<a href="/" class="text-sm transition-all duration-300 hover:text-orange-500"> Home </a>
+						<a
+							href="/"
+							class="text-xs transition-all duration-300 hover:text-orange-500 lg:text-sm"
+						>
+							Home
+						</a>
 					</li>
 					<li>
-						<a href="/shipper" class="text-sm transition-all duration-300 hover:text-orange-500">
+						<a
+							href="/shipper"
+							class="text-xs transition-all duration-300 hover:text-orange-500 lg:text-sm"
+						>
 							{$_('landing.footer.nav-1.shipper')}
 						</a>
 					</li>
 					<li>
-						<a href="/carrier" class="text-sm transition-all duration-300 hover:text-orange-500">
+						<a
+							href="/carrier"
+							class="text-xs transition-all duration-300 hover:text-orange-500 lg:text-sm"
+						>
 							{$_('landing.footer.nav-1.carrier')}
 						</a>
 					</li>
 					<li>
-						<a href="/customer" class="text-sm transition-all duration-300 hover:text-orange-500">
+						<a
+							href="/customer"
+							class="text-xs transition-all duration-300 hover:text-orange-500 lg:text-sm"
+						>
 							{$_('landing.footer.nav-1.track')}
 						</a>
 					</li>
 				</ul>
 			</div>
 
-			<div class="flex flex-col space-y-4 pl-32">
-				<h2 class="uppercase">More info</h2>
+			<div class="flex flex-col space-y-4 lg:pl-32">
+				<h2 class="text-sm uppercase lg:text-base">More info</h2>
 
 				<ul class="flex flex-col space-y-2 text-neutral-700">
 					<li>
-						<a href="/about" class="text-sm transition-all duration-300 hover:text-orange-500">
+						<a
+							href="/about"
+							class="text-xs transition-all duration-300 hover:text-orange-500 lg:text-sm"
+						>
 							{$_('landing.footer.nav-2.about')}
 						</a>
 					</li>
 					<li>
-						<a href="/contact" class="text-sm transition-all duration-300 hover:text-orange-500">
+						<a
+							href="/contact"
+							class="text-xs transition-all duration-300 hover:text-orange-500 lg:text-sm"
+						>
 							{$_('landing.footer.nav-2.contact')}
 						</a>
 					</li>
 				</ul>
 			</div>
 
-			<div class="flex flex-col space-y-4 pl-32">
-				<h2 class="uppercase">Socials</h2>
+			<div class="flex flex-col space-y-4 lg:pl-32">
+				<h2 class="text-sm uppercase lg:text-base">Socials</h2>
 
 				<ul class="flex flex-col space-y-2 text-neutral-700">
 					<li class="flex items-center space-x-3">
 						<img src={discord} alt="" class="w-4" />
-						<a href="#" class="text-sm transition-all duration-300 hover:text-[#7289da]">
+						<a href="#" class="text-xs transition-all duration-300 hover:text-[#7289da] lg:text-sm">
 							Discord
 						</a>
 					</li>
 					<li class="flex items-center space-x-3">
 						<img src={twitter} alt="" class="w-4" />
-						<a href="#" class="text-sm transition-all duration-300 hover:text-[#1DA1F2]">
+						<a href="#" class="text-xs transition-all duration-300 hover:text-[#1DA1F2] lg:text-sm">
 							Twitter
 						</a>
 					</li>
 					<li class="flex items-center space-x-3">
 						<img src={telegram} alt="" class="w-4" />
-						<a href="#" class="text-sm transition-all duration-300 hover:text-[#24A1DE]">
+						<a href="#" class="text-xs transition-all duration-300 hover:text-[#24A1DE] lg:text-sm">
 							Telegram
 						</a>
 					</li>
