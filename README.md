@@ -1,6 +1,4 @@
-<div align="center"><h1>🌍 Apresh</h1>
-<p>Turning Empty Space into an Opportunity</p>
-</div>
+<div align="center"><h1>🌍 Apresh - Decentralized Delivery Network</h1></div>
 
 <br/>
 
