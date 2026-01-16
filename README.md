@@ -6,13 +6,20 @@
 
 Apresh is a decentralized delivery platform built on the **ICP blockchain** that revolutionizes package delivery by connecting shippers directly with carriers in a trustless, blockchain-powered marketplace. We're transforming underutilized vehicle capacity and commuter routes into efficient delivery networks, offering fair pricing without intermediaries.
 
----
+<br/>
+
+<div align="center">
+  <img src="./docs/apresh-mobile.gif" width="700" height="auto" alt="Prezentacja interfejsu aplikacji Apresh">
+</div>
+
+<br/>
 
 ## 🚀 The Business Opportunity
 
 ### Problem We Solve
 
 The current logistics and delivery market faces critical inefficiencies:
+
 - **High Costs for Small Businesses**: Platform fees can absorb up to **30%** of delivery revenue
 - **Underutilized Assets**: **20-24%** of EU road freight kilometers are traveled by empty trucks; private urban car occupancy averages only **1.2-1.9** persons per trip
 - **Last-Mile Inefficiency**: Last-mile transportation accounts for **40%** of global logistics spending
@@ -22,6 +29,7 @@ The current logistics and delivery market faces critical inefficiencies:
 ### Our Solution
 
 Apresh provides a decentralized alternative to traditional courier services:
+
 - **Decentralized Network**: Built on **ICP blockchain**, creating a trustless environment with clear audit trails and reduced overhead
 - **Available for Everyone**: Anyone who commutes can become a carrier, turning planned trips into delivery opportunities
 - **Fair Market Pricing**: Pricing controlled by market demand without hidden fees; shippers choose carriers based on price, rating, and delivery estimates
@@ -50,6 +58,7 @@ Apresh provides a decentralized alternative to traditional courier services:
 ## 💼 Key Features
 
 ### For Shippers
+
 - 📦 **Create Shipments** with custom parameters (size, value, destination)
 - 💰 **Set Your Price** - competitive market-driven pricing
 - 🔐 **Secure Escrow** - payment held in smart contract until delivery
@@ -58,6 +67,7 @@ Apresh provides a decentralized alternative to traditional courier services:
 - 📱 **QR Code Verification** - easy package confirmation
 
 ### For Carriers
+
 - 🗺️ **Browse Shipments** - filter by location, size, and compensation
 - 🚗 **Optimize Routes** - earn more by matching existing trips
 - ⚡ **Instant Payments** - automatic settlement via blockchain
@@ -65,6 +75,7 @@ Apresh provides a decentralized alternative to traditional courier services:
 - 💼 **Flexible Work** - choose what to deliver and when
 
 ### Platform Benefits
+
 - ⛓️ **Blockchain Security** - immutable records on Internet Computer
 - 🔒 **No Custody Risk** - smart contracts handle all funds
 - 🌍 **Global Reach** - borderless payments and operations
@@ -78,6 +89,7 @@ Apresh provides a decentralized alternative to traditional courier services:
 ### Technology Stack
 
 #### Blockchain Layer (Internet Computer)
+
 - **Smart Contract**: Rust-based canister handling shipment lifecycle
 - **Token Standard**: ICRC-1 ledger for payments and escrow
 - **Authentication**: Internet Identity for privacy-preserving auth
@@ -85,6 +97,7 @@ Apresh provides a decentralized alternative to traditional courier services:
 - **Testing**: PocketIC for local integration testing
 
 #### Frontend
+
 - **Framework**: SvelteKit 5 with TypeScript
 - **Styling**: Tailwind CSS + Sass
 - **Maps**: MapLibre GL for geolocation
@@ -93,6 +106,7 @@ Apresh provides a decentralized alternative to traditional courier services:
 - **Development**: Vite, Storybook for component documentation
 
 #### Cryptography & Security
+
 - **End-to-End Encryption**: ChaCha20-Poly1305 for messaging
 - **Key Exchange**: X25519 (Curve25519) for secure channels
 - **QR Codes**: Custom gradient QR generation with error correction
@@ -108,7 +122,7 @@ Apresh provides a decentralized alternative to traditional courier services:
 │  │ Web (Svelte) │                         │  Storybook│ │
 │  └──────┬───────┘                         └───────────┘ │
 └─────────┼───────────────────────────────────────────────┘
-          │                  
+          │
           └────────┐
                    │ HTTPS / Agent
 ┌──────────────────┼───────────────────────────────────┐
@@ -132,7 +146,9 @@ Apresh provides a decentralized alternative to traditional courier services:
 ### Core Components
 
 #### 1. Smart Contract (`/src/contract`)
+
 **Rust canister implementing:**
+
 - Shipment lifecycle management (create → buy → in-transit → finalize)
 - ICRC-1 token transfers for escrow and settlement
 - Encrypted communication channels between shipper/carrier
@@ -140,6 +156,7 @@ Apresh provides a decentralized alternative to traditional courier services:
 - Admin controls and whitelist management
 
 **Key Operations:**
+
 ```rust
 createShipment   // Shipper creates listing with escrow
 buyShipment      // Carrier accepts job
@@ -149,20 +166,25 @@ cancel_shipment  // Cancellation with refund
 ```
 
 #### 2. Cryptography Crates
+
 - **apresh-crypto**: X25519 key exchange, ChaCha20-Poly1305 encryption
 - **apresh-qr**: Custom QR code generation with gradients
 - **apresh-wasm**: WebAssembly bindings for browser crypto
 - **apresh-derive**: Procedural macros for serialization
 
 #### 3. Engine (`/src/crates/engine`)
+
 **Business logic layer:**
+
 - State machine for shipment status transitions
 - Actor system (Shipper/Carrier roles)
 - Operation validation and execution
 - Channel-based encrypted messaging
 
 #### 4. Frontend Application (`/src/app`)
+
 **Features:**
+
 - Wallet integration with balance management
 - Shipment creation wizard with maps
 - Marketplace browser with filtering
@@ -175,19 +197,19 @@ cancel_shipment  // Cancellation with refund
 ```
 1. CREATE
    Shipper → Create listing → Approve tokens → Generate secret
-   
+
 2. MARKETPLACE
    Carrier → Browse listings → Filter by location/price
-   
+
 3. ACCEPT
    Carrier → Buy shipment → Generate channel keys
-   
+
 4. PICKUP
    Carrier → Updates status → Encrypted communication begins
-   
+
 5. DELIVERY
    Carrier → Scans QR / enters secret → Payment auto-released
-   
+
 6. SETTLEMENT
    Smart contract → Transfers escrowed funds → Updates state
 ```
@@ -206,6 +228,7 @@ cancel_shipment  // Cancellation with refund
 ## 🛠️ Development
 
 ### Prerequisites
+
 - Node.js ≥16.0.0
 - Rust (with `wasm32-unknown-unknown` target)
 - dfx (Internet Computer SDK)
@@ -299,17 +322,20 @@ npm test
 ### Internet Computer Mainnet
 
 1. **Create production identity**
+
 ```bash
 dfx identity new production
 dfx identity use production
 ```
 
 2. **Add cycles** (ICP's gas tokens)
+
 ```bash
 dfx wallet --network ic balance
 ```
 
 3. **Deploy with mainnet feature**
+
 ```bash
 ./build.sh contract --release --features mainnet
 dfx deploy --network ic
@@ -326,6 +352,7 @@ dfx deploy --network ic
 ## 🎯 Roadmap
 
 ### Phase 1: Kraków Launch (Current)
+
 - ✅ Core shipment lifecycle
 - ✅ Escrow and payments
 - ✅ Encrypted messaging
@@ -335,6 +362,7 @@ dfx deploy --network ic
 - 🔲 Safe incentive program
 
 ### Phase 2: Major Polish Cities
+
 - 🎯 **Target**: 15,000 deliveries
 - 🔲 Mobile app launch (iOS/Android)
 - 🔲 B2B partnerships
@@ -376,6 +404,7 @@ We welcome contributions! Please see our contributing guidelines.
 ## 📞 Contact
 
 **For Business Inquiries:**
+
 - Email: contact@apresh.eu
 - LinkedIn: [Company Page] (Coming Soon)
 
