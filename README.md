@@ -8,12 +8,6 @@ Apresh is a decentralized delivery platform built on the **ICP blockchain** that
 
 <br/>
 
-<div align="center">
-  <img src="./docs/apresh-mobile.gif" width="700" height="auto" alt="Prezentacja interfejsu aplikacji Apresh">
-</div>
-
-<br/>
-
 ## 🚀 The Business Opportunity
 
 ### Problem We Solve
