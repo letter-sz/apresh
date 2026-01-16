@@ -1,6 +1,8 @@
-# Apresh
+<div align="center"><h1>🌍 Apresh</h1>
+<p>Turning Empty Space into an Opportunity</p>
+</div>
 
-**Turning Empty Space into an Opportunity**
+<br/>
 
 Apresh is a decentralized delivery platform built on the **ICP blockchain** that revolutionizes package delivery by connecting shippers directly with carriers in a trustless, blockchain-powered marketplace. We're transforming underutilized vehicle capacity and commuter routes into efficient delivery networks, offering fair pricing without intermediaries.
 
