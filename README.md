@@ -321,23 +321,6 @@ dfx deploy --network ic
 
 ---
 
-## 📊 Business Metrics & KPIs
-
-### Platform Metrics
-- **GMV** (Gross Merchandise Value): Total shipment value
-- **Take Rate**: Platform fee percentage
-- **Active Users**: Monthly shippers and carriers
-- **Transaction Volume**: Completed deliveries
-- **Average Order Value**: Mean shipment price
-
-### Growth Indicators
-- **Network Density**: Shipments per geographic region
-- **Repeat Rate**: Percentage of returning users
-- **Time to Fill**: Hours between listing and carrier acceptance
-- **Completion Rate**: Successful deliveries / total bookings
-
----
-
 ## 🎯 Roadmap
 
 ### Phase 1: Kraków Launch (Current)
@@ -357,21 +340,6 @@ dfx deploy --network ic
 - 🔲 Route optimization algorithms
 - 🔲 Reputation system
 - 🔲 Multi-package batching
-
-### Phase 3: Regional Expansion
-- 🔲 Cross-border capabilities
-- 🔲 GDPR compliance framework
-- 🔲 Strategic partnerships with major retailers
-- 🔲 Insurance options
-- 🔲 Real-time tracking
-- 🔲 Advanced API for B2B integration
-
-### Phase 4: Global Scale
-- 🔲 International market expansion
-- 🔲 Multi-chain support
-- 🔲 AI-powered matching and routing
-- 🔲 DAO governance
-- 🔲 Carbon offset tracking
 
 ---
 
@@ -393,15 +361,6 @@ We welcome contributions! Please see our contributing guidelines.
 
 ---
 
-## 🔗 Links
-
-- **Website/MVP**: [apresh.eu](https://apresh.eu)
-- **Documentation**: [docs.apresh.io] (Coming Soon)
-- **Discord**: [Join Community] (Coming Soon)
-- **Twitter**: [@apresh_io] (Coming Soon)
-
----
-
 ## 💡 Why Internet Computer?
 
 - **True Decentralization**: No cloud providers, fully on-chain
@@ -417,11 +376,6 @@ We welcome contributions! Please see our contributing guidelines.
 **For Business Inquiries:**
 - Email: contact@apresh.eu
 - LinkedIn: [Company Page] (Coming Soon)
-
-**For Technical Support:**
-- GitHub Issues: [Report bugs](../../issues)
-- Email: contact@apresh.eu
-- Developer Chat: [Discord] (Coming Soon)
 
 ---
 
