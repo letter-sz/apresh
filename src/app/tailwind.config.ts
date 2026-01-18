@@ -70,8 +70,12 @@ export default {
 				sans: [...fontFamily.sans]
 			},
 			transitionDuration: {
+				'850': '850ms',
 				'1500': '1500ms',
 				'10000': '10000ms'
+			},
+			transitionDelay: {
+				'850': '850ms'
 			}
 		}
 	},

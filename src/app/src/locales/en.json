@@ -4,7 +4,8 @@
 			"nav": {
 				"about": "About",
 				"contact": "Contact"
-			}
+			},
+			"language": "Change language to:"
 		},
 		"welcome-section": {
 			"title": "Find a carrier for your shipment",
@@ -27,11 +28,28 @@
 				"description": "See the status of your shipments and when they will be with you."
 			}
 		},
+		"dotted-map-section": {
+			"title": "Connecting Senders and Travelers Worldwide",
+			"description": "With our community, packages arrive faster and at a lower cost. We leverage user journeys to connect people and parcels in the most efficient way."
+		},
 		"benefits-section": {
-			"title": "Why should you use Apresh?"
+			"title": "Why should you use Apresh?",
+			"card-1": {
+				"title": "Available for everyone",
+				"description": "Anyone who commutes can become a carrier, utilizing planned trips to provide cost-effective options."
+			},
+			"card-2": {
+				"title": "Trustless network",
+				"description": "Built on the ICP blockchain, reducing overhead by creating decentralized, trustless delivery network with clear audit trail."
+			},
+			"card-3": {
+				"title": "Autonomy and control",
+				"description": "Your package, your choices. Independent carriers provide enhanced communication for a better experience."
+			}
 		},
 		"footer": {
 			"copyright": "All rights reserved.",
+			"description": "Apresh is a platform that allows you to find the best carrier for your shipment.",
 			"nav-1": {
 				"home": "Home",
 				"shipper": "Shipper",
