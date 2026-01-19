@@ -2,7 +2,7 @@
 
 <br/>
 
-Apresh is a decentralized delivery platform built on the **ICP blockchain** that revolutionizes package delivery by connecting shippers directly with carriers in a trustless, blockchain-powered marketplace. We're transforming underutilized vehicle capacity and commuter routes into efficient delivery networks, offering fair pricing without intermediaries.
+Apresh is a decentralized delivery platform built on **Internet Computer Protocol (ICP)** — a next-generation distributed cloud infrastructure — that revolutionizes package delivery by connecting shippers directly with carriers in a secure, peer-to-peer marketplace. We're transforming underutilized vehicle capacity and commuter routes into efficient delivery networks, offering fair pricing without intermediaries.
 
 <br/>
 
@@ -21,12 +21,11 @@ The current logistics and delivery market faces critical inefficiencies:
 ### Our Solution
 
 Apresh provides a decentralized alternative to traditional courier services:
-
-- **Decentralized Network**: Built on **ICP blockchain**, creating a trustless environment with clear audit trails and reduced overhead
+- **Distributed Infrastructure**: Built on **Internet Computer Protocol**, creating a transparent environment with verifiable audit trails and minimal overhead
 - **Available for Everyone**: Anyone who commutes can become a carrier, turning planned trips into delivery opportunities
 - **Fair Market Pricing**: Pricing controlled by market demand without hidden fees; shippers choose carriers based on price, rating, and delivery estimates
 - **User Autonomy**: Shippers have freedom to make choices about their packages, supported by enhanced communication with independent carriers
-- **Smart Contracts**: Handle escrow, ensuring secure payments and cryptographic verification for package handoff
+- **Automated Escrow**: Programmable contracts handle secure payments and cryptographic verification for package handoff
 
 ### Market Potential
 
@@ -34,12 +33,12 @@ Apresh provides a decentralized alternative to traditional courier services:
 - **European Last-Mile**: Accounts for **39%** of the total parcel market
 - **Polish Market Focus**: Serviceable Obtainable Market (SOM) in Poland estimated at **~$4B**; notably, **60%** of recipients are not attached to a specific courier company
 - **Gig Economy Growth**: $455B market by 2028 (Mastercard)
-- **Blockchain Logistics**: Expected to reach $3.2B by 2030
+- **Decentralized Logistics**: Emerging market expected to reach $3.2B by 2030
 - **Cost Savings**: 40-60% reduction compared to traditional services
 
 ### Revenue Model
 
-- **Transaction Fees**: Base fee on completed shipments to support operational costs and service quality (configurable, currently 0.001 ICP tokens)
+- **Transaction Fees**: Small fee on completed shipments to support operational costs and service quality (typically less than 1% of delivery value)
 - **Value-Added Services**: Custom features and integrations for professional businesses via bounty system
 - **Premium Services**: Access to advanced routing algorithms, real-time data analytics, and statistical dashboards
 - **B2B Solutions**: Enterprise API access for bulk shipping and e-commerce integration
@@ -67,11 +66,10 @@ Apresh provides a decentralized alternative to traditional courier services:
 - 💼 **Flexible Work** - choose what to deliver and when
 
 ### Platform Benefits
-
-- ⛓️ **Blockchain Security** - immutable records on Internet Computer
-- 🔒 **No Custody Risk** - smart contracts handle all funds
+- 🔐 **Tamper-Proof Records** - immutable transaction history on distributed infrastructure
+- 🔒 **No Custody Risk** - automated escrow system, platform never holds funds
 - 🌍 **Global Reach** - borderless payments and operations
-- 📈 **Scalable** - built on ICP for unlimited throughput
+- 📈 **Infinitely Scalable** - built on distributed cloud architecture for unlimited throughput
 - 🔓 **Open Source** - transparent and auditable code
 
 ---
@@ -80,12 +78,11 @@ Apresh provides a decentralized alternative to traditional courier services:
 
 ### Technology Stack
 
-#### Blockchain Layer (Internet Computer)
-
-- **Smart Contract**: Rust-based canister handling shipment lifecycle
-- **Token Standard**: ICRC-1 ledger for payments and escrow
+#### Backend Infrastructure (Internet Computer)
+- **Application Logic**: Rust-based canister handling shipment lifecycle
+- **Payment System**: ICRC-1 digital ledger for payments and escrow
 - **Authentication**: Internet Identity for privacy-preserving auth
-- **Storage**: On-chain state management with refund logging
+- **Data Storage**: Distributed state management with transaction logging
 - **Testing**: PocketIC for local integration testing
 
 #### Frontend
@@ -118,11 +115,11 @@ Apresh provides a decentralized alternative to traditional courier services:
           └────────┐
                    │ HTTPS / Agent
 ┌──────────────────┼───────────────────────────────────┐
-│    Internet Computer (ICP) Blockchain Layer          │
+│    Internet Computer (ICP) - Distributed Cloud       │
 │  ┌─────────────┬─┴────────────┬──────────────────┐   │
-│  │  Internet   │   Contract   │  ICRC-1 Ledger   │   │
+│  │  Internet   │  Application │  Payment Ledger  │   │
 │  │  Identity   │   Canister   │   Canister       │   │
-│  │  (Auth)     │  (Business)  │  (Payments)      │   │
+│  │  (Auth)     │  (Business)  │  (Settlements)   │   │
 │  └─────────────┴──────┬───────┴──────────────────┘   │
 │                       │                              │
 │              ┌────────┴────────┐                     │
@@ -137,15 +134,13 @@ Apresh provides a decentralized alternative to traditional courier services:
 
 ### Core Components
 
-#### 1. Smart Contract (`/src/contract`)
-
-**Rust canister implementing:**
-
+#### 1. Application Canister (`/src/contract`)
+**Rust-based business logic implementing:**
 - Shipment lifecycle management (create → buy → in-transit → finalize)
-- ICRC-1 token transfers for escrow and settlement
+- ICRC-1 payment transfers for escrow and settlement
 - Encrypted communication channels between shipper/carrier
-- Refund mechanisms and dead token tracking
-- Admin controls and whitelist management
+- Refund mechanisms and transaction tracking
+- Admin controls and access management
 
 **Key Operations:**
 
@@ -208,12 +203,12 @@ cancel_shipment  // Cancellation with refund
 
 ### Security Model
 
-- **Escrow Protection**: Funds locked in smart contract until delivery proof
+- **Escrow Protection**: Funds locked in programmable escrow until delivery proof
 - **Zero-Knowledge Secrets**: Shipper generates secret, carrier must provide to finalize
 - **Encrypted Channels**: All communication uses X25519 + ChaCha20-Poly1305
 - **No Platform Custody**: Platform never controls user funds
-- **Refund Guarantees**: Automatic refunds on cancellation or failure
-- **Identity Privacy**: Internet Identity provides anonymous authentication
+- **Automatic Refunds**: Guaranteed refunds on cancellation or failure
+- **Privacy-First**: Internet Identity provides anonymous authentication
 
 ---
 
@@ -335,8 +330,8 @@ dfx deploy --network ic
 
 ### Configuration
 
-- **Transfer Fee**: Adjustable via `setTransferFee` (default: 0.0001 ICP)
-- **Ledger Canister**: ICRC-1 compatible token
+- **Transfer Fee**: Adjustable via `setTransferFee` (typically < 1% of transaction value)
+- **Payment Ledger**: ICRC-1 compatible digital ledger
 - **Internet Identity**: Privacy-preserving authentication
 
 ---
@@ -385,11 +380,11 @@ We welcome contributions! Please see our contributing guidelines.
 
 ## 💡 Why Internet Computer?
 
-- **True Decentralization**: No cloud providers, fully on-chain
-- **Web Speed**: Sub-second finality, 200ms query responses
-- **Reverse Gas Model**: Users don't pay transaction fees
-- **Infinite Scalability**: Subnet architecture supports unlimited growth
-- **Web3 Native**: Host frontends and backends entirely on blockchain
+- **Decentralized Cloud Infrastructure**: No dependency on centralized cloud providers (AWS, Azure, Google Cloud)
+- **Enterprise Performance**: Sub-second response times with 200ms query latency
+- **Zero User Fees**: Infrastructure costs covered by developers, not users
+- **Unlimited Scalability**: Distributed subnet architecture supports unlimited growth
+- **Full-Stack Platform**: Host frontends, backends, and data storage on a single decentralized infrastructure
 
 ---
 
