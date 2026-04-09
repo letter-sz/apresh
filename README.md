@@ -6,7 +6,7 @@ Apresh is a decentralized delivery platform built on **Internet Computer Protoco
 
 <br/>
 
-## 🚀 The Business Opportunity
+## The Business Opportunity
 
 ### Problem We Solve
 
@@ -46,35 +46,35 @@ Apresh provides a decentralized alternative to traditional courier services:
 
 ---
 
-## 💼 Key Features
+## Key Features
 
 ### For Shippers
 
-- 📦 **Create Shipments** with custom parameters (size, value, destination)
-- 💰 **Set Your Price** - competitive market-driven pricing
-- 🔐 **Secure Escrow** - payment held in smart contract until delivery
-- 🔑 **Proof of Delivery** - cryptographic secret verification
-- 💬 **Encrypted Communication** - secure messaging with carriers
-- 📱 **QR Code Verification** - easy package confirmation
+-  **Create Shipments** with custom parameters (size, value, destination)
+-  **Set Your Price** - competitive market-driven pricing
+-  **Secure Escrow** - payment held in smart contract until delivery
+-  **Proof of Delivery** - cryptographic secret verification
+-  **Encrypted Communication** - secure messaging with carriers
+-  **QR Code Verification** - easy package confirmation
 
 ### For Carriers
 
-- 🗺️ **Browse Shipments** - filter by location, size, and compensation
-- 🚗 **Optimize Routes** - earn more by matching existing trips
-- ⚡ **Instant Payments** - automatic settlement via blockchain
-- 📊 **Reputation System** - build trust through completed deliveries
-- 💼 **Flexible Work** - choose what to deliver and when
+-  **Browse Shipments** - filter by location, size, and compensation
+-  **Optimize Routes** - earn more by matching existing trips
+-  **Instant Payments** - automatic settlement via blockchain
+-  **Reputation System** - build trust through completed deliveries
+-  **Flexible Work** - choose what to deliver and when
 
 ### Platform Benefits
-- 🔐 **Tamper-Proof Records** - immutable transaction history on distributed infrastructure
-- 🔒 **No Custody Risk** - automated escrow system, platform never holds funds
-- 🌍 **Global Reach** - borderless payments and operations
-- 📈 **Infinitely Scalable** - built on distributed cloud architecture for unlimited throughput
-- 🔓 **Open Source** - transparent and auditable code
+-  **Tamper-Proof Records** - immutable transaction history on distributed infrastructure
+-  **No Custody Risk** - automated escrow system, platform never holds funds
+-  **Global Reach** - borderless payments and operations
+-  **Infinitely Scalable** - built on distributed cloud architecture for unlimited throughput
+-  **Open Source** - transparent and auditable code
 
 ---
 
-## 🏗️ Technical Architecture
+##  Technical Architecture
 
 ### Technology Stack
 
@@ -212,7 +212,7 @@ cancel_shipment  // Cancellation with refund
 
 ---
 
-## 🛠️ Development
+##  Development
 
 ### Prerequisites
 
@@ -304,7 +304,7 @@ npm test
 
 ---
 
-## 🌐 Deployment
+## Deployment
 
 ### Internet Computer Mainnet
 
@@ -336,7 +336,7 @@ dfx deploy --network ic
 
 ---
 
-## 🎯 Roadmap
+##  Roadmap
 
 ### Phase 1: Kraków Launch (Current)
 
@@ -360,7 +360,7 @@ dfx deploy --network ic
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 We welcome contributions! Please see our contributing guidelines.
 
@@ -372,13 +372,13 @@ We welcome contributions! Please see our contributing guidelines.
 
 ---
 
-## 📄 License
+## License
 
 [Specify your license here]
 
 ---
 
-## 💡 Why Internet Computer?
+## Why Internet Computer?
 
 - **Decentralized Cloud Infrastructure**: No dependency on centralized cloud providers (AWS, Azure, Google Cloud)
 - **Enterprise Performance**: Sub-second response times with 200ms query latency
@@ -388,7 +388,7 @@ We welcome contributions! Please see our contributing guidelines.
 
 ---
 
-## 📞 Contact
+## Contact
 
 **For Business Inquiries:**
 
